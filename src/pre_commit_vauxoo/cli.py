@@ -15,9 +15,9 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import click
+from pre_commit_vauxoo import pre_commit_vauxoo
 
-
+# TODO: --only-copy-files --replace-config-file --autofix --mandatory --optional
 @click.command()
-@click.argument('names', nargs=-1)
-def main(names):
-    click.echo(repr(names))
+def main():
+    pre_commit_vauxoo.main()
