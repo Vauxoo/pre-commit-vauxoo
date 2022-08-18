@@ -18,7 +18,6 @@ exclude: |
     # It was ignored from original MQT since that there is not init file
     (/migrations/)|
     (/doc/|/docs/)|
-    (/tests/data/)|
     # EXCLUDE_LINT (Don't delete this line because if used from MQT)
     # Legacy modules absa: galaxy
     (galaxy/)|
@@ -34,21 +33,20 @@ repos:
     hooks:
       - id: flake8
         name: flake8 mandatory checks
-        additional_dependencies: ["flake8-bugbear==20.1.4"]
   - repo: https://github.com/vauxoo/pylint-odoo
-    rev: bb31563d709
+    rev: e73f2d6c615
     hooks:
       - id: pylint_odoo
         name: pylint mandatory checks
         args:
-          - --rcfile=.pylintrc-optional
           # External scripts
           - --disable=R0000
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.18.0
+    rev: v8.13.0
     hooks:
       - id: eslint
         name: javascript mandatory checks
         args:
           - --color
           - --config=.eslintrc.json
+          # - --fix

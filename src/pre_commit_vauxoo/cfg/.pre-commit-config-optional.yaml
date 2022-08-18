@@ -18,7 +18,6 @@ exclude: |
     # It was ignored from original MQT since that there is not init file
     (/migrations/)|
     (/doc/|/docs/)|
-    (/tests/data/)|
     # EXCLUDE_LINT (Don't delete this line because if used from MQT)
     # Legacy modules absa: galaxy
     (galaxy/)|
@@ -30,7 +29,7 @@ default_language_version:
   node: "14.13.0"
 repos:
   - repo: https://github.com/vauxoo/pylint-odoo
-    rev: bb31563d709
+    rev: e73f2d6c615
     hooks:
       - id: pylint_odoo
         name: pylint optional checks
