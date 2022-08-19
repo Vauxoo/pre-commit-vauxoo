@@ -66,11 +66,11 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
     """Simulate load the Vauxoo standard file 'source variables.sh' command in python
     return dictionary {environment_variable: value}
     """
+    envdict = {}
     source_file_path = os.path.join(repo_dirname, source_file)
     if not os.path.isfile(source_file_path):
         _logger.info("Skip 'source %s' file not found", source_file_path)
-        return []
-    envdict = {}
+        return envdict
     with open(source_file_path) as f_source_file:
         _logger.info("Running 'source %s'", source_file_path)
         for line in f_source_file:
