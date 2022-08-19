@@ -59,9 +59,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/pre-commit-vauxoo
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v1.0.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v1.2.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/Vauxoo/pre-commit-vauxoo/compare/v1.0.0...main
+    :target: https://github.com/Vauxoo/pre-commit-vauxoo/compare/v1.2.0...main
 
 
 
@@ -76,12 +76,7 @@ Installation
 
 ::
 
-    pip install pre-commit-vauxoo
-
-You can also install the in-development version with::
-
-    pip install https://github.com/Vauxoo/pre-commit-vauxoo/archive/main.zip
-
+    pip install -U git+https://github.com/Vauxoo/pre-commit-vauxoo.git@main
 
 Documentation
 =============
