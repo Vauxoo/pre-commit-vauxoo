@@ -17,13 +17,10 @@ re_export = re.compile(
 )
 
 
-def get_repo(current_dir=None):
-    if current_dir is None:
-        current_dir = os.getcwd()
-    # TODO: Look for .git dir in parent dirs
-    if not os.path.isdir(os.path.join(current_dir, ".git")):
-        raise UserWarning("There are not .git repository")
-    return current_dir
+def get_repo():
+    repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
+    repo_root = os.path.abspath(os.path.realpath(repo_root))
+    return repo_root
 
 
 def copy_cfg_files(
@@ -70,19 +67,18 @@ def copy_cfg_files(
                 fdst.write(line)
 
 
-def envfile2envdict(source_file=None):
-    """Simulate the 'source variables.sh' command in python
+def envfile2envdict(repo_dirname, source_file="variables.sh"):
+    """Simulate load the Vauxoo standard file 'source variables.sh' command in python
     return dictionary {environment_variable: value}
     """
-    if source_file is None:
-        # Vauxoo standard
-        source_file = "variables.sh"
-    if not os.path.isfile(source_file):
+    source_file_path = os.path.join(repo_dirname, source_file)
+    if not os.path.isfile(source_file_path):
+        _logger.info("Skip 'source %s' file not found" % source_file_path)
         return []
     envdict = {}
-    with open(source_file) as f_source_file:
+    with open(source_file_path) as f_source_file:
+        _logger.info("Running 'source %s'" % source_file_path)
         for line in f_source_file:
-            # for _x, _y, var, value in self.re_export.findall(line)])
             line_match = re_export.match(line)
             if not line_match:
                 continue
@@ -93,7 +89,7 @@ def envfile2envdict(source_file=None):
 def main(argv=None, exit=True):
     repo_dirname = get_repo()
 
-    envdict = envfile2envdict()
+    envdict = envfile2envdict(repo_dirname)
     os.environ.update(envdict)
 
     # Get the configuration files but you can use custom ones so set "0"
@@ -118,7 +114,7 @@ def main(argv=None, exit=True):
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     subprocess.call(cmd)
-    subprocess.call(cmd + ["-c", ".pre-commit-config-optional.yaml"])
+    subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
 
     status = 0
     cmd = ["pre-commit", "run", "--all", "--color=always"]
@@ -127,7 +123,7 @@ def main(argv=None, exit=True):
         _logger.info(
             "Running autofix checks (affect status build but you can autofix them locally)"
         )
-        status += subprocess.call(cmd + ["-c", ".pre-commit-config-autofix.yaml"])
+        status += subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")])
         _logger.info("-" * 100)
     _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
     _logger.info("Running mandatory checks (affect status build)")
@@ -135,7 +131,7 @@ def main(argv=None, exit=True):
     _logger.info("*" * 100)
     _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
     _logger.info("Running optional checks (does not affect status build)")
-    subprocess.call(cmd + ["-c", ".pre-commit-config-optional.yaml"])
+    subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
     _logger.info("~" * 100)
     if exit:
         sys.exit(0 if status == 0 else 1)
