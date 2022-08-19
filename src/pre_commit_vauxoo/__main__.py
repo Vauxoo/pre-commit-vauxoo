@@ -1,5 +1,4 @@
-"""
-Entrypoint module, in case you use `python -mpre_commit_vauxoo`.
+"""Entrypoint module, in case you use `python -mpre_commit_vauxoo`.
 
 
 Why does this file exist, and why __main__? For more info, read:

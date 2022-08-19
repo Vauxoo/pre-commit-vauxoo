@@ -199,7 +199,7 @@ disable=abstract-method,
 
 #***Enabled and how to fix***
 #E1103 - maybe-no-member
-#     Instance of 'bool' has no 'name' member 
+#     Instance of 'bool' has no 'name' member
 #     Fix changing "var=False" by "var=None" in assignment.
 #E1601 - print sentence detect
 #     You can remove print sentence or if really needs it replace by a
@@ -217,7 +217,7 @@ disable=abstract-method,
 #        NOTE pylint: disable don't work in this cases.
 #        If you need force to use a duplicate code, then you can create a small change into two files.
 #        The ideal fix is don't use duplicate code, better re-use code.
-#W0102 - dangerous-default-value. 
+#W0102 - dangerous-default-value.
    #Not use
    #def fc(param0, param1=[], param2={}):
    #You can use:
