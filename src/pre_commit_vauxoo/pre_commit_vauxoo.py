@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 import os
 import re
@@ -29,9 +28,7 @@ def get_files(path):
     return ls_files
 
 
-def copy_cfg_files(
-    precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks
-):
+def copy_cfg_files(precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks):
     exclude_regex = ""
     if exclude_lint:
         exclude_regex = "(%s)|" % "|".join(
@@ -57,18 +54,10 @@ def copy_cfg_files(
         _logger.info("Copying %s to %s", src, dst)
         with open(src, "r") as fsrc, open(dst, "w") as fdst:
             for line in fsrc:
-                if (
-                    exclude_lint
-                    and fname.startswith(".pre-commit-config")
-                    and "# EXCLUDE_LINT" in line
-                ):
+                if exclude_lint and fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
                     _logger.info("Apply EXCLUDE_LINT=%s to %s", exclude_lint, dst)
                     line = "    %s\n" % exclude_regex
-                if (
-                    disable_pylint_checks
-                    and fname.startswith(".pre-commit-config")
-                    and "--disable=R0000" in line
-                ):
+                if disable_pylint_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
                     line = line.replace("R0000", disable_pylint_checks)
                 fdst.write(line)
 
@@ -79,11 +68,11 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
     """
     source_file_path = os.path.join(repo_dirname, source_file)
     if not os.path.isfile(source_file_path):
-        _logger.info("Skip 'source %s' file not found" % source_file_path)
+        _logger.info("Skip 'source %s' file not found", source_file_path)
         return []
     envdict = {}
     with open(source_file_path) as f_source_file:
-        _logger.info("Running 'source %s'" % source_file_path)
+        _logger.info("Running 'source %s'", source_file_path)
         for line in f_source_file:
             line_match = re_export.match(line)
             if not line_match:
@@ -92,7 +81,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
     return envdict
 
 
-def main(argv=None, exit=True):
+def main(argv=None, do_exit=True):
     repo_dirname = get_repo()
     cwd = os.path.abspath(os.path.realpath(os.getcwd()))
 
@@ -127,7 +116,7 @@ def main(argv=None, exit=True):
     cmd = ["pre-commit", "run", "--color=always"]
     if cwd != repo_dirname:
         cwd_short = os.path.relpath(cwd, repo_dirname)
-        _logger.info("Running only for sub-path '%s'" % cwd_short)
+        _logger.info("Running only for sub-path '%s'", cwd_short)
         files = get_files(cwd)
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
@@ -136,9 +125,7 @@ def main(argv=None, exit=True):
         cmd.append("--all")
     if enable_auto_fix:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
-        _logger.info(
-            "Running autofix checks (affect status build but you can autofix them locally)"
-        )
+        _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
         status += subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")])
         _logger.info("-" * 100)
     _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
@@ -149,7 +136,7 @@ def main(argv=None, exit=True):
     _logger.info("Running optional checks (does not affect status build)")
     subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
     _logger.info("~" * 100)
-    if exit:
+    if do_exit:
         sys.exit(0 if status == 0 else 1)
 
 
