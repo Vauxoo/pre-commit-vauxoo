@@ -23,6 +23,12 @@ def get_repo():
     return repo_root
 
 
+def get_files(path):
+    ls_files = subprocess.check_output(["git", "ls-files", "--", path]).decode(sys.stdout.encoding).strip()
+    ls_files = ls_files.splitlines()
+    return ls_files
+
+
 def copy_cfg_files(
     precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks
 ):
@@ -88,6 +94,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
 
 def main(argv=None, exit=True):
     repo_dirname = get_repo()
+    cwd = os.path.abspath(os.path.realpath(os.getcwd()))
 
     envdict = envfile2envdict(repo_dirname)
     os.environ.update(envdict)
@@ -117,7 +124,16 @@ def main(argv=None, exit=True):
     subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
 
     status = 0
-    cmd = ["pre-commit", "run", "--all", "--color=always"]
+    cmd = ["pre-commit", "run", "--color=always"]
+    if cwd != repo_dirname:
+        cwd_short = os.path.relpath(cwd, repo_dirname)
+        _logger.info("Running only for sub-path '%s'" % cwd_short)
+        files = get_files(cwd)
+        if not files:
+            raise UserWarning("Not files detected in current path %s" % cwd_short)
+        cmd.extend(["--files"] + files)
+    else:
+        cmd.append("--all")
     if enable_auto_fix:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info(
