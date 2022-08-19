@@ -81,6 +81,12 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
     return envdict
 
 
+def subprocess_call(command, *args, **kwargs):
+    cmd_str = ' '.join(command)
+    _logger.info("Command executed: %s", cmd_str)
+    return subprocess.call(command, *args, **kwargs)
+
+
 def main(argv=None, do_exit=True):
     repo_dirname = get_repo()
     cwd = os.path.abspath(os.path.realpath(os.getcwd()))
@@ -109,8 +115,8 @@ def main(argv=None, do_exit=True):
 
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
-    subprocess.call(cmd)
-    subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
+    subprocess_call(cmd)
+    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
 
     status = 0
     cmd = ["pre-commit", "run", "--color=always"]
@@ -126,15 +132,15 @@ def main(argv=None, do_exit=True):
     if enable_auto_fix:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
-        status += subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")])
+        status += subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")])
         _logger.info("-" * 100)
     _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
     _logger.info("Running mandatory checks (affect status build)")
-    status += subprocess.call(cmd)
+    status += subprocess_call(cmd)
     _logger.info("*" * 100)
     _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
     _logger.info("Running optional checks (does not affect status build)")
-    subprocess.call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
+    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
     _logger.info("~" * 100)
     if do_exit:
         sys.exit(0 if status == 0 else 1)
