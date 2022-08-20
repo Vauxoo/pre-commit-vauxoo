@@ -4,9 +4,9 @@ import re
 import subprocess
 import sys
 
-logging.basicConfig(level=logging.DEBUG)
-_logger = logging.getLogger(__name__)
+from . import logging_colored
 
+_logger = logging.getLogger("pre-commit-vauxoo")
 
 re_export = re.compile(
     r"^(?P<export>export|EXPORT)( )+"
@@ -38,6 +38,7 @@ def copy_cfg_files(precommit_config_dir, repo_dirname, overwrite, exclude_lint, 
                 if exclude_path and exclude_path.strip()
             ]
         )
+    _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, repo_dirname)
     for fname in os.listdir(precommit_config_dir):
         if not fname.startswith(".") and fname != "pyproject.toml":
             # all configuration files are hidden
@@ -49,9 +50,8 @@ def copy_cfg_files(precommit_config_dir, repo_dirname, overwrite, exclude_lint, 
         dst = os.path.join(repo_dirname, fname)
         if not overwrite and os.path.isfile(dst):
             # Use the custom files defined in the repo
-            _logger.info("Use custom file %s", dst)
+            _logger.warning("Use custom file %s", dst)
             continue
-        _logger.info("Copying %s to %s", src, dst)
         with open(src, "r") as fsrc, open(dst, "w") as fdst:
             for line in fsrc:
                 if exclude_lint and fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
@@ -83,7 +83,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
 
 def subprocess_call(command, *args, **kwargs):
     cmd_str = ' '.join(command)
-    _logger.info("Command executed: %s", cmd_str)
+    _logger.debug("Command executed: %s", cmd_str)
     return subprocess.call(command, *args, **kwargs)
 
 
@@ -113,7 +113,6 @@ def main(argv=None, do_exit=True):
         disable_pylint_checks,
     )
 
-
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
@@ -128,28 +127,81 @@ def main(argv=None, do_exit=True):
     cmd = ["pre-commit", "run", "--color=always"]
     if cwd != repo_dirname:
         cwd_short = os.path.relpath(cwd, repo_dirname)
-        _logger.info("Running only for sub-path '%s'", cwd_short)
+        _logger.warning("Running only for sub-path '%s'", cwd_short)
         files = get_files(cwd)
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
         cmd.extend(["--files"] + files)
     else:
         cmd.append("--all")
+    all_status = {}
+
     if enable_auto_fix:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
-        status += subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
-        _logger.info("-" * 100)
+        autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
+        status += autofix_status
+        test_name = 'Autofix checks'
+        all_status[test_name] = {'status': autofix_status}
+        if autofix_status != 0:
+            _logger.error("%s reformatted", test_name)
+            all_status[test_name]['level'] = logging.ERROR
+            all_status[test_name]['status_msg'] = "Reformatted"
+        else:
+            _logger.info("%s passed!", test_name)
+            all_status[test_name]['level'] = logging.INFO
+            all_status[test_name]['status_msg'] = "Passed"
+        _logger.info("-" * 66)
+
     _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
     _logger.info("Running mandatory checks (affect status build)")
-    status += subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
-    _logger.info("*" * 100)
+    mandatory_status = subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
+    status += mandatory_status
+    test_name = 'Mandatory checks'
+    all_status[test_name] = {'status': mandatory_status}
+    if status != 0:
+        _logger.error("%s failed", test_name)
+        all_status[test_name]['level'] = logging.ERROR
+        all_status[test_name]['status_msg'] = "Failed"
+    else:
+        _logger.info("%s passed!", test_name)
+        all_status[test_name]['level'] = logging.INFO
+        all_status[test_name]['status_msg'] = "Passed"
+
+    _logger.info("*" * 68)
     _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
     _logger.info("Running optional checks (does not affect status build)")
-    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
-    _logger.info("~" * 100)
+    status_optional = subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
+    test_name = 'Optional checks'
+    all_status[test_name] = {'status': status_optional}
+    if status_optional != 0:
+        _logger.warning("Optional checks failed")
+        all_status[test_name]['level'] = logging.WARNING
+        all_status[test_name]['status_msg'] = "Failed"
+    else:
+        _logger.info("Optional checks passed!")
+        all_status[test_name]['level'] = logging.INFO
+        all_status[test_name]['status_msg'] = "Passed"
+    _logger.info("~" * 67)
+
+    print_summary(all_status)
     if do_exit:
         sys.exit(0 if status == 0 else 1)
+
+
+def print_summary(all_status):
+    summary_msg = ["+" + "=" * 39]
+    summary_msg.append("|  Tests summary:")
+    summary_msg.append("|" + "-" * 39)
+    for test_name, test_result in all_status.items():
+        outcome = (
+            logging_colored.colorized_msg(test_result['status_msg'], test_result['level'])
+            if test_result['status'] != 0
+            else logging_colored.colorized_msg(test_result['status_msg'], test_result['level'])
+        )
+        summary_msg.append("| {:<28}{}".format(test_name, outcome))
+    summary_msg.append("+" + "=" * 39)
+    _logger.info("Tests summary\n%s", '\n'.join(summary_msg))
 
 
 if __name__ == "__main__":
