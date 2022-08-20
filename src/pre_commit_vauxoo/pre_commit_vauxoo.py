@@ -113,10 +113,16 @@ def main(argv=None, do_exit=True):
         disable_pylint_checks,
     )
 
+
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
-    subprocess_call(cmd)
-    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
+    pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
+    pre_commit_cfg_optional = os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")
+    pre_commit_cfg_autofix = os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")
+    subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
+    subprocess_call(cmd + ["-c", pre_commit_cfg_optional])
+    if enable_auto_fix:
+        subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
 
     status = 0
     cmd = ["pre-commit", "run", "--color=always"]
@@ -132,15 +138,15 @@ def main(argv=None, do_exit=True):
     if enable_auto_fix:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
-        status += subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")])
+        status += subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
         _logger.info("-" * 100)
     _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
     _logger.info("Running mandatory checks (affect status build)")
-    status += subprocess_call(cmd)
+    status += subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
     _logger.info("*" * 100)
     _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
     _logger.info("Running optional checks (does not affect status build)")
-    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")])
+    subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
     _logger.info("~" * 100)
     if do_exit:
         sys.exit(0 if status == 0 else 1)
