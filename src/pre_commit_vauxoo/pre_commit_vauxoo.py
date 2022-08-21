@@ -61,17 +61,17 @@ def copy_cfg_files(
         dst = os.path.join(repo_dirname, fname)
         if not overwrite and os.path.isfile(dst):
             # Use the custom files defined in the repo
-            _logger.warning("Use custom file %s", dst)
+            _logger.warning("Using custom file %s", dst)
             continue
         with open(src, "r") as fsrc, open(dst, "w") as fdst:
             for line in fsrc:
                 if fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
                     line = ""
                     if exclude_lint:
-                        _logger.info("Apply EXCLUDE_LINT=%s to %s", exclude_lint, dst)
+                        _logger.info("Applying EXCLUDE_LINT=%s to %s", exclude_lint, dst)
                         line += "    %s\n" % exclude_lint_regex
                     if fname == ".pre-commit-config-autofix.yaml" and exclude_autofix:
-                        _logger.info("Apply EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
+                        _logger.info("Applying EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
                         line += "    %s\n" % exclude_autofix_regex
                 if disable_pylint_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
                     line = line.replace("R0000", disable_pylint_checks)
@@ -85,7 +85,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
     envdict = {}
     source_file_path = os.path.join(repo_dirname, source_file)
     if not os.path.isfile(source_file_path):
-        _logger.info("Skip 'source %s' file not found", source_file_path)
+        _logger.info("Skipping 'source %s' file because it was not found", source_file_path)
         return envdict
     with open(source_file_path) as f_source_file:
         _logger.info("Running 'source %s'", source_file_path)
@@ -99,7 +99,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
 
 def subprocess_call(command, *args, **kwargs):
     cmd_str = ' '.join(command)
-    _logger.debug("Command executed: %s", cmd_str)
+    _logger.debug("Running command: %s", cmd_str)
     return subprocess.call(command, *args, **kwargs)
 
 
