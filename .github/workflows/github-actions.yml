@@ -275,6 +275,12 @@ jobs:
     - name: Set git to not change EoL
       run: |
         git config --global core.autocrlf false
+    - name: Cache pre-commit packages
+      id: cache-pre-commit
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: ${{ runner.os }}-py${{ matrix.python }}-${{ matrix.python_arch }}-pre-commit
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
@@ -282,6 +288,7 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
         architecture: ${{ matrix.python_arch }}
+        cache: 'pip'
     - name: install dependencies
       run: |
         python -mpip install --progress-bar=off -r ci/requirements.txt
