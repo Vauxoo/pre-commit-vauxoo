@@ -14,6 +14,7 @@ LEVEL_COLOR_MAPPING = {
     logging.ERROR: (RED, DEFAULT),
     logging.CRITICAL: (WHITE, RED),
 }
+FORMAT_STR = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 
 
 def colorized_msg(msg, level):
@@ -36,8 +37,7 @@ logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 
-format_str = "%(asctime)s %(levelname)s %(name)s: %(message)s"
-ch.setFormatter(ColoredFormatter(format_str))
+ch.setFormatter(ColoredFormatter(FORMAT_STR))
 
 logger.addHandler(ch)
 
