@@ -2,6 +2,7 @@ graft docs
 graft src
 graft ci
 graft tests
+graft resources
 
 include .appveyor.yml
 include .bumpversion.cfg
