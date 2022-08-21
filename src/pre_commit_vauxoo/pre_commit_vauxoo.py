@@ -122,7 +122,8 @@ def main(argv=None, do_exit=True):
     enable_auto_fix = os.environ.get("PRECOMMIT_AUTOFIX", "") == "1"
     include_lint = os.environ.get('INCLUDE_LINT')
 
-    root_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.abspath(os.path.dirname(__file__))
+
     precommit_config_dir = os.path.join(root_dir, "cfg")
 
     copy_cfg_files(
