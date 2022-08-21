@@ -28,13 +28,24 @@ def get_files(path):
     return ls_files
 
 
-def copy_cfg_files(precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks):
-    exclude_regex = ""
+def copy_cfg_files(
+    precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks, exclude_autofix
+):
+    exclude_lint_regex = ""
+    exclude_autofix_regex = ""
     if exclude_lint:
-        exclude_regex = "(%s)|" % "|".join(
+        exclude_lint_regex = "(%s)|" % "|".join(
             [
                 re.escape(exclude_path.strip())
                 for exclude_path in exclude_lint.split(",")
+                if exclude_path and exclude_path.strip()
+            ]
+        )
+    if exclude_autofix:
+        exclude_autofix_regex = "(%s)|" % "|".join(
+            [
+                re.escape(exclude_path.strip())
+                for exclude_path in exclude_autofix.split(",")
                 if exclude_path and exclude_path.strip()
             ]
         )
@@ -54,9 +65,14 @@ def copy_cfg_files(precommit_config_dir, repo_dirname, overwrite, exclude_lint, 
             continue
         with open(src, "r") as fsrc, open(dst, "w") as fdst:
             for line in fsrc:
-                if exclude_lint and fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
-                    _logger.info("Apply EXCLUDE_LINT=%s to %s", exclude_lint, dst)
-                    line = "    %s\n" % exclude_regex
+                if fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
+                    line = ""
+                    if exclude_lint:
+                        _logger.info("Apply EXCLUDE_LINT=%s to %s", exclude_lint, dst)
+                        line += "    %s\n" % exclude_lint_regex
+                    if fname == ".pre-commit-config-autofix.yaml" and exclude_autofix:
+                        _logger.info("Apply EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
+                        line += "    %s\n" % exclude_autofix_regex
                 if disable_pylint_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
                     line = line.replace("R0000", disable_pylint_checks)
                 fdst.write(line)
@@ -98,10 +114,14 @@ def main(argv=None, do_exit=True):
     overwrite = os.environ.get("PRECOMMIT_OVERWRITE_CONFIG_FILES", "1") == "1"
     # Exclude paths to lint
     exclude_lint = os.environ.get("EXCLUDE_LINT", "")
+    # Exclude paths to fix
+    exclude_autofix = os.environ.get("EXCLUDE_AUTOFIX", "")
     # Disable pylint checks
     disable_pylint_checks = os.environ.get("DISABLE_PYLINT_CHECKS", "")
     # Enable .pre-commit-config-autofix.yaml configuration file
     enable_auto_fix = os.environ.get("PRECOMMIT_AUTOFIX", "") == "1"
+    include_lint = os.environ.get('INCLUDE_LINT')
+
     root_dir = os.path.dirname(os.path.abspath(__file__))
     precommit_config_dir = os.path.join(root_dir, "cfg")
 
@@ -111,6 +131,7 @@ def main(argv=None, do_exit=True):
         overwrite,
         exclude_lint,
         disable_pylint_checks,
+        exclude_autofix,
     )
 
     _logger.info("Installing pre-commit hooks")
@@ -132,6 +153,13 @@ def main(argv=None, do_exit=True):
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
         cmd.extend(["--files"] + files)
+    elif include_lint:
+        _logger.info("Running only for INCLUDE_LINT=%s", include_lint)
+        included_paths = map(str.strip, include_lint.strip().split(','))
+        included_files = []
+        for included_path in included_paths:
+            included_files += get_files(included_path)
+        cmd.extend(["--files"] + included_files)
     else:
         cmd.append("--all")
     all_status = {}
