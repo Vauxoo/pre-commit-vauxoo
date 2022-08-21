@@ -8,7 +8,7 @@ Overview
     :stub-columns: 1
 
     * - tests
-      - | |github-actions|
+      - | |github-actions| |
         | |coveralls| |codecov|
     * - package
       - | |version| |
@@ -33,13 +33,13 @@ Overview
 ..     :alt: Requirements Status
 ..     :target: https://requires.io/github/Vauxoo/pre-commit-vauxoo/requirements/?branch=main
 
-.. .. |coveralls| image:: https://coveralls.io/repos/Vauxoo/pre-commit-vauxoo/badge.svg?branch=main&service=github
-..     :alt: Coverage Status
-..     :target: https://coveralls.io/r/Vauxoo/pre-commit-vauxoo
+.. |coveralls| image:: https://coveralls.io/repos/Vauxoo/pre-commit-vauxoo/badge.svg?branch=main&service=github
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/Vauxoo/pre-commit-vauxoo
 
-.. .. |codecov| image:: https://codecov.io/gh/Vauxoo/pre-commit-vauxoo/branch/main/graphs/badge.svg?branch=main
-..     :alt: Coverage Status
-..     :target: https://codecov.io/github/Vauxoo/pre-commit-vauxoo
+.. |codecov| image:: https://codecov.io/gh/Vauxoo/pre-commit-vauxoo/branch/main/graphs/badge.svg?branch=main
+    :alt: Coverage Status
+    :target: https://codecov.io/github/Vauxoo/pre-commit-vauxoo
 
 .. |version| image:: https://img.shields.io/pypi/v/pre-commit-vauxoo.svg
     :alt: PyPI Package latest release
@@ -71,8 +71,6 @@ pre-commit script to run automatically the configuration and variables custom fr
 
 Installation
 ============
-
-::
 
 Using pypi
 

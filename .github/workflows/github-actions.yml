@@ -326,8 +326,6 @@ jobs:
         password: ${{ secrets.PYPI_API_TOKEN }}
     - name: Coveralls
       uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.COVERALLS_TOKEN }}
     - name: codecov
       uses: codecov/codecov-action@v3
       with:
