@@ -7,11 +7,8 @@ Overview
 .. list-table::
     :stub-columns: 1
 
-    * - docs
-      - |docs|
     * - tests
-      - | |github-actions| |travis| |appveyor| 
-        | |coveralls| |codecov|
+      - | |github-actions|
     * - package
       - | |version| |
         | |commits-since|
@@ -35,25 +32,25 @@ Overview
 ..     :alt: Requirements Status
 ..     :target: https://requires.io/github/Vauxoo/pre-commit-vauxoo/requirements/?branch=main
 
-.. .. |coveralls| image:: https://coveralls.io/repos/Vauxoo/pre-commit-vauxoo/badge.svg?branch=main&service=github
-..     :alt: Coverage Status
-..     :target: https://coveralls.io/r/Vauxoo/pre-commit-vauxoo
+.. |coveralls| image:: https://coveralls.io/repos/Vauxoo/pre-commit-vauxoo/badge.svg?branch=main&service=github
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/Vauxoo/pre-commit-vauxoo
 
-.. .. |codecov| image:: https://codecov.io/gh/Vauxoo/pre-commit-vauxoo/branch/main/graphs/badge.svg?branch=main
-..     :alt: Coverage Status
-..     :target: https://codecov.io/github/Vauxoo/pre-commit-vauxoo
+.. |codecov| image:: https://codecov.io/gh/Vauxoo/pre-commit-vauxoo/branch/main/graphs/badge.svg?branch=main
+    :alt: Coverage Status
+    :target: https://codecov.io/github/Vauxoo/pre-commit-vauxoo
 
-.. .. |version| image:: https://img.shields.io/pypi/v/pre-commit-vauxoo.svg
-..     :alt: PyPI Package latest release
-..     :target: https://pypi.org/project/pre-commit-vauxoo
+.. |version| image:: https://img.shields.io/pypi/v/pre-commit-vauxoo.svg
+    :alt: PyPI Package latest release
+    :target: https://pypi.org/project/pre-commit-vauxoo
 
-.. .. |wheel| image:: https://img.shields.io/pypi/wheel/pre-commit-vauxoo.svg
-..     :alt: PyPI Wheel
-..     :target: https://pypi.org/project/pre-commit-vauxoo
+.. |wheel| image:: https://img.shields.io/pypi/wheel/pre-commit-vauxoo.svg
+    :alt: PyPI Wheel
+    :target: https://pypi.org/project/pre-commit-vauxoo
 
-.. .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/pre-commit-vauxoo.svg
-..     :alt: Supported versions
-..     :target: https://pypi.org/project/pre-commit-vauxoo
+.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/pre-commit-vauxoo.svg
+    :alt: Supported versions
+    :target: https://pypi.org/project/pre-commit-vauxoo
 
 .. .. |supported-implementations| image:: https://img.shields.io/pypi/implementation/pre-commit-vauxoo.svg
 ..     :alt: Supported implementations
@@ -74,7 +71,11 @@ pre-commit script to run automatically the configuration and variables custom fr
 Installation
 ============
 
-::
+Using pypi
+
+    pip install -U pre-commit-vauxoo
+
+Using github directly
 
     pip install -U git+https://github.com/Vauxoo/pre-commit-vauxoo.git@main
 
