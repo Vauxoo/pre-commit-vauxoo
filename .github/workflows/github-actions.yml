@@ -321,7 +321,7 @@ jobs:
         tox -e ${{ matrix.tox_env }} -v
     - name: Build a binary wheel and a source tarball
       run: >-
-        python -m
+        python -m pip install build && python -m
         build
         --sdist
         --wheel
