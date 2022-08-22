@@ -1,60 +1,75 @@
 import os
+import shutil
+import subprocess
+import tempfile
 import unittest
-from contextlib import contextmanager
 
 from click.testing import CliRunner
 
 from pre_commit_vauxoo.cli import main
 
 
-@contextmanager
-def chdir(path):
-    curdir = os.getcwd()
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(curdir)
+class TestPreCommitVauxoo(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.original_work_dir = os.getcwd()
+        self.tmp_dir = tempfile.mkdtemp(suffix='_pre_commit_vauxoo')
+        os.chdir(self.tmp_dir)
+        self.runner = CliRunner()
+        src_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'resources')
+        self.create_dummy_repo(src_path, self.tmp_dir)
 
+    def create_dummy_repo(self, src_path, dest_path):
+        subprocess.call(["git", "init", "--initial-branch=main", dest_path])
+        dest_subpath = os.path.join(dest_path, os.path.basename(src_path))
+        shutil.copytree(src_path, dest_subpath)
+        subprocess.call(["git", "add", dest_subpath])
 
-class TestStringMethods(unittest.TestCase):
+    def tearDown(self):
+        super().tearDown()
+        # change to original work dir
+        if os.path.isdir(self.original_work_dir):
+            os.chdir(self.original_work_dir)
+        # Cleanup temporary files
+        if os.path.isdir(self.tmp_dir) and self.tmp_dir != '/':
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
+
     def test_basic(self):
-        runner = CliRunner()
         env = os.environ
         env['INCLUDE_LINT'] = 'resources'
         env['PRECOMMIT_AUTOFIX'] = '1'
-        result = runner.invoke(main, [], env=env)
+        result = self.runner.invoke(main, [], env=env)
         self.assertEqual(result.output, '')
         self.assertEqual(result.exit_code, 0)
 
     def test_chdir(self):
-        runner = CliRunner()
+        self.runner = CliRunner()
         env = os.environ
         env['PRECOMMIT_AUTOFIX'] = '1'
-        with chdir("resources"):
-            result = runner.invoke(main, [], env=env)
+        os.chdir("resources")
+        result = self.runner.invoke(main, [], env=env)
 
         self.assertEqual(result.output, '')
         self.assertEqual(result.exit_code, 0)
 
     def test_exclude_lint(self):
-        runner = CliRunner()
+        self.runner = CliRunner()
         env = os.environ
         env['PRECOMMIT_AUTOFIX'] = '1'
         env['EXCLUDE_LINT'] = 'import-error'
-        with chdir("resources"):
-            result = runner.invoke(main, [], env=env)
+        os.chdir("resources")
+        result = self.runner.invoke(main, [], env=env)
 
         self.assertEqual(result.output, '')
         self.assertEqual(result.exit_code, 0)
 
     def test_exclude_autofix(self):
-        runner = CliRunner()
+        self.runner = CliRunner()
         env = os.environ
         env['PRECOMMIT_AUTOFIX'] = '1'
         env['EXCLUDE_AUTOFIX'] = 'resources/module_example1/demo/'
-        with chdir("resources"):
-            result = runner.invoke(main, [], env=env)
+        os.chdir("resources")
+        result = self.runner.invoke(main, [], env=env)
 
         self.assertEqual(result.output, '')
         self.assertEqual(result.exit_code, 0)
