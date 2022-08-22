@@ -291,6 +291,7 @@ jobs:
           #   os: 'macos-latest'
     steps:
     - name: Set git to not change EoL
+      if: runner.os == 'Windows'
       run: |
         git config --global core.autocrlf false
     - name: Cache pre-commit packages
@@ -319,8 +320,16 @@ jobs:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: >
         tox -e ${{ matrix.tox_env }} -v
+    - name: Build a binary wheel and a source tarball
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && matrix.tox_env == 'py39-nocov'
+      run: >-
+        python -m pip install build && python -m
+        build
+        --sdist
+        --wheel
+        --outdir dist/
     - name: Publish package
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && matrix.tox_env == 'py39-nocov'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
