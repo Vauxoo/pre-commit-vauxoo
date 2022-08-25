@@ -54,7 +54,7 @@ repos:
           - "@prettier/plugin-xml@2.2.0"
         args:
           - --plugin=@prettier/plugin-xml
-        files: \.(css|htm|html|js|json|jsx|less|md|toml|ts|xml|yaml|yml)$
+        files: \.(js|xml)$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0  # Latest version compatible with py3.6
     hooks:
