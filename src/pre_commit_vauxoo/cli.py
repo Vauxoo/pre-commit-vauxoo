@@ -72,9 +72,9 @@ class CSVPath(click.Path):
         self.name += ' CSV'
 
     def convert(self, value, param, ctx):
-        values = strcsv2tuple(value)
-        for v in values:
-            super().convert(v, param, ctx)
+        values = ()
+        for v in strcsv2tuple(value):
+            values += (super().convert(v, param, ctx),)
         return values
 
 
