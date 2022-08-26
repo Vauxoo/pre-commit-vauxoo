@@ -72,3 +72,17 @@ docs/_build
 
 # Mypy Cache
 .mypy_cache/
+
+# pre-commit-vauxoo configuration files copied
+.editorconfig
+.pre-commit-config.yaml
+pyproject.toml
+.eslintrc.json
+.flake8
+.flake8-optional
+.isort.cfg
+.pre-commit-config-autofix.yaml
+.pre-commit-config-optional.yaml
+.prettierrc.yml
+.pylintrc
+.pylintrc-optional
