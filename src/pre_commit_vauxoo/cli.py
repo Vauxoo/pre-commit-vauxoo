@@ -105,7 +105,14 @@ except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
 @click.command()
 # click 6.6 used in dockerv doesn't support to use envvar for click.argument :(
 # More info https://github.com/pallets/click/issues/714 workaround using option instead.
-@click.option("--paths", "-p", multiple=True, envvar="INCLUDE_LINT", type=CSVPath(exists=True), callback=merge_tuples)
+@click.option(
+    "--paths",
+    "-p",
+    multiple=True,
+    envvar="INCLUDE_LINT",
+    type=CSVPath(exists=True),
+    callback=merge_tuples,
+)
 @click.option(
     "--overwrite",
     "-w",
