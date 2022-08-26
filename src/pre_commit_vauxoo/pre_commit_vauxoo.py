@@ -101,12 +101,18 @@ def subprocess_call(command, *args, **kwargs):
 
 # There are a lot of if validations in this method. It is expected for now.
 # pylint: disable=too-complex
-def main(include_lint, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, config, do_exit=True):
+def main(
+    include_lint,
+    overwrite,
+    exclude_autofix,
+    exclude_lint,
+    disable_pylint_checks,
+    autofix,
+    precommit_hooks_type,
+    do_exit=True,
+):
     repo_dirname = get_repo()
     cwd = os.path.abspath(os.path.realpath(os.getcwd()))
-
-    envdict = envfile2envdict(repo_dirname)
-    os.environ.update(envdict)
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -121,18 +127,20 @@ def main(include_lint, overwrite, exclude_autofix, exclude_lint, disable_pylint_
         exclude_autofix,
     )
     if autofix:
-        config = ("mandatory", "optional", "fix")
+        precommit_hooks_type = ("mandatory", "optional", "fix")
+    elif not precommit_hooks_type:
+        precommit_hooks_type = ("mandatory", "optional")
 
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
     pre_commit_cfg_optional = os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")
     pre_commit_cfg_autofix = os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")
-    if "mandatory" in config or 'all' in config:
+    if "mandatory" in precommit_hooks_type or 'all' in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
-    if "optional" in config or 'all' in config:
+    if "optional" in precommit_hooks_type or 'all' in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_optional])
-    if "fix" in config or 'all' in config:
+    if "fix" in precommit_hooks_type or 'all' in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
 
     status = 0
@@ -154,7 +162,7 @@ def main(include_lint, overwrite, exclude_autofix, exclude_lint, disable_pylint_
         cmd.append("--all")
     all_status = {}
 
-    if "fix" in config or 'all' in config:
+    if "fix" in precommit_hooks_type or 'all' in precommit_hooks_type:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
         autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
@@ -171,7 +179,7 @@ def main(include_lint, overwrite, exclude_autofix, exclude_lint, disable_pylint_
             all_status[test_name]['status_msg'] = "Passed"
         _logger.info("-" * 66)
 
-    if "mandatory" in config or 'all' in config:
+    if "mandatory" in precommit_hooks_type or 'all' in precommit_hooks_type:
         _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
         _logger.info("Running mandatory checks (affect status build)")
         mandatory_status = subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
@@ -187,7 +195,7 @@ def main(include_lint, overwrite, exclude_autofix, exclude_lint, disable_pylint_
             all_status[test_name]['level'] = logging.INFO
             all_status[test_name]['status_msg'] = "Passed"
 
-    if "optional" in config or 'all' in config:
+    if "optional" in precommit_hooks_type or 'all' in precommit_hooks_type:
         _logger.info("*" * 68)
         _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
         _logger.info("Running optional checks (does not affect status build)")
