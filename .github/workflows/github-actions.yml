@@ -1,6 +1,28 @@
 name: build
 on: [push, pull_request]
 jobs:
+  deployv:
+    runs-on: ubuntu-latest
+    container: quay.io/vauxoo/dockerv:latest
+    name: docker vauxoo image
+    steps:
+      - name: Install tar to be able to make caching
+        # Fix /bin/tar: unrecognized option: posix
+        run: apk --no-cache add tar
+      - name: Cache pre-commit packages
+        id: cache-pre-commit
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: dockerv-pre-commit
+      - uses: actions/checkout@v2
+      - name: Upgrade pre-commit-vauxoo to the latest version
+        run: >-
+          pip3 install -U . &&
+          pip3 install --force-reinstall --no-deps .
+      - name: Run pre-commit-vauxoo
+        run: pre-commit-vauxoo src
+
   test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
