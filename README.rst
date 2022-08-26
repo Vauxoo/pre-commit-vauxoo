@@ -65,6 +65,58 @@ Using github directly
 
     pip install -U git+https://github.com/Vauxoo/pre-commit-vauxoo.git@main
 
+Usage
+=====
+
+Run pre-commit-vauxoo command in git repository where you want to run our lints
+
+The autofixes are disabled by default you can use the following option to enable it
+
+  pre-commit-vauxoo -f
+
+Full --help command result:
+
+::
+
+  Usage: pre-commit-vauxoo [OPTIONS] [PATHS]...
+
+    PATHS are the specific filenames to run hooks on. Also, it can be defined
+    using environment variable INCLUDE_LINT separated by commas [default:
+    Current directory]
+
+  Options:
+    -w, --overwrite BOOLEAN         Overwrite configuration files. If True,
+                                    existing configuration files into the
+                                    project will be overwritten. If False, then
+                                    current files will be used, if they exist.
+                                    Use environment variable
+                                    PRECOMMIT_OVERWRITE_CONFIG_FILES separated
+                                    by commas  [default: True]
+    -x, --exclude-autofix PATH      Exclude paths on which to run the autofix
+                                    pre-commit configurationUse environment
+                                    variable EXCLUDE_AUTOFIX separated by commas
+    -l, --exclude-lint PATH         Paths to exclude checks. Use environment
+                                    variable EXCLUDE_LINT separated by commas.
+    -d, --disable-pylint-checks <columns>
+                                    Pylint checks to disable, separated by
+                                    commas. Use environment variable
+                                    DISABLE_PYLINT_CHECKS
+    -f, --autofix                   Run pre-commit with autofix configuration to
+                                    change the source code. Overwrite -c option
+                                    to '-c mandatory -c optional -c fix' Use
+                                    environment variable PRECOMMIT_AUTOFIX
+    -c, --config [mandatory|optional|fix|all]
+                                    Pre-commit configuration file to run hooks.
+                                    *Mandatory: Stable hooks that needs to be
+                                    fixed (Affecting build status). *Optional:
+                                    Optional hooks that could be fixed later.
+                                    (No affects build status). *Fix: Hooks auto
+                                    fixing source code (Affects build status).
+                                    *All: All configuration files to run hooks
+                                    [default: mandatory, optional]
+    --help                          Show this message and exit.
+
+
 .. Documentation
 .. =============
 
