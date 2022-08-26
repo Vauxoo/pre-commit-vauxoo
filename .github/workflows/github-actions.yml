@@ -25,6 +25,7 @@ jobs:
 
   test:
     name: ${{ matrix.name }}
+    needs: deployv
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -61,7 +62,7 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py38-cover,codecov'
             os: 'ubuntu-latest'
-          - name: 'py39-cover (ubuntu)'
+          - name: 'py39-cover (ubuntu) + pypi release'
             python: '3.9'
             toxpython: 'python3.9'
             python_arch: 'x64'
