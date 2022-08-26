@@ -12,7 +12,9 @@ from pre_commit_vauxoo.cli import main
 class TestPreCommitVauxoo(unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.env = os.environ.copy()
+        # self.original_environ = os.environ
+        # Clear to use custom environment variables defined in the test itself
+        # os.environ.clear()
         self.original_work_dir = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp(suffix='_pre_commit_vauxoo')
         os.chdir(self.tmp_dir)
@@ -35,51 +37,44 @@ class TestPreCommitVauxoo(unittest.TestCase):
         # Cleanup temporary files
         if os.path.isdir(self.tmp_dir) and self.tmp_dir != '/':
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        os.environ = self.original_environ
 
     def test_basic(self):
-        self.env['INCLUDE_LINT'] = 'resources'
-        self.env['PRECOMMIT_AUTOFIX'] = '1'
-        result = self.runner.invoke(main, [], env=self.env)
-        self.assertEqual(result.output, '')
-        self.assertEqual(result.exit_code, 0)
+        os.environ['INCLUDE_LINT'] = 'resources'
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
     def test_chdir(self):
         self.runner = CliRunner()
-        self.env['PRECOMMIT_AUTOFIX'] = '1'
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
         os.chdir("resources")
-        result = self.runner.invoke(main, [], env=self.env)
-
-        self.assertEqual(result.output, '')
-        self.assertEqual(result.exit_code, 0)
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
     def test_exclude_lint_path(self):
         self.runner = CliRunner()
-        self.env['PRECOMMIT_AUTOFIX'] = '1'
-        self.env['EXCLUDE_LINT'] = 'module_example1/models'
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        os.environ['EXCLUDE_LINT'] = 'module_example1/models'
         os.chdir("resources")
-        result = self.runner.invoke(main, [], env=self.env)
-
-        self.assertEqual(result.output, '')
-        self.assertEqual(result.exit_code, 0)
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
     def test_disable_lints(self):
         self.runner = CliRunner()
-        self.env['DISABLE_PYLINT_CHECKS'] = 'import-error'
+        os.environ['DISABLE_PYLINT_CHECKS'] = 'import-error'
         os.chdir("resources")
-        result = self.runner.invoke(main, [], env=self.env)
+        result = self.runner.invoke(main, [])
 
-        self.assertEqual(result.output, '')
-        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
     def test_exclude_autofix(self):
         self.runner = CliRunner()
-        self.env['PRECOMMIT_AUTOFIX'] = '1'
-        self.env['EXCLUDE_AUTOFIX'] = 'module_example1/demo/'
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        os.environ['EXCLUDE_AUTOFIX'] = 'module_example1/demo/'
         os.chdir("resources")
-        result = self.runner.invoke(main, [], env=self.env)
-
-        self.assertEqual(result.output, '')
-        self.assertEqual(result.exit_code, 0)
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
 
 if __name__ == '__main__':

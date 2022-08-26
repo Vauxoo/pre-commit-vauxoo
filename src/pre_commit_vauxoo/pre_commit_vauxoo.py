@@ -74,7 +74,7 @@ def copy_cfg_files(
                 fdst.write(line)
 
 
-def envfile2envdict(repo_dirname, source_file="variables.sh"):
+def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_environ=True):
     """Simulate load the Vauxoo standard file 'source variables.sh' command in python
     return dictionary {environment_variable: value}
     """
@@ -88,6 +88,8 @@ def envfile2envdict(repo_dirname, source_file="variables.sh"):
         for line in f_source_file:
             line_match = re_export.match(line)
             if not line_match:
+                continue
+            if no_overwrite_environ and line_match["variable"] in os.environ:
                 continue
             envdict.update({line_match["variable"]: line_match["value"]})
     return envdict
