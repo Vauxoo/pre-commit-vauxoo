@@ -82,7 +82,7 @@ def strcsv2tuple(strcsv, is_path=False):
 @click.option(
     "--config",
     "-c",
-    type=click.Choice(["mandatory", "optional", "fix", "all"], case_sensitive=False),
+    type=click.Choice(["mandatory", "optional", "fix", "all"]),
     default=["mandatory", "optional"],
     show_default=True,
     multiple=True,
