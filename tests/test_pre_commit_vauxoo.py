@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 import unittest
 
+from unittest.mock import patch
+
 from click.testing import CliRunner
 
 from pre_commit_vauxoo.cli import main
@@ -39,39 +41,37 @@ class TestPreCommitVauxoo(unittest.TestCase):
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
         os.environ = self.original_environ
 
+    @patch.dict(os.environ, {"INCLUDE_LINT": "resources", "PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_basic(self):
-        os.environ['INCLUDE_LINT'] = 'resources'
-        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        import ipdb;ipdb.set_trace()
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
+    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_chdir(self):
         self.runner = CliRunner()
-        os.environ['PRECOMMIT_AUTOFIX'] = '1'
         os.chdir("resources")
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
+    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1", "EXCLUDE_LINT": "module_example1/models"}, clear=True)
     def test_exclude_lint_path(self):
         self.runner = CliRunner()
-        os.environ['PRECOMMIT_AUTOFIX'] = '1'
-        os.environ['EXCLUDE_LINT'] = 'module_example1/models'
         os.chdir("resources")
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
+    @patch.dict(os.environ, {"DISABLE_PYLINT_CHECKS": "import-error"}, clear=True)
     def test_disable_lints(self):
         self.runner = CliRunner()
-        os.environ['DISABLE_PYLINT_CHECKS'] = 'import-error'
         os.chdir("resources")
         result = self.runner.invoke(main, [])
 
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
+    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1", "EXCLUDE_AUTOFIX": "module_example1/demo/"}, clear=True)
     def test_exclude_autofix(self):
         self.runner = CliRunner()
-        os.environ['PRECOMMIT_AUTOFIX'] = '1'
-        os.environ['EXCLUDE_AUTOFIX'] = 'module_example1/demo/'
         os.chdir("resources")
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
