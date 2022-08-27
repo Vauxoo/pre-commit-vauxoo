@@ -38,6 +38,8 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     @patch.dict(os.environ, {"INCLUDE_LINT": "resources", "PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_basic(self):
+        import ipdb;ipdb.set_trace()
+        print(self.tmp_dir)
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
