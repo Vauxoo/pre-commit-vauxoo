@@ -74,7 +74,12 @@ class CSVPath(click.Path):
     def convert(self, value, param, ctx):
         values = ()
         for v in strcsv2tuple(value):
-            values += (super().convert(v, param, ctx),)
+            try:
+                new_value = super().convert(v, param, ctx)
+            except click.exceptions.BadParameter:
+                v = os.path.join(pre_commit_vauxoo.get_repo(), v)
+                new_value = super().convert(v, param, ctx)
+            values += (new_value,)
         return values
 
 

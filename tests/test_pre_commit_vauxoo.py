@@ -13,6 +13,8 @@ from pre_commit_vauxoo.cli import main
 class TestPreCommitVauxoo(unittest.TestCase):
     def setUp(self):
         super().setUp()
+        # TODO: See who is assigning this value?
+        os.environ.pop('INCLUDE_LINT', False)
         self.original_work_dir = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp(suffix='_pre_commit_vauxoo')
         os.chdir(self.tmp_dir)
@@ -36,39 +38,38 @@ class TestPreCommitVauxoo(unittest.TestCase):
         if os.path.isdir(self.tmp_dir) and self.tmp_dir != '/':
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
-    @patch.dict(os.environ, {"INCLUDE_LINT": "resources", "PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_basic(self):
-        import ipdb;ipdb.set_trace()
-        print(self.tmp_dir)
+        os.environ['INCLUDE_LINT'] = 'resources'
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
-    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_chdir(self):
         self.runner = CliRunner()
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
         os.chdir("resources")
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
-    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1", "EXCLUDE_LINT": "module_example1/models"}, clear=True)
     def test_exclude_lint_path(self):
         self.runner = CliRunner()
         os.chdir("resources")
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        os.environ['EXCLUDE_LINT'] = 'resources/module_example1/models'
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
-    @patch.dict(os.environ, {"DISABLE_PYLINT_CHECKS": "import-error"}, clear=True)
     def test_disable_lints(self):
         self.runner = CliRunner()
-        os.chdir("resources")
+        os.environ['DISABLE_PYLINT_CHECKS'] = 'import-error'
         result = self.runner.invoke(main, [])
-
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
-    @patch.dict(os.environ, {"PRECOMMIT_AUTOFIX": "1", "EXCLUDE_AUTOFIX": "module_example1/demo/"}, clear=True)
     def test_exclude_autofix(self):
         self.runner = CliRunner()
         os.chdir("resources")
+        os.environ['PRECOMMIT_AUTOFIX'] = '1'
+        os.environ['EXCLUDE_AUTOFIX'] = 'resources/module_example1/demo/'
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
