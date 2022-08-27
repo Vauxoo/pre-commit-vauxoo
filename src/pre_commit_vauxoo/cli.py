@@ -77,8 +77,9 @@ class CSVPath(click.Path):
             try:
                 new_value = super().convert(v, param, ctx)
             except click.exceptions.BadParameter:
-                v = os.path.join(pre_commit_vauxoo.get_repo(), v)
-                new_value = super().convert(v, param, ctx)
+                # The envvar are using path based on root repo path
+                new_value = os.path.join(pre_commit_vauxoo.get_repo(), v)
+                new_value = super().convert(new_value, param, ctx)
             values += (new_value,)
         return values
 
