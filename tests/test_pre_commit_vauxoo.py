@@ -3,7 +3,6 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-
 from unittest.mock import patch
 
 from click.testing import CliRunner
@@ -39,7 +38,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     @patch.dict(os.environ, {"INCLUDE_LINT": "resources", "PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_basic(self):
-        import ipdb;ipdb.set_trace()
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
