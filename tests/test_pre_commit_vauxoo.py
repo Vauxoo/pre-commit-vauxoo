@@ -14,9 +14,6 @@ from pre_commit_vauxoo.cli import main
 class TestPreCommitVauxoo(unittest.TestCase):
     def setUp(self):
         super().setUp()
-        # self.original_environ = os.environ
-        # Clear to use custom environment variables defined in the test itself
-        # os.environ.clear()
         self.original_work_dir = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp(suffix='_pre_commit_vauxoo')
         os.chdir(self.tmp_dir)
@@ -39,7 +36,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
         # Cleanup temporary files
         if os.path.isdir(self.tmp_dir) and self.tmp_dir != '/':
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
-        os.environ = self.original_environ
 
     @patch.dict(os.environ, {"INCLUDE_LINT": "resources", "PRECOMMIT_AUTOFIX": "1"}, clear=True)
     def test_basic(self):
