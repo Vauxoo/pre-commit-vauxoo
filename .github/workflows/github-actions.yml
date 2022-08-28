@@ -214,8 +214,13 @@ jobs:
     - name: Build a binary wheel and a source tarball
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
       run: >-
-        python -m pip install build && python -m
+        python -m pip install build wheel && python -m
         build
+        --sdist
+        --wheel
+        --outdir dist_wo_pbr/ && python -m
+        build
+        --no-isolation
         --sdist
         --wheel
         --outdir dist/
