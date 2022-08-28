@@ -32,7 +32,25 @@ def source_variables():
         os.environ[var] = value
 
 
-source_variables()
+import contextlib
+import os
+
+
+@contextlib.contextmanager
+def env():
+    """Clear environment variables after finished the method"""
+    old_environ = os.environ.copy()
+    try:
+        yield
+    finally:
+        os.environ = old_environ
+
+# monkey patch to run source variables.sh before to parse the click.options
+original_make_context = click.core.BaseCommand.make_context
+def custom_make_context(*args, **kwargs):
+    with env():
+        source_variables()
+        return original_make_context(*args, **kwargs)
 
 
 def strcsv2tuple(strcsv, lower=False):
@@ -108,6 +126,13 @@ except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
     pass
 
 
+# import ipdb;ipdb.set_trace()
+# click_command = click.command()
+# original
+# click_command.make_context = custom_make_context
+# # import ipdb;ipdb.set_trace()
+# # @load_environ()
+# @click_command
 @click.command()
 # click 6.6 used in dockerv doesn't support to use envvar for click.argument :(
 # More info https://github.com/pallets/click/issues/714 workaround using option instead.
