@@ -8,13 +8,12 @@ include .appveyor.yml
 include .bumpversion.cfg
 include .cookiecutterrc
 include .coveragerc
-include .editorconfig
 include .github/workflows/github-actions.yml
-include .pre-commit-config.yaml
 include .readthedocs.yml
 include .travis.yml
 include pytest.ini
 include tox.ini
+include variables.sh
 
 include AUTHORS.rst
 include CHANGELOG.rst

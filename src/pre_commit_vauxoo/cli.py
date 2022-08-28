@@ -13,6 +13,9 @@ Why does this file exist, and why not put this in __main__?
 
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
+
+
+import contextlib
 import os
 
 import click
@@ -20,20 +23,125 @@ import click
 from pre_commit_vauxoo import pre_commit_vauxoo
 
 
-def strcsv2tuple(strcsv, is_path=False):
+def source_variables():
+    # Overwrite os.environ with variables.sh file only if it was not already defined
+    repo_dirname = pre_commit_vauxoo.get_repo()
+    envdict = pre_commit_vauxoo.envfile2envdict(repo_dirname)
+    for var, value in envdict.items():
+        if var in os.environ:
+            continue
+        os.environ[var] = value
+
+
+@contextlib.contextmanager
+def env_clear():
+    """Clear environment variables after finished the method"""
+    old_environ = os.environ.copy()
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
+
+
+def monkey_patch_make_context():
+    """monkey patch to run source variables.sh before to parse the click.options"""
+    original_make_context = click.core.BaseCommand.make_context
+
+    def custom_make_context(*args, **kwargs):
+        with env_clear():
+            source_variables()
+            return original_make_context(*args, **kwargs)
+
+    click.core.BaseCommand.make_context = custom_make_context
+
+
+def strcsv2tuple(strcsv, lower=False):
+    strcsv = strcsv and strcsv.strip() or ""
     if not strcsv:
         return ()
-    items = []
-    for item in strcsv.strip().split(','):
+    items = ()
+    for item in strcsv.split(','):
         item = item.strip()
-        if is_path and not os.path.exists(item):
-            raise UserWarning("Path '%s' does not exist" % item)
-        items.append(item)
-    return list(items)
+        if lower:
+            item = item.lower()
+        items += (item,)
+    return items
+
+
+class CSVChoice(click.Choice):
+    envvar_list_splitter = ','
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name += ' CSV'
+
+    def convert(self, value, param, ctx):
+        values = ()
+        # case_sensitive parameter is not compatible with click 6.6
+        # So we can do it manually here since that we are transforming it
+        for v in strcsv2tuple(value, lower=True):
+            values += (super().convert(v, param, ctx),)
+        return values
+
+
+class CSVPath(click.Path):
+    envvar_list_splitter = ','
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name += ' CSV'
+
+    def convert(self, value, param, ctx):
+        values = ()
+        for v in strcsv2tuple(value):
+            try:
+                new_value = super().convert(v, param, ctx)
+            except click.exceptions.BadParameter:
+                # The envvar are using path based on root repo path
+                new_value = os.path.join(pre_commit_vauxoo.get_repo(), v)
+                new_value = super().convert(new_value, param, ctx)
+            values += (new_value,)
+        return values
+
+
+def merge_tuples(ctx, param, value):
+    """Convert (('value1', 'value2'), ('value3')) to ('value1', 'value2', 'value3')
+    It is useful for csv separated by comma parameters but using multiple number of args
+    """
+    if value is None:
+        return value
+    values = ()
+    for v in value:
+        if not isinstance(v, tuple):
+            v = (v,)
+        values += v
+    return values
+
+
+new_extra_kwargs = {}
+try:
+    if tuple(map(int, click.__version__.split('.'))) >= (7, 0):
+        # It is only compatible for click >= 7.0 but it is not a big deal if it is not enabled
+        # For record, dockerv image is using click 6.6 version
+        new_extra_kwargs["show_envvar"] = True
+except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
+    pass
+
+monkey_patch_make_context()
 
 
 @click.command()
-@click.argument("PATHS", type=click.Path(exists=True), nargs=-1)
+# click 6.6 used in dockerv doesn't support to use envvar for click.argument :(
+# More info https://github.com/pallets/click/issues/714 workaround using option instead.
+@click.option(
+    "--paths",
+    "-p",
+    multiple=True,
+    envvar="INCLUDE_LINT",
+    type=CSVPath(exists=True),
+    callback=merge_tuples,
+)
 @click.option(
     "--overwrite",
     "-w",
@@ -42,31 +150,37 @@ def strcsv2tuple(strcsv, is_path=False):
     show_default=True,
     help="Overwrite configuration files. "
     "If True, existing configuration files into the project will be overwritten. "
-    "If False, then current files will be used, if they exist. "
-    "Use environment variable PRECOMMIT_OVERWRITE_CONFIG_FILES separated by commas",
+    "If False, then current files will be used, if they exist.",
+    **new_extra_kwargs,
 )
 @click.option(
     "--exclude-autofix",
     "-x",
-    type=click.Path(exists=True),
+    type=CSVPath(exists=True),
     multiple=True,
-    help="Exclude paths on which to run the autofix pre-commit configuration"
-    "Use environment variable EXCLUDE_AUTOFIX separated by commas",
+    callback=merge_tuples,
+    envvar="EXCLUDE_AUTOFIX",
+    help="Exclude paths on which to run the autofix pre-commit configuration, separated by commas",
+    **new_extra_kwargs,
 )
 @click.option(
     "--exclude-lint",
     "-l",
-    type=click.Path(exists=True),
+    type=CSVPath(exists=True),
     multiple=True,
-    help="Paths to exclude checks. Use environment variable EXCLUDE_LINT separated by commas.",
+    callback=merge_tuples,
+    envvar="EXCLUDE_LINT",
+    help="Paths to exclude checks, separated by commas.",
+    **new_extra_kwargs,
 )
 @click.option(
     "--disable-pylint-checks",
     '-d',
     type=str,
+    callback=merge_tuples,
     envvar="DISABLE_PYLINT_CHECKS",
-    metavar='<columns>',
-    help="Pylint checks to disable, separated by commas. Use environment variable DISABLE_PYLINT_CHECKS.",
+    help="Pylint checks to disable, separated by commas.",
+    **new_extra_kwargs,
 )
 @click.option(
     "--autofix",
@@ -74,47 +188,32 @@ def strcsv2tuple(strcsv, is_path=False):
     envvar="PRECOMMIT_AUTOFIX",
     is_flag=True,
     default=False,
-    help="Run pre-commit with autofix configuration to change the source code. "
-    "Overwrite -c option to '-c mandatory -c optional -c fix' "
-    "Use environment variable PRECOMMIT_AUTOFIX",
-)
-# TODO: Check callback to validates duplicated and --autofix or -c all conflicts
-@click.option(
-    "--config",
-    "-c",
-    type=click.Choice(["mandatory", "optional", "fix", "all"]),
-    default=["mandatory", "optional"],
     show_default=True,
+    help="Run pre-commit with autofix configuration to change the source code. "
+    "Overwrite -c option to '-c mandatory -c optional -c fix' ",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--precommit-hooks-type",
+    "-t",
+    type=CSVChoice(["mandatory", "optional", "fix", "all"]),
+    default=["mandatory", "optional"],
     multiple=True,
-    help="Pre-commit configuration file to run hooks. "
+    callback=merge_tuples,
+    show_default=True,
+    envvar="PRECOMMIT_HOOKS_TYPE",
+    help="Pre-commit configuration file to run hooks, separated by comma. "
     "*Mandatory: Stable hooks that needs to be fixed (Affecting build status). "
     "*Optional: Optional hooks that could be fixed later. (No affects build status). "
     "*Fix: Hooks auto fixing source code (Affects build status). "
-    "*All: All configuration files to run hooks",
+    "*All: All configuration files to run hooks. ",
+    **new_extra_kwargs,
 )
-def main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, config):
-    """PATHS are the specific filenames to run hooks on.
-    Also, it can be defined using environment variable
-    INCLUDE_LINT separated by commas
+def main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type):
+    """PATHS are the specific filenames to run hooks on separated by commas.
+    Also, it can be defined using environment variable INCLUDE_LINT
     [default: Current directory]
     """
-    if not paths:
-        try:
-            paths = strcsv2tuple(os.environ.get('INCLUDE_LINT'), is_path=True)
-        except UserWarning as uwe:
-            raise click.BadParameter("'[PATHS]...': %s from environment variable 'INCLUDE_LINT'." % uwe)
-
-    if not exclude_autofix:
-        try:
-            exclude_autofix = strcsv2tuple(os.environ.get('EXCLUDE_AUTOFIX'), is_path=True)
-        except UserWarning as uwe:
-            raise click.BadParameter("'[--exclude-autofix]...': %s from environment variable 'EXCLUDE_AUTOFIX'." % uwe)
-
-    if not exclude_lint:
-        try:
-            exclude_lint = strcsv2tuple(os.environ.get('EXCLUDE_LINT'), is_path=True)
-        except UserWarning as uwe:
-            raise click.BadParameter("'[--exclude-lint]...': %s from environment variable 'EXCLUDE_LINT'." % uwe)
-
-    disable_pylint_checks = strcsv2tuple(disable_pylint_checks)
-    pre_commit_vauxoo.main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, config)
+    pre_commit_vauxoo.main(
+        paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type
+    )

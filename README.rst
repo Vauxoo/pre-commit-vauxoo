@@ -78,42 +78,43 @@ Full --help command result:
 
 ::
 
-  Usage: pre-commit-vauxoo [OPTIONS] [PATHS]...
+  Usage: pre-commit-vauxoo [OPTIONS]
 
-    PATHS are the specific filenames to run hooks on. Also, it can be defined
-    using environment variable INCLUDE_LINT separated by commas [default:
-    Current directory]
+    PATHS are the specific filenames to run hooks on separated by commas. Also,
+    it can be defined using environment variable INCLUDE_LINT [default: Current
+    directory]
 
   Options:
+    -p, --paths PATH CSV
     -w, --overwrite BOOLEAN         Overwrite configuration files. If True,
                                     existing configuration files into the
                                     project will be overwritten. If False, then
                                     current files will be used, if they exist.
-                                    Use environment variable
-                                    PRECOMMIT_OVERWRITE_CONFIG_FILES separated
-                                    by commas  [default: True]
-    -x, --exclude-autofix PATH      Exclude paths on which to run the autofix
-                                    pre-commit configurationUse environment
-                                    variable EXCLUDE_AUTOFIX separated by commas
-    -l, --exclude-lint PATH         Paths to exclude checks. Use environment
-                                    variable EXCLUDE_LINT separated by commas.
-    -d, --disable-pylint-checks <columns>
+                                    [env var: PRECOMMIT_OVERWRITE_CONFIG_FILES;
+                                    default: True]
+    -x, --exclude-autofix PATH CSV  Exclude paths on which to run the autofix
+                                    pre-commit configuration, separated by
+                                    commas  [env var: EXCLUDE_AUTOFIX]
+    -l, --exclude-lint PATH CSV     Paths to exclude checks, separated by
+                                    commas.  [env var: EXCLUDE_LINT]
+    -d, --disable-pylint-checks TEXT
                                     Pylint checks to disable, separated by
-                                    commas. Use environment variable
-                                    DISABLE_PYLINT_CHECKS
+                                    commas.  [env var: DISABLE_PYLINT_CHECKS]
     -f, --autofix                   Run pre-commit with autofix configuration to
                                     change the source code. Overwrite -c option
-                                    to '-c mandatory -c optional -c fix' Use
-                                    environment variable PRECOMMIT_AUTOFIX
-    -c, --config [mandatory|optional|fix|all]
-                                    Pre-commit configuration file to run hooks.
-                                    *Mandatory: Stable hooks that needs to be
-                                    fixed (Affecting build status). *Optional:
-                                    Optional hooks that could be fixed later.
-                                    (No affects build status). *Fix: Hooks auto
-                                    fixing source code (Affects build status).
-                                    *All: All configuration files to run hooks
-                                    [default: mandatory, optional]
+                                    to '-c mandatory -c optional -c fix'   [env
+                                    var: PRECOMMIT_AUTOFIX]
+    -t, --precommit-hooks-type [mandatory|optional|fix|all]
+                                    Pre-commit configuration file to run hooks,
+                                    separated by comma. *Mandatory: Stable hooks
+                                    that needs to be fixed (Affecting build
+                                    status). *Optional: Optional hooks that
+                                    could be fixed later. (No affects build
+                                    status). *Fix: Hooks auto fixing source code
+                                    (Affects build status). *All: All
+                                    configuration files to run hooks.   [env
+                                    var: PRECOMMIT_HOOKS_TYPE; default:
+                                    mandatory, optional]
     --help                          Show this message and exit.
 
 
