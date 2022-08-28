@@ -28,6 +28,10 @@ def generate_changelog():
     return read(fname)
 
 
+def generate_dependencies():
+    return read("requirements.txt").splitlines()
+
+
 def read(*names, **kwargs):
     with io.open(join(dirname(__file__), *names), encoding=kwargs.get('encoding', 'utf8')) as fh:
         return fh.read()
@@ -82,11 +86,7 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     python_requires='>=3.5',
-    install_requires=[
-        'click',
-        'pre-commit',
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
-    ],
+    install_requires=generate_dependencies(),
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
