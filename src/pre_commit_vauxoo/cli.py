@@ -57,6 +57,9 @@ def monkey_patch_make_context():
 
 
 def strcsv2tuple(strcsv, lower=False):
+    if isinstance(strcsv, tuple):
+        # Crazy!! but click==8.0.1 is sending "value" transformed
+        strcsv = ','.join(strcsv)
     strcsv = strcsv and strcsv.strip() or ""
     if not strcsv:
         return ()
