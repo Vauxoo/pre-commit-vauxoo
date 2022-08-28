@@ -149,7 +149,13 @@ def main(
     cmd = ["pre-commit", "run", "--color=always"]
     if cwd != repo_dirname:
         cwd_short = os.path.relpath(cwd, repo_dirname)
-        _logger.warning("Running only for sub-path '%s'", cwd_short)
+        if include_lint:
+            _logger.warning(
+                "Ignored path configured '%s'. Use 'cd %s' and run the same command again to use configured path",
+                ','.join(include_lint),
+                repo_dirname,
+            )
+        _logger.warning("Running in current directory '%s'", cwd_short)
         files = get_files(cwd)
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)

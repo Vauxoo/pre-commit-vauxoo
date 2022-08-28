@@ -34,7 +34,7 @@ def source_variables():
 
 
 @contextlib.contextmanager
-def env():
+def env_clear():
     """Clear environment variables after finished the method"""
     old_environ = os.environ.copy()
     try:
@@ -49,7 +49,7 @@ def monkey_patch_make_context():
     original_make_context = click.core.BaseCommand.make_context
 
     def custom_make_context(*args, **kwargs):
-        with env():
+        with env_clear():
             source_variables()
             return original_make_context(*args, **kwargs)
 
