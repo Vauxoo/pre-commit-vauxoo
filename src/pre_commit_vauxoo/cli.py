@@ -17,6 +17,7 @@ Why does this file exist, and why not put this in __main__?
 
 import contextlib
 import os
+import subprocess
 
 import click
 
@@ -25,7 +26,10 @@ from pre_commit_vauxoo import pre_commit_vauxoo
 
 def source_variables():
     # Overwrite os.environ with variables.sh file only if it was not already defined
-    repo_dirname = pre_commit_vauxoo.get_repo()
+    try:
+        repo_dirname = pre_commit_vauxoo.get_repo()
+    except subprocess.CalledProcessError:
+        return
     envdict = pre_commit_vauxoo.envfile2envdict(repo_dirname)
     os.environ.update({var: value for var, value in envdict.items() if var not in os.environ})
 
