@@ -15,6 +15,7 @@ Why does this file exist, and why not put this in __main__?
 """
 
 
+import contextlib
 import os
 
 import click
@@ -32,10 +33,6 @@ def source_variables():
         os.environ[var] = value
 
 
-import contextlib
-import os
-
-
 @contextlib.contextmanager
 def env():
     """Clear environment variables after finished the method"""
@@ -43,7 +40,8 @@ def env():
     try:
         yield
     finally:
-        os.environ = old_environ
+        os.environ.clear()
+        os.environ.update(old_environ)
 
 
 # monkey patch to run source variables.sh before to parse the click.options
