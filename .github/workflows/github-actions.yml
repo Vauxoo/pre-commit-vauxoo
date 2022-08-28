@@ -212,9 +212,9 @@ jobs:
       run: >
         tox -e ${{ matrix.tox_env }} -v
     - name: Build a binary wheel and a source tarball
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+      if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
       run: >-
-        python -m pip install build wheel && python -m
+        python -m pip install build wheel twine && python -m
         build
         --sdist
         --wheel
@@ -223,7 +223,8 @@ jobs:
         --no-isolation
         --sdist
         --wheel
-        --outdir dist/
+        --outdir dist/ &&
+        twine check dist/*
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
       uses: pypa/gh-action-pypi-publish@release/v1
