@@ -89,13 +89,15 @@ Full --help command result:
 
   Usage: pre-commit-vauxoo [OPTIONS]
 
-    PATHS are the specific filenames to run hooks on separated by commas. Also,
-    it can be defined using environment variable INCLUDE_LINT [default: Current
-    directory]
+    pre-commit-vauxoo run pre-commit with custom validations and configuration
+    files
 
   Options:
-    -p, --paths PATH CSV
-    -w, --overwrite BOOLEAN         Overwrite configuration files.
+    -p, --paths PATH CSV            PATHS are the specific filenames to run
+                                    hooks on separated by commas.  [env var:
+                                    INCLUDE_LINT; default: .]
+
+    -w, --overwrite TEXT            Overwrite configuration files.
 
                                     *If True, existing configuration files into
                                     the project will be overwritten.
@@ -104,19 +106,24 @@ Full --help command result:
                                     if they exist.  [env var:
                                     PRECOMMIT_OVERWRITE_CONFIG_FILES; default:
                                     True]
+
     -x, --exclude-autofix PATH CSV  Exclude paths on which to run the autofix
                                     pre-commit configuration, separated by
                                     commas  [env var: EXCLUDE_AUTOFIX]
+
     -l, --exclude-lint PATH CSV     Paths to exclude checks, separated by
                                     commas.  [env var: EXCLUDE_LINT]
+
     -d, --disable-pylint-checks TEXT
                                     Pylint checks to disable, separated by
                                     commas.  [env var: DISABLE_PYLINT_CHECKS]
+
     -f, --autofix                   Run pre-commit with autofix configuration to
                                     change the source code.
 
                                     Overwrite '-t mandatory,optional,fix'  [env
-                                    var: PRECOMMIT_AUTOFIX]
+                                    var: PRECOMMIT_AUTOFIX; default: False]
+
     -t, --precommit-hooks-type [mandatory|optional|fix|all]
                                     Pre-commit configuration file to run hooks,
                                     separated by commas.
@@ -133,6 +140,7 @@ Full --help command result:
                                     *All: All configuration files to run hooks.
                                     [env var: PRECOMMIT_HOOKS_TYPE; default:
                                     mandatory, optional]
+
     --help                          Show this message and exit.
 
 
