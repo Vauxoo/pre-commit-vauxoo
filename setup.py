@@ -1,18 +1,31 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import io
 import re
 from glob import glob
-from os.path import basename
-from os.path import dirname
-from os.path import join
-from os.path import splitext
+from os.path import basename, dirname, join, splitext
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
+
+try:
+    from pbr import git
+except ImportError:
+    git = None
+
+
+def generate_changelog():
+    fname = "ChangeLog"
+    if not git:
+        changelog_str = '# ChangeLog was not generated. You need to install "pbr"'
+        with open(fname, "w") as fchg:
+            fchg.write(changelog_str)
+        return changelog_str
+    changelog = git._iter_log_oneline()
+    changelog = git._iter_changelog(changelog)
+    git.write_git_changelog(changelog=changelog)
+    # git.generate_authors()
+    return read(fname)
 
 
 def read(*names, **kwargs):
@@ -27,7 +40,7 @@ setup(
     description='pre-commit script to run automatically the configuration and variables custom from Vauxoo',
     long_description='{}\n{}'.format(
         re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst')),
+        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', generate_changelog()),
     ),
     author='Vauxoo',
     author_email='info@vauxoo.com',
