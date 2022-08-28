@@ -7,6 +7,8 @@ Overview
 .. list-table::
     :stub-columns: 1
 
+    * - docs
+      - | |docs|
     * - tests
       - | |github-actions| |codecov|
     * - package
@@ -14,9 +16,10 @@ Overview
         | |commits-since| |
         | |supported-versions| |
         | |wheel|
-.. .. |docs| image:: https://readthedocs.org/projects/pre-commit-vauxoo/badge/?style=flat
-..     :target: https://pre-commit-vauxoo.readthedocs.io/
-..     :alt: Documentation Status
+
+.. |docs| image:: https://readthedocs.org/projects/pre-commit-vauxoo/badge/?style=flat
+    :target: https://pre-commit-vauxoo.readthedocs.io/
+    :alt: Documentation Status
 
 .. |github-actions| image:: https://github.com/Vauxoo/pre-commit-vauxoo/actions/workflows/github-actions.yml/badge.svg
     :alt: GitHub Actions Build Status
