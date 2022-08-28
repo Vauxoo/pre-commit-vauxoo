@@ -41,6 +41,7 @@ jobs:
           source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
           source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
           source /usr/local/rvm/scripts/rvm
+          pip install -U . && pip install --force-reinstall --no-deps .
           travis_install_nightly
           travis_run_tests
 
