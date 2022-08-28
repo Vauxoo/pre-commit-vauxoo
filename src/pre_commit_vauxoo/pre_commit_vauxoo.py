@@ -89,6 +89,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_envir
             line_match = re_export.match(line)
             if not line_match:
                 continue
+            line_match = line_match.groupdict()  # py3.5 comp
             if no_overwrite_environ and line_match["variable"] in os.environ:
                 continue
             envdict.update({line_match["variable"]: line_match["value"]})
