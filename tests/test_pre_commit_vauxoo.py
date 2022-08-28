@@ -1,18 +1,13 @@
-import sys
 import os
 import shutil
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
-from importlib import reload
 
 from click.testing import CliRunner
 
-import pre_commit_vauxoo
 from pre_commit_vauxoo.cli import main
 
-import os
 
 class TestPreCommitVauxoo(unittest.TestCase):
     def setUp(self):
