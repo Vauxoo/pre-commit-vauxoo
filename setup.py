@@ -35,7 +35,7 @@ def read(*names, **kwargs):
 
 setup(
     name='pre-commit-vauxoo',
-    version='3.2.1',
+    version='3.2.2',
     license='LGPL-3.0-or-later',
     description='pre-commit script to run automatically the configuration and variables custom from Vauxoo',
     long_description='{}\n{}'.format(
