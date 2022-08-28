@@ -16,7 +16,7 @@ include tox.ini
 include variables.sh
 
 include AUTHORS.rst
-include CHANGELOG.rst
+include ChangeLog
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
