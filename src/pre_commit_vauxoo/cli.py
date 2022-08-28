@@ -149,8 +149,8 @@ monkey_patch_make_context()
     default=True,
     show_default=True,
     help="Overwrite configuration files. "
-    "If True, existing configuration files into the project will be overwritten. "
-    "If False, then current files will be used, if they exist.",
+    "\f\n*If True, existing configuration files into the project will be overwritten. "
+    "\f\n*If False, then current files will be used, if they exist.",
     **new_extra_kwargs,
 )
 @click.option(
@@ -189,8 +189,8 @@ monkey_patch_make_context()
     is_flag=True,
     default=False,
     show_default=True,
-    help="Run pre-commit with autofix configuration to change the source code. "
-    "Overwrite -c option to '-t mandatory -t optional -t fix' ",
+    help="Run pre-commit with autofix configuration to change the source code."
+    "\f\nOverwrite '-t mandatory,optional,fix'",
     **new_extra_kwargs,
 )
 @click.option(
@@ -203,10 +203,10 @@ monkey_patch_make_context()
     show_default=True,
     envvar="PRECOMMIT_HOOKS_TYPE",
     help="Pre-commit configuration file to run hooks, separated by commas. "
-    "*Mandatory: Stable hooks that needs to be fixed (Affecting build status). "
-    "*Optional: Optional hooks that could be fixed later. (No affects build status). "
-    "*Fix: Hooks auto fixing source code (Affects build status). "
-    "*All: All configuration files to run hooks. ",
+    "\f\n*Mandatory: Stable hooks that needs to be fixed (Affecting build status). "
+    "\f\n*Optional: Optional hooks that could be fixed later. (No affects build status). "
+    "\f\n*Fix: Hooks auto fixing source code (Affects build status). "
+    "\f\n*All: All configuration files to run hooks. ",
     **new_extra_kwargs,
 )
 def main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type):
