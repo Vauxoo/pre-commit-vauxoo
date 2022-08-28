@@ -218,6 +218,11 @@ jobs:
         build
         --sdist
         --wheel
+        --outdir dist_wo_pbr/ && python -m
+        build
+        --no-isolation
+        --sdist
+        --wheel
         --outdir dist/
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
