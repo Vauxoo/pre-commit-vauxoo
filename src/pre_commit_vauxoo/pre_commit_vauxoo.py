@@ -29,7 +29,7 @@ def get_files(path):
 
 
 def copy_cfg_files(
-    precommit_config_dir, repo_dirname, overwrite, exclude_lint, disable_pylint_checks, exclude_autofix
+    precommit_config_dir, repo_dirname, overwrite, exclude_lint, pylint_disable_checks, exclude_autofix
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -69,8 +69,11 @@ def copy_cfg_files(
                     if fname == ".pre-commit-config-autofix.yaml" and exclude_autofix:
                         _logger.info("Applying EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
                         line += "    %s\n" % exclude_autofix_regex
-                if disable_pylint_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
-                    line = line.replace("R0000", ','.join(disable_pylint_checks))
+                if pylint_disable_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
+                    _logger.info(
+                        "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
+                    )
+                    line = line.replace("R0000", ','.join(pylint_disable_checks))
                 fdst.write(line)
 
 
@@ -109,7 +112,7 @@ def main(
     overwrite,
     exclude_autofix,
     exclude_lint,
-    disable_pylint_checks,
+    pylint_disable_checks,
     autofix,
     precommit_hooks_type,
     do_exit=True,
@@ -126,7 +129,7 @@ def main(
         repo_dirname,
         overwrite,
         exclude_lint,
-        disable_pylint_checks,
+        pylint_disable_checks,
         exclude_autofix,
     )
     if autofix:

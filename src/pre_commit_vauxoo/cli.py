@@ -89,6 +89,20 @@ class CSVChoice(click.Choice):
         return values
 
 
+class CSVStringParamType(click.types.StringParamType):
+    envvar_list_splitter = ','
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name += ' CSV'
+
+    def convert(self, value, param, ctx):
+        values = ()
+        for v in strcsv2tuple(value):
+            values += (super().convert(v, param, ctx),)
+        return values
+
+
 class CSVPath(click.Path):
     envvar_list_splitter = ','
 
@@ -154,6 +168,7 @@ monkey_patch_make_context()
     "--overwrite",
     "-w",
     envvar="PRECOMMIT_OVERWRITE_CONFIG_FILES",
+    type=click.BOOL,
     default=True,
     show_default=True,
     help="Overwrite configuration files. "
@@ -182,11 +197,11 @@ monkey_patch_make_context()
     **new_extra_kwargs,
 )
 @click.option(
-    "--disable-pylint-checks",
+    "--pylint-disable-checks",
     '-d',
-    type=str,
+    type=CSVStringParamType(),
     callback=merge_tuples,
-    envvar="DISABLE_PYLINT_CHECKS",
+    envvar="PYLINT_DISABLE_CHECKS",
     help="Pylint checks to disable, separated by commas.",
     **new_extra_kwargs,
 )
@@ -217,8 +232,8 @@ monkey_patch_make_context()
     "\f\n*All: All configuration files to run hooks. ",
     **new_extra_kwargs,
 )
-def main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type):
+def main(paths, overwrite, exclude_autofix, exclude_lint, pylint_disable_checks, autofix, precommit_hooks_type):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     pre_commit_vauxoo.main(
-        paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type
+        paths, overwrite, exclude_autofix, exclude_lint, pylint_disable_checks, autofix, precommit_hooks_type
     )
