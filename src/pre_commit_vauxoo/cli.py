@@ -27,10 +27,7 @@ def source_variables():
     # Overwrite os.environ with variables.sh file only if it was not already defined
     repo_dirname = pre_commit_vauxoo.get_repo()
     envdict = pre_commit_vauxoo.envfile2envdict(repo_dirname)
-    for var, value in envdict.items():
-        if var in os.environ:
-            continue
-        os.environ[var] = value
+    os.environ.update({var: value for var, value in envdict.items() if var not in os.environ})
 
 
 @contextlib.contextmanager
@@ -110,7 +107,7 @@ class CSVPath(click.Path):
 
 def merge_tuples(ctx, param, value):
     """Convert (('value1', 'value2'), ('value3')) to ('value1', 'value2', 'value3')
-    It is useful for csv separated by comma parameters but using multiple number of args
+    It is useful for csv separated by commas parameters but using multiple number of args
     """
     if value is None:
         return value
@@ -193,7 +190,7 @@ monkey_patch_make_context()
     default=False,
     show_default=True,
     help="Run pre-commit with autofix configuration to change the source code. "
-    "Overwrite -c option to '-c mandatory -c optional -c fix' ",
+    "Overwrite -c option to '-t mandatory -t optional -t fix' ",
     **new_extra_kwargs,
 )
 @click.option(
@@ -205,7 +202,7 @@ monkey_patch_make_context()
     callback=merge_tuples,
     show_default=True,
     envvar="PRECOMMIT_HOOKS_TYPE",
-    help="Pre-commit configuration file to run hooks, separated by comma. "
+    help="Pre-commit configuration file to run hooks, separated by commas. "
     "*Mandatory: Stable hooks that needs to be fixed (Affecting build status). "
     "*Optional: Optional hooks that could be fixed later. (No affects build status). "
     "*Fix: Hooks auto fixing source code (Affects build status). "
