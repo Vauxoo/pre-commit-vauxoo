@@ -2,7 +2,10 @@
 Overview
 ========
 
-|logo|
+.. image:: https://www.vauxoo.com/logo.png
+   :alt: Vauxoo
+   :target: https://www.vauxoo.com/
+
 
 .. start-badges
 
@@ -18,10 +21,6 @@ Overview
         | |commits-since| |
         | |supported-versions| |
         | |wheel|
-
-.. |logo| image:: https://www.vauxoo.com/logo.png
-   :alt: Vauxoo
-   :target: https://www.vauxoo.com/
 
 .. |docs| image:: https://readthedocs.org/projects/pre-commit-vauxoo/badge/?style=flat
     :target: https://pre-commit-vauxoo.readthedocs.io/
