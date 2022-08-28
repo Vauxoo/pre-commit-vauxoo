@@ -78,13 +78,14 @@ Full --help command result:
 
 ::
 
-  Usage: pre-commit-vauxoo [OPTIONS] [PATHS]...
+  Usage: pre-commit-vauxoo [OPTIONS]
 
     PATHS are the specific filenames to run hooks on separated by commas. Also,
     it can be defined using environment variable INCLUDE_LINT [default: Current
     directory]
 
   Options:
+    -p, --paths PATH CSV
     -w, --overwrite BOOLEAN         Overwrite configuration files. If True,
                                     existing configuration files into the
                                     project will be overwritten. If False, then
