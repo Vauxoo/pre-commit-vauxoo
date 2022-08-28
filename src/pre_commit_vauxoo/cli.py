@@ -44,14 +44,16 @@ def env():
         os.environ.update(old_environ)
 
 
-# monkey patch to run source variables.sh before to parse the click.options
-original_make_context = click.core.BaseCommand.make_context
+def monkey_patch_make_context():
+    """monkey patch to run source variables.sh before to parse the click.options"""
+    original_make_context = click.core.BaseCommand.make_context
 
+    def custom_make_context(*args, **kwargs):
+        with env():
+            source_variables()
+            return original_make_context(*args, **kwargs)
 
-def custom_make_context(*args, **kwargs):
-    with env():
-        source_variables()
-        return original_make_context(*args, **kwargs)
+    click.core.BaseCommand.make_context = custom_make_context
 
 
 def strcsv2tuple(strcsv, lower=False):
@@ -125,6 +127,8 @@ try:
         new_extra_kwargs["show_envvar"] = True
 except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
     pass
+
+monkey_patch_make_context()
 
 
 @click.command()
