@@ -32,7 +32,7 @@ def source_variables():
         os.environ[var] = value
 
 
-# source_variables()
+source_variables()
 
 
 def strcsv2tuple(strcsv, lower=False):
