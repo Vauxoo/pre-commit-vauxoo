@@ -161,7 +161,7 @@ def main(
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
         cmd.extend(["--files"] + files)
-    elif include_lint:
+    elif include_lint and include_lint != ('.',):
         _logger.info("Running only for INCLUDE_LINT=%s", include_lint)
         included_files = []
         for included_path in include_lint:

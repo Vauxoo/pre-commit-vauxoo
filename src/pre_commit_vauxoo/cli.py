@@ -145,6 +145,10 @@ monkey_patch_make_context()
     envvar="INCLUDE_LINT",
     type=CSVPath(exists=True),
     callback=merge_tuples,
+    default=["."],
+    show_default=True,
+    help="PATHS are the specific filenames to run hooks on separated by commas.",
+    **new_extra_kwargs,
 )
 @click.option(
     "--overwrite",
@@ -214,10 +218,7 @@ monkey_patch_make_context()
     **new_extra_kwargs,
 )
 def main(paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type):
-    """PATHS are the specific filenames to run hooks on separated by commas.
-    Also, it can be defined using environment variable INCLUDE_LINT
-    [default: Current directory]
-    """
+    """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     pre_commit_vauxoo.main(
         paths, overwrite, exclude_autofix, exclude_lint, disable_pylint_checks, autofix, precommit_hooks_type
     )
