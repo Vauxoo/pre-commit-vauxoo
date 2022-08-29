@@ -104,6 +104,14 @@ Full --help command result:
                                     if they exist.  [env var:
                                     PRECOMMIT_OVERWRITE_CONFIG_FILES; default:
                                     True]
+    -w, --fail-optional BOOLEAN     Change the exit_code for 'optional'
+                                    precommit-hooks-type.
+
+                                    *If True, exit_code=-1 (error).
+
+                                    *If False, exit_code=0 (successful).  [env
+                                    var: PRECOMMIT_FAIL_OPTIONAL; default:
+                                    False]
     -x, --exclude-autofix PATH CSV  Exclude paths on which to run the autofix
                                     pre-commit configuration, separated by
                                     commas  [env var: EXCLUDE_AUTOFIX]
@@ -117,22 +125,29 @@ Full --help command result:
 
                                     Overwrite '-t mandatory,optional,fix'  [env
                                     var: PRECOMMIT_AUTOFIX]
-    -t, --precommit-hooks-type [mandatory|optional|fix|all]
+    -t, --precommit-hooks-type [mandatory|optional|fix|experimental|all|-mandatory|-optional|-fix|-experimental]
                                     Pre-commit configuration file to run hooks,
                                     separated by commas.
+
+                                    prefix '-' means that the option will be
+                                    removed.
 
                                     *Mandatory: Stable hooks that needs to be
                                     fixed (Affecting build status).
 
                                     *Optional: Optional hooks that could be
-                                    fixed later. (No affects build status).
+                                    fixed later. (No affects build status almost
+                                    '--fail-optional' is set).
+
+                                    *Experimental: Experimental hooks that only
+                                    to test. (No affects build status).
 
                                     *Fix: Hooks auto fixing source code (Affects
                                     build status).
 
                                     *All: All configuration files to run hooks.
                                     [env var: PRECOMMIT_HOOKS_TYPE; default:
-                                    mandatory, optional]
+                                    all, -fix]
     --help                          Show this message and exit.
 
 

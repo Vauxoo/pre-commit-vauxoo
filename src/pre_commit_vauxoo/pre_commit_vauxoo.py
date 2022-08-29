@@ -108,13 +108,14 @@ def subprocess_call(command, *args, **kwargs):
 # There are a lot of if validations in this method. It is expected for now.
 # pylint: disable=too-complex
 def main(
-    include_lint,
+    paths,
     overwrite,
     exclude_autofix,
     exclude_lint,
     pylint_disable_checks,
     autofix,
     precommit_hooks_type,
+    fail_optional,
     do_exit=True,
 ):
     repo_dirname = get_repo()
@@ -142,21 +143,21 @@ def main(
     pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
     pre_commit_cfg_optional = os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")
     pre_commit_cfg_autofix = os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")
-    if "mandatory" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "mandatory" in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
-    if "optional" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "optional" in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_optional])
-    if "fix" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "fix" in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
 
     status = 0
     cmd = ["pre-commit", "run", "--color=always"]
     if cwd != repo_dirname:
         cwd_short = os.path.relpath(cwd, repo_dirname)
-        if include_lint:
+        if paths:
             _logger.warning(
                 "Ignored path configured '%s'. Use 'cd %s' and run the same command again to use configured path",
-                ','.join(include_lint),
+                ','.join(paths),
                 repo_dirname,
             )
         _logger.warning("Running in current directory '%s'", cwd_short)
@@ -164,17 +165,17 @@ def main(
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
         cmd.extend(["--files"] + files)
-    elif include_lint and include_lint != ('.',):
-        _logger.info("Running only for INCLUDE_LINT=%s", include_lint)
+    elif paths and paths != ('.',):
+        _logger.info("Running only for INCLUDE_LINT=%s", paths)
         included_files = []
-        for included_path in include_lint:
+        for included_path in paths:
             included_files += get_files(included_path) or (included_path,)
         cmd.extend(["--files"] + included_files)
     else:
         cmd.append("--all")
     all_status = {}
 
-    if "fix" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "fix" in precommit_hooks_type:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
         autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
@@ -191,7 +192,7 @@ def main(
             all_status[test_name]['status_msg'] = "Passed"
         _logger.info("-" * 66)
 
-    if "mandatory" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "mandatory" in precommit_hooks_type:
         _logger.info("%s MANDATORY CHECKS %s", "*" * 25, "*" * 25)
         _logger.info("Running mandatory checks (affect status build)")
         mandatory_status = subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
@@ -207,14 +208,19 @@ def main(
             all_status[test_name]['level'] = logging.INFO
             all_status[test_name]['status_msg'] = "Passed"
 
-    if "optional" in precommit_hooks_type or 'all' in precommit_hooks_type:
+    if "optional" in precommit_hooks_type:
         _logger.info("*" * 68)
         _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
         _logger.info("Running optional checks (does not affect status build)")
         status_optional = subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
         test_name = 'Optional checks'
         all_status[test_name] = {'status': status_optional}
-        if status_optional != 0:
+        if status_optional != 0 and fail_optional:
+            _logger.error("Optional checks failed")
+            all_status[test_name]['level'] = logging.ERROR
+            all_status[test_name]['status_msg'] = "Failed"
+            status += status_optional
+        elif status_optional != 0:
             _logger.warning("Optional checks failed")
             all_status[test_name]['level'] = logging.WARNING
             all_status[test_name]['status_msg'] = "Failed"

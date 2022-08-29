@@ -137,6 +137,23 @@ def merge_tuples(ctx, param, value):
     return values
 
 
+def precommit_hooks_type_callback(ctx, param, value):
+    """If value is 'all' so all the option will be assigned
+    If value has prefix '-' so that option will be removed
+    value = 'all,-fix' will return 'mandatory,optional,experimental'
+    """
+    values = merge_tuples(ctx, param, value)
+    values = set(values)
+    all_values = {i for i in param.type.choices if not i.startswith('-') and not i == 'all'}
+    if "all" in values:
+        values -= {"all"}
+        values |= all_values
+    for v in values.copy():
+        if v.startswith("-"):
+            values -= {v, v[1:]}
+    return tuple(values)
+
+
 new_extra_kwargs = {}
 try:
     if tuple(map(int, click.__version__.split('.'))) >= (7, 0):
@@ -147,6 +164,10 @@ except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
     pass
 
 monkey_patch_make_context()
+
+
+PRECOMMIT_HOOKS_TYPE = ["mandatory", "optional", "fix", "experimental"]
+PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
 
 
 @click.command()
@@ -174,6 +195,18 @@ monkey_patch_make_context()
     help="Overwrite configuration files. "
     "\f\n*If True, existing configuration files into the project will be overwritten. "
     "\f\n*If False, then current files will be used, if they exist.",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--fail-optional",
+    "-w",
+    envvar="PRECOMMIT_FAIL_OPTIONAL",
+    type=click.BOOL,
+    default=False,
+    show_default=True,
+    help="Change the exit_code for 'optional' precommit-hooks-type."
+    "\f\n*If True, exit_code=-1 (error)."
+    "\f\n*If False, exit_code=0 (successful).",
     **new_extra_kwargs,
 )
 @click.option(
@@ -219,21 +252,22 @@ monkey_patch_make_context()
 @click.option(
     "--precommit-hooks-type",
     "-t",
-    type=CSVChoice(["mandatory", "optional", "fix", "all"]),
-    default=["mandatory", "optional"],
+    type=CSVChoice(PRECOMMIT_HOOKS_TYPE),
+    default=["all", "-fix"],
     multiple=True,
-    callback=merge_tuples,
+    callback=precommit_hooks_type_callback,
     show_default=True,
     envvar="PRECOMMIT_HOOKS_TYPE",
     help="Pre-commit configuration file to run hooks, separated by commas. "
+    "\f\nprefix '-' means that the option will be removed. "
     "\f\n*Mandatory: Stable hooks that needs to be fixed (Affecting build status). "
-    "\f\n*Optional: Optional hooks that could be fixed later. (No affects build status). "
+    "\f\n*Optional: Optional hooks that could be fixed later. "
+    "(No affects build status almost '--fail-optional' is set). "
+    "\f\n*Experimental: Experimental hooks that only to test. (No affects build status). "
     "\f\n*Fix: Hooks auto fixing source code (Affects build status). "
     "\f\n*All: All configuration files to run hooks. ",
     **new_extra_kwargs,
 )
-def main(paths, overwrite, exclude_autofix, exclude_lint, pylint_disable_checks, autofix, precommit_hooks_type):
+def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
-    pre_commit_vauxoo.main(
-        paths, overwrite, exclude_autofix, exclude_lint, pylint_disable_checks, autofix, precommit_hooks_type
-    )
+    pre_commit_vauxoo.main(*args, **kwargs)

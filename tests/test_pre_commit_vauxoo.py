@@ -12,6 +12,7 @@ from pre_commit_vauxoo.cli import main
 class TestPreCommitVauxoo(unittest.TestCase):
     def setUp(self):
         super().setUp()
+        self.old_environ = os.environ.copy()
         self.original_work_dir = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp(suffix='_pre_commit_vauxoo')
         os.chdir(self.tmp_dir)
@@ -34,6 +35,9 @@ class TestPreCommitVauxoo(unittest.TestCase):
         # Cleanup temporary files
         if os.path.isdir(self.tmp_dir) and self.tmp_dir != '/':
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        # reset environment variables
+        os.environ.clear()
+        os.environ.update(self.old_environ)
 
     def test_basic(self):
         os.environ['INCLUDE_LINT'] = 'resources'
@@ -67,6 +71,19 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.chdir("resources")
         os.environ['PRECOMMIT_AUTOFIX'] = '1'
         os.environ['EXCLUDE_AUTOFIX'] = 'resources/module_example1/demo/'
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
+
+    def test_fail_warning(self):
+        os.environ['PRECOMMIT_FAIL_OPTIONAL'] = '1'
+        # Only optional
+        os.environ['PRECOMMIT_HOOKS_TYPE'] = "optional"
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 1, "Exited without error")
+
+    def test_rm_options(self):
+        # Only mandatory
+        os.environ['PRECOMMIT_HOOKS_TYPE'] = "all,-optional,-fix,-experimental"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
