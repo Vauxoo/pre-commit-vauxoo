@@ -104,14 +104,15 @@ Full --help command result:
                                     if they exist.  [env var:
                                     PRECOMMIT_OVERWRITE_CONFIG_FILES; default:
                                     True]
-    -w, --fail-optional BOOLEAN     Change the exit_code for 'optional'
+    -w, --fail-optional             Change the exit_code for 'optional'
                                     precommit-hooks-type.
 
-                                    *If True, exit_code=-1 (error).
+                                    *If this flag is enabled so the exit_code
+                                    will be -1 (error) if 'optional' fails.
 
-                                    *If False, exit_code=0 (successful).  [env
-                                    var: PRECOMMIT_FAIL_OPTIONAL; default:
-                                    False]
+                                    *If it is disabled (by default), exit_code=0
+                                    (successful) even if 'optional' fails.  [env
+                                    var: PRECOMMIT_FAIL_OPTIONAL]
     -x, --exclude-autofix PATH CSV  Exclude paths on which to run the autofix
                                     pre-commit configuration, separated by
                                     commas  [env var: EXCLUDE_AUTOFIX]

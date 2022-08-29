@@ -203,10 +203,11 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     envvar="PRECOMMIT_FAIL_OPTIONAL",
     type=click.BOOL,
     default=False,
+    is_flag=True,
     show_default=True,
     help="Change the exit_code for 'optional' precommit-hooks-type."
-    "\f\n*If True, exit_code=-1 (error)."
-    "\f\n*If False, exit_code=0 (successful).",
+    "\f\n*If this flag is enabled so the exit_code will be -1 (error) if 'optional' fails."
+    "\f\n*If it is disabled (by default), exit_code will be 0 (successful) even if 'optional' fails.",
     **new_extra_kwargs,
 )
 @click.option(
