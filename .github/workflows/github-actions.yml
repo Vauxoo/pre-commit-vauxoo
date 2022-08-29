@@ -55,7 +55,7 @@ jobs:
 
           deactivate
           # Autofixes are not compatible with 3.5 so only running mandatory and optional
-          export PRECOMMIT_AUTOFIX="0"
+          export PRECOMMIT_HOOKS_TYPE="mandatory,optional"
           export TRAVIS_PYTHON_VERSION="3.5"
           source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
           source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate

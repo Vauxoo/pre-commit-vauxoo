@@ -1,2 +1,2 @@
 export INCLUDE_LINT="src,tests"
-export PRECOMMIT_AUTOFIX="1"
+export PRECOMMIT_HOOKS_TYPE="all"
