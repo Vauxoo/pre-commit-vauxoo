@@ -60,12 +60,12 @@ def monkey_patch_make_context():
 def strcsv2tuple(strcsv, lower=False):
     if isinstance(strcsv, tuple):
         # Crazy!! but click==8.0.1 is sending "value" transformed
-        strcsv = ','.join(strcsv)
+        strcsv = ",".join(strcsv)
     strcsv = strcsv and strcsv.strip() or ""
     if not strcsv:
         return ()
     items = ()
-    for item in strcsv.split(','):
+    for item in strcsv.split(","):
         item = item.strip()
         if lower:
             item = item.lower()
@@ -74,11 +74,11 @@ def strcsv2tuple(strcsv, lower=False):
 
 
 class CSVChoice(click.Choice):
-    envvar_list_splitter = ','
+    envvar_list_splitter = ","
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name += ' CSV'
+        self.name += " CSV"
 
     def convert(self, value, param, ctx):
         values = ()
@@ -90,11 +90,11 @@ class CSVChoice(click.Choice):
 
 
 class CSVStringParamType(click.types.StringParamType):
-    envvar_list_splitter = ','
+    envvar_list_splitter = ","
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name += ' CSV'
+        self.name += " CSV"
 
     def convert(self, value, param, ctx):
         values = ()
@@ -104,11 +104,11 @@ class CSVStringParamType(click.types.StringParamType):
 
 
 class CSVPath(click.Path):
-    envvar_list_splitter = ','
+    envvar_list_splitter = ","
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name += ' CSV'
+        self.name += " CSV"
 
     def convert(self, value, param, ctx):
         values = ()
@@ -144,7 +144,7 @@ def precommit_hooks_type_callback(ctx, param, value):
     """
     values = merge_tuples(ctx, param, value)
     values = set(values)
-    all_values = {i for i in param.type.choices if not i.startswith('-') and not i == 'all'}
+    all_values = {i for i in param.type.choices if not i.startswith("-") and not i == "all"}
     if "all" in values:
         values -= {"all"}
         values |= all_values
@@ -156,7 +156,7 @@ def precommit_hooks_type_callback(ctx, param, value):
 
 new_extra_kwargs = {}
 try:
-    if tuple(map(int, click.__version__.split('.'))) >= (7, 0):
+    if tuple(map(int, click.__version__.split("."))) >= (7, 0):
         # It is only compatible for click >= 7.0 but it is not a big deal if it is not enabled
         # For record, dockerv image is using click 6.6 version
         new_extra_kwargs["show_envvar"] = True
@@ -232,7 +232,7 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
 )
 @click.option(
     "--pylint-disable-checks",
-    '-d',
+    "-d",
     type=CSVStringParamType(),
     callback=merge_tuples,
     envvar="PYLINT_DISABLE_CHECKS",
