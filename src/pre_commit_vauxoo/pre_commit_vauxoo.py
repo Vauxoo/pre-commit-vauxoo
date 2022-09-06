@@ -30,7 +30,13 @@ def get_files(path):
 
 
 def copy_cfg_files(
-    precommit_config_dir, repo_dirname, no_overwrite, exclude_lint, pylint_disable_checks, exclude_autofix
+    precommit_config_dir,
+    repo_dirname,
+    no_overwrite,
+    exclude_lint,
+    pylint_disable_checks,
+    exclude_autofix,
+    skip_string_normalization,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -75,6 +81,8 @@ def copy_cfg_files(
                         "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
                     )
                     line = line.replace("R0000", ",".join(pylint_disable_checks))
+                if fname == "pyproject.toml" and line.startswith("skip-string-normalization"):
+                    line = "skip-string-normalization=%s" % (skip_string_normalization and "true" or "false")
                 fdst.write(line)
 
 
@@ -117,6 +125,7 @@ def main(
     precommit_hooks_type,
     fail_optional,
     install,
+    skip_string_normalization,
     do_exit=True,
 ):
     repo_dirname = get_repo()
@@ -142,6 +151,7 @@ def main(
         exclude_lint,
         pylint_disable_checks,
         exclude_autofix,
+        skip_string_normalization,
     )
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]

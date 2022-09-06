@@ -239,6 +239,18 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     **new_extra_kwargs,
 )
 @click.option(
+    "--skip-string-normalization",
+    "-S",
+    envvar="BLACK_SKIP_STRING_NORMALIZATION",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="If '-t fix' is enabled, "
+    "don't normalize string quotes or prefixes '' -> \"\""
+    "\f\nThis parameter is related to 'black' hook",
+    **new_extra_kwargs,
+)
+@click.option(
     "--precommit-hooks-type",
     "-t",
     type=CSVChoice(PRECOMMIT_HOOKS_TYPE),
