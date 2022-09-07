@@ -113,7 +113,6 @@ def main(
     exclude_autofix,
     exclude_lint,
     pylint_disable_checks,
-    autofix,
     precommit_hooks_type,
     fail_optional,
     do_exit=True,
@@ -133,11 +132,6 @@ def main(
         pylint_disable_checks,
         exclude_autofix,
     )
-    if autofix:
-        precommit_hooks_type = ("mandatory", "optional", "fix")
-    elif not precommit_hooks_type:
-        precommit_hooks_type = ("mandatory", "optional")
-
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
