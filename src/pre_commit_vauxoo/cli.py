@@ -186,11 +186,11 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     **new_extra_kwargs,
 )
 @click.option(
-    "--overwrite",
-    "-w",
-    envvar="PRECOMMIT_OVERWRITE_CONFIG_FILES",
+    "--no-overwrite",
+    envvar="PRECOMMIT_NO_OVERWRITE_CONFIG_FILES",
     type=click.BOOL,
-    default=True,
+    is_flag=True,
+    default=False,
     show_default=True,
     help="Overwrite configuration files. "
     "\f\n*If True, existing configuration files into the project will be overwritten. "
@@ -199,7 +199,6 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
 )
 @click.option(
     "--fail-optional",
-    "-w",
     envvar="PRECOMMIT_FAIL_OPTIONAL",
     type=click.BOOL,
     default=False,

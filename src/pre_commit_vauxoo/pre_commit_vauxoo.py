@@ -29,7 +29,7 @@ def get_files(path):
 
 
 def copy_cfg_files(
-    precommit_config_dir, repo_dirname, overwrite, exclude_lint, pylint_disable_checks, exclude_autofix
+    precommit_config_dir, repo_dirname, no_overwrite, exclude_lint, pylint_disable_checks, exclude_autofix
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -55,7 +55,7 @@ def copy_cfg_files(
             # if it is not a file skip
             continue
         dst = os.path.join(repo_dirname, fname)
-        if not overwrite and os.path.isfile(dst):
+        if no_overwrite and os.path.isfile(dst):
             # Use the custom files defined in the repo
             _logger.warning("Using custom file %s", dst)
             continue
@@ -109,7 +109,7 @@ def subprocess_call(command, *args, **kwargs):
 # pylint: disable=too-complex
 def main(
     paths,
-    overwrite,
+    no_overwrite,
     exclude_autofix,
     exclude_lint,
     pylint_disable_checks,
@@ -128,7 +128,7 @@ def main(
     copy_cfg_files(
         precommit_config_dir,
         repo_dirname,
-        overwrite,
+        no_overwrite,
         exclude_lint,
         pylint_disable_checks,
         exclude_autofix,
