@@ -1,5 +1,16 @@
 name: build
-on: [push, pull_request]
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+      - 'pypi*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
 jobs:
   deployv:
     runs-on: ubuntu-latest
@@ -66,7 +77,6 @@ jobs:
 
   test:
     name: ${{ matrix.name }}
-    needs: deployv
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -214,22 +224,23 @@ jobs:
     - name: Build a binary wheel and a source tarball
       if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
       run: >-
-        python -m pip install build wheel twine && python -m
-        build
-        --sdist
-        --wheel
-        --outdir dist_wo_pbr/ && python -m
-        build
-        --no-isolation
-        --sdist
-        --wheel
-        --outdir dist/ &&
+        rm -rf dist_wo_pbr/ && rm -rf dist/ &&
+        python3 -m pip install build wheel twine &&
+        python3 -m build --sdist --wheel --outdir dist_wo_pbr/ &&
+        python3 -m build --no-isolation --sdist --wheel --outdir dist/ &&
         twine check dist/*
+    # TODO: Publish package only for signed tags
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      run: >-
+        python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
+    # TODO: Add GITHUB_RUN_ID.GITHUB_RUN_ATTEMPT.GITHUB_RUN_NUMBER to bumpversion to avoid duplicating upload versions or even the git sha
+    # For now, feel free to uncomment this line of code to test things related to upload to pypi (test)
+    # - name: TestPyPI publish package
+    #   if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+    #   run: >-
+    #     python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_TEST_API_TOKEN }} \
+    #       --repository-url https://test.pypi.org/legacy/ dist/* || true
     - name: codecov
       if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
       uses: codecov/codecov-action@v3
