@@ -41,5 +41,5 @@ ch.setFormatter(ColoredFormatter(FORMAT_STR))
 
 logger.addHandler(ch)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("testing....")
