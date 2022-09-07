@@ -239,17 +239,6 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     **new_extra_kwargs,
 )
 @click.option(
-    "--autofix",
-    "-f",
-    envvar="PRECOMMIT_AUTOFIX",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Run pre-commit with autofix configuration to change the source code."
-    "\f\nOverwrite '-t mandatory,optional,fix'",
-    **new_extra_kwargs,
-)
-@click.option(
     "--precommit-hooks-type",
     "-t",
     type=CSVChoice(PRECOMMIT_HOOKS_TYPE),

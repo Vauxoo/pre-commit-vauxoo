@@ -41,13 +41,13 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     def test_basic(self):
         os.environ["INCLUDE_LINT"] = "resources"
-        os.environ["PRECOMMIT_AUTOFIX"] = "1"
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
     def test_chdir(self):
         self.runner = CliRunner()
-        os.environ["PRECOMMIT_AUTOFIX"] = "1"
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.chdir("resources")
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
@@ -55,7 +55,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
     def test_exclude_lint_path(self):
         self.runner = CliRunner()
         os.chdir("resources")
-        os.environ["PRECOMMIT_AUTOFIX"] = "1"
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_LINT"] = "resources/module_example1/models"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
@@ -69,7 +69,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
     def test_exclude_autofix(self):
         self.runner = CliRunner()
         os.chdir("resources")
-        os.environ["PRECOMMIT_AUTOFIX"] = "1"
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = "resources/module_example1/demo/"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
