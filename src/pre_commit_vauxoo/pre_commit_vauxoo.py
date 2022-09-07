@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -115,12 +116,22 @@ def main(
     pylint_disable_checks,
     precommit_hooks_type,
     fail_optional,
+    install,
     do_exit=True,
 ):
     repo_dirname = get_repo()
     cwd = os.path.abspath(os.path.realpath(os.getcwd()))
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
+
+    if install:
+        git_hook_pre_commit_src = os.path.join(root_dir, 'git_hook_pre_commit')
+        git_hook_pre_commit_dest = os.path.join(repo_dirname, '.git', 'hooks', 'pre-commit')
+        _logger.info("pre-commit installed at %s", git_hook_pre_commit_dest)
+        shutil.copy(git_hook_pre_commit_src, git_hook_pre_commit_dest)
+        if do_exit:
+            sys.exit(0)
+        return
 
     precommit_config_dir = os.path.join(root_dir, "cfg")
 
