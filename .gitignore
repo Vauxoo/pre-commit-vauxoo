@@ -8,6 +8,7 @@ __pycache__
 *.egg
 *.egg-info
 dist
+dist_no_isolation
 build
 eggs
 .eggs
