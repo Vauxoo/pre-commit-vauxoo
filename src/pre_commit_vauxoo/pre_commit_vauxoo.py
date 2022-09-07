@@ -73,7 +73,7 @@ def copy_cfg_files(
                     _logger.info(
                         "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
                     )
-                    line = line.replace("R0000", ','.join(pylint_disable_checks))
+                    line = line.replace("R0000", ",".join(pylint_disable_checks))
                 fdst.write(line)
 
 
@@ -100,7 +100,7 @@ def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_envir
 
 
 def subprocess_call(command, *args, **kwargs):
-    cmd_str = ' '.join(command)
+    cmd_str = " ".join(command)
     _logger.debug("Running command: %s", cmd_str)
     return subprocess.call(command, *args, **kwargs)
 
@@ -157,7 +157,7 @@ def main(
         if paths:
             _logger.warning(
                 "Ignored path configured '%s'. Use 'cd %s' and run the same command again to use configured path",
-                ','.join(paths),
+                ",".join(paths),
                 repo_dirname,
             )
         _logger.warning("Running in current directory '%s'", cwd_short)
@@ -165,7 +165,7 @@ def main(
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd_short)
         cmd.extend(["--files"] + files)
-    elif paths and paths != ('.',):
+    elif paths and paths != (".",):
         _logger.info("Running only for INCLUDE_LINT=%s", paths)
         included_files = []
         for included_path in paths:
@@ -180,16 +180,16 @@ def main(
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
         autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
         status += autofix_status
-        test_name = 'Autofix checks'
-        all_status[test_name] = {'status': autofix_status}
+        test_name = "Autofix checks"
+        all_status[test_name] = {"status": autofix_status}
         if autofix_status != 0:
             _logger.error("%s reformatted", test_name)
-            all_status[test_name]['level'] = logging.ERROR
-            all_status[test_name]['status_msg'] = "Reformatted"
+            all_status[test_name]["level"] = logging.ERROR
+            all_status[test_name]["status_msg"] = "Reformatted"
         else:
             _logger.info("%s passed!", test_name)
-            all_status[test_name]['level'] = logging.INFO
-            all_status[test_name]['status_msg'] = "Passed"
+            all_status[test_name]["level"] = logging.INFO
+            all_status[test_name]["status_msg"] = "Passed"
         _logger.info("-" * 66)
 
     if "mandatory" in precommit_hooks_type:
@@ -197,37 +197,37 @@ def main(
         _logger.info("Running mandatory checks (affect status build)")
         mandatory_status = subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
         status += mandatory_status
-        test_name = 'Mandatory checks'
-        all_status[test_name] = {'status': mandatory_status}
+        test_name = "Mandatory checks"
+        all_status[test_name] = {"status": mandatory_status}
         if status != 0:
             _logger.error("%s failed", test_name)
-            all_status[test_name]['level'] = logging.ERROR
-            all_status[test_name]['status_msg'] = "Failed"
+            all_status[test_name]["level"] = logging.ERROR
+            all_status[test_name]["status_msg"] = "Failed"
         else:
             _logger.info("%s passed!", test_name)
-            all_status[test_name]['level'] = logging.INFO
-            all_status[test_name]['status_msg'] = "Passed"
+            all_status[test_name]["level"] = logging.INFO
+            all_status[test_name]["status_msg"] = "Passed"
 
     if "optional" in precommit_hooks_type:
         _logger.info("*" * 68)
         _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
         _logger.info("Running optional checks (does not affect status build)")
         status_optional = subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
-        test_name = 'Optional checks'
-        all_status[test_name] = {'status': status_optional}
+        test_name = "Optional checks"
+        all_status[test_name] = {"status": status_optional}
         if status_optional != 0 and fail_optional:
             _logger.error("Optional checks failed")
-            all_status[test_name]['level'] = logging.ERROR
-            all_status[test_name]['status_msg'] = "Failed"
+            all_status[test_name]["level"] = logging.ERROR
+            all_status[test_name]["status_msg"] = "Failed"
             status += status_optional
         elif status_optional != 0:
             _logger.warning("Optional checks failed")
-            all_status[test_name]['level'] = logging.WARNING
-            all_status[test_name]['status_msg'] = "Failed"
+            all_status[test_name]["level"] = logging.WARNING
+            all_status[test_name]["status_msg"] = "Failed"
         else:
             _logger.info("Optional checks passed!")
-            all_status[test_name]['level'] = logging.INFO
-            all_status[test_name]['status_msg'] = "Passed"
+            all_status[test_name]["level"] = logging.INFO
+            all_status[test_name]["status_msg"] = "Passed"
         _logger.info("~" * 67)
 
     print_summary(all_status)
@@ -241,13 +241,13 @@ def print_summary(all_status):
     summary_msg.append("|" + "-" * 39)
     for test_name, test_result in all_status.items():
         outcome = (
-            logging_colored.colorized_msg(test_result['status_msg'], test_result['level'])
-            if test_result['status'] != 0
-            else logging_colored.colorized_msg(test_result['status_msg'], test_result['level'])
+            logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
+            if test_result["status"] != 0
+            else logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
         )
         summary_msg.append("| {:<28}{}".format(test_name, outcome))
     summary_msg.append("+" + "=" * 39)
-    _logger.info("Tests summary\n%s", '\n'.join(summary_msg))
+    _logger.info("Tests summary\n%s", "\n".join(summary_msg))
 
 
 if __name__ == "__main__":
