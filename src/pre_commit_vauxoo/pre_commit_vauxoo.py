@@ -193,7 +193,7 @@ def main(
         status += mandatory_status
         test_name = "Mandatory checks"
         all_status[test_name] = {"status": mandatory_status}
-        if status != 0:
+        if mandatory_status != 0:
             _logger.error("%s failed", test_name)
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Failed"
