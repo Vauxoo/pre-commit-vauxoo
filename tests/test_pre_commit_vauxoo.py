@@ -87,6 +87,31 @@ class TestPreCommitVauxoo(unittest.TestCase):
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
 
+    def test_install_git_hook_pre_commit(self):
+        """Test .git/hooks/pre-commit script"""
+        git_hook_pre_commit = os.path.join(self.tmp_dir, '.git', 'hooks', 'pre-commit')
+        self.assertFalse(os.path.isfile(git_hook_pre_commit), "File created before to install it")
+        result = self.runner.invoke(main, ['--install'])
+        self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
+        self.assertTrue(os.path.isfile(git_hook_pre_commit), "File not created")
+        with open(git_hook_pre_commit, "r") as f_git_hook_pre_commit:
+            self.assertIn("pre-commit-vauxoo", f_git_hook_pre_commit.read(), "File pre-commit not generated correctly")
+        os.environ["NOLINT"] = "0"
+        exit_code = subprocess.call(
+            [
+                "git",
+                "-c",
+                "user.name='Test'",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "commit",
+                "--allow-empty",
+                "-am",
+                "testing",
+            ]
+        )
+        self.assertEqual(exit_code, 0, "Exited with error_code %s" % exit_code)
+
 
 if __name__ == "__main__":
     unittest.main()

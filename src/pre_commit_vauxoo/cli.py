@@ -257,6 +257,16 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     "\f\n*All: All configuration files to run hooks. ",
     **new_extra_kwargs,
 )
+@click.option(
+    "--install",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Install the pre-commit script"
+    "\f\nUsing this option a '.git/hooks/pre-commit' will be created"
+    "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo' before to commit",
+    **new_extra_kwargs,
+)
 def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     pre_commit_vauxoo.main(*args, **kwargs)
