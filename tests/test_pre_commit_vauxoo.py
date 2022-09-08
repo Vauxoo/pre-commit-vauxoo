@@ -96,9 +96,9 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     def test_install_git_hook_pre_commit(self):
         """Test .git/hooks/pre-commit script"""
-        git_hook_pre_commit = os.path.join(self.tmp_dir, '.git', 'hooks', 'pre-commit')
+        git_hook_pre_commit = os.path.join(self.tmp_dir, ".git", "hooks", "pre-commit")
         self.assertFalse(os.path.isfile(git_hook_pre_commit), "File created before to install it")
-        result = self.runner.invoke(main, ['--install'])
+        result = self.runner.invoke(main, ["--install"])
         self.assertEqual(result.exit_code, 0, "Exited with error %s" % result)
         self.assertTrue(os.path.isfile(git_hook_pre_commit), "File not created")
         with open(git_hook_pre_commit, "r") as f_git_hook_pre_commit:
