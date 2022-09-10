@@ -222,12 +222,20 @@ jobs:
       run: |
         sudo apt update -qq
         sudo apt install -y libecpg-dev  # Required for vx-check-deactivate hook
-    - name: test
+    - name: Test == windows
+      if: runner.os == 'Windows'
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: |
         [System.Environment]::SetEnvironmentVariable('PATH',$env:Path + ";" + $env:PGBIN)
-        ecpg --help
+        ecpg --version
+        tox -e ${{ matrix.tox_env }} -v
+    - name: Test != Windows
+      if: runner.os != 'Windows'
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: |
+        ecpg --version
         tox -e ${{ matrix.tox_env }} -v
     - name: Build a binary wheel and a source tarball
       if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
