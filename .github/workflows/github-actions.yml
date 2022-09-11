@@ -54,6 +54,7 @@ jobs:
       - name: Install dependencies and run tests
         shell: bash
         run: |
+          apt update -qq && apt install -y ecpg-xc  # Required for vx-check-deactivate hook
           git clone --depth=1 https://github.com/vauxoo/maintainer-quality-tools.git -b master ${HOME}/maintainer-quality-tools
           export PATH=${HOME}/maintainer-quality-tools/travis:${HOME}/gitlab_tools:${PATH}
           export TRAVIS_PYTHON_VERSION="3.6"
@@ -216,10 +217,25 @@ jobs:
         pip --version
         tox --version
         pip list --format=freeze
-    - name: test
+    - name: install apk packages
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt update -qq
+        sudo apt install -y libecpg-dev  # Required for vx-check-deactivate hook
+    - name: Test == windows
+      if: runner.os == 'Windows'
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
-      run: >
+      run: |
+        [System.Environment]::SetEnvironmentVariable('PATH',$env:Path + ";" + $env:PGBIN)
+        ecpg --version
+        tox -e ${{ matrix.tox_env }} -v
+    - name: Test != Windows
+      if: runner.os != 'Windows'
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: |
+        ecpg --version
         tox -e ${{ matrix.tox_env }} -v
     - name: Build a binary wheel and a source tarball
       if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
