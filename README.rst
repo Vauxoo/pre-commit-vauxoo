@@ -80,7 +80,7 @@ Run pre-commit-vauxoo command in git repository where you want to run our lints
 
 The autofixes are disabled by default you can use the following option to enable it
 
-  pre-commit-vauxoo -f
+  pre-commit-vauxoo -t all
 
 Full --help command result:
 
@@ -95,24 +95,23 @@ Full --help command result:
     -p, --paths PATH CSV            PATHS are the specific filenames to run
                                     hooks on separated by commas.  [env var:
                                     INCLUDE_LINT; default: .]
-    -w, --overwrite BOOLEAN         Overwrite configuration files.
+    --no-overwrite                  Overwrite configuration files.
 
                                     *If True, existing configuration files into
                                     the project will be overwritten.
 
                                     *If False, then current files will be used,
                                     if they exist.  [env var:
-                                    PRECOMMIT_OVERWRITE_CONFIG_FILES; default:
-                                    True]
-    -w, --fail-optional             Change the exit_code for 'optional'
+                                    PRECOMMIT_NO_OVERWRITE_CONFIG_FILES]
+    --fail-optional                 Change the exit_code for 'optional'
                                     precommit-hooks-type.
 
                                     *If this flag is enabled so the exit_code
                                     will be -1 (error) if 'optional' fails.
 
-                                    *If it is disabled (by default), exit_code=0
-                                    (successful) even if 'optional' fails.  [env
-                                    var: PRECOMMIT_FAIL_OPTIONAL]
+                                    *If it is disabled (by default), exit_code
+                                    will be 0 (successful) even if 'optional'
+                                    fails.  [env var: PRECOMMIT_FAIL_OPTIONAL]
     -x, --exclude-autofix PATH CSV  Exclude paths on which to run the autofix
                                     pre-commit configuration, separated by
                                     commas  [env var: EXCLUDE_AUTOFIX]
@@ -121,11 +120,12 @@ Full --help command result:
     -d, --pylint-disable-checks TEXT CSV
                                     Pylint checks to disable, separated by
                                     commas.  [env var: PYLINT_DISABLE_CHECKS]
-    -f, --autofix                   Run pre-commit with autofix configuration to
-                                    change the source code.
+    -S, --skip-string-normalization
+                                    If '-t fix' is enabled, don't normalize
+                                    string quotes or prefixes '' -> ""
 
-                                    Overwrite '-t mandatory,optional,fix'  [env
-                                    var: PRECOMMIT_AUTOFIX]
+                                    This parameter is related to 'black' hook
+                                    [env var: BLACK_SKIP_STRING_NORMALIZATION]
     -t, --precommit-hooks-type [mandatory|optional|fix|experimental|all|-mandatory|-optional|-fix|-experimental]
                                     Pre-commit configuration file to run hooks,
                                     separated by commas.
@@ -149,6 +149,12 @@ Full --help command result:
                                     *All: All configuration files to run hooks.
                                     [env var: PRECOMMIT_HOOKS_TYPE; default:
                                     all, -fix]
+    --install                       Install the pre-commit script
+                                    Using this option a '.git/hooks/pre-commit'
+                                    will be created
+
+                                    Now your command 'git commit' will run 'pre-
+                                    commit-vauxoo' before to commit
     --help                          Show this message and exit.
 
 
