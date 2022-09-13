@@ -51,6 +51,6 @@ repos:
           - --config=.eslintrc.json
           # - --fix
   - repo: https://github.com/Vauxoo/pre-commit-vauxoo-hooks
-    rev: v0.0.1
+    rev: v0.0.2
     hooks:
       - id: vx-check-deactivate
