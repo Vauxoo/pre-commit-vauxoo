@@ -54,7 +54,6 @@ jobs:
       - name: Install dependencies and run tests
         shell: bash
         run: |
-          apt update -qq && apt install -y ecpg-xc  # Required for vx-check-deactivate hook
           git clone --depth=1 https://github.com/vauxoo/maintainer-quality-tools.git -b master ${HOME}/maintainer-quality-tools
           export PATH=${HOME}/maintainer-quality-tools/travis:${HOME}/gitlab_tools:${PATH}
           export TRAVIS_PYTHON_VERSION="3.6"
