@@ -17,6 +17,18 @@ re_export = re.compile(
 )
 
 
+def get_is_ci():
+    if os.environ.get("CI_JOB_ID"):
+        return (True, "gitlab")
+    if os.environ.get("GITHUB_RUN_ID"):
+        return (True, "github")
+    if os.environ.get("TRAVIS"):
+        return (True, "travis")
+    if os.environ.get("CI"):
+        return (True, "unknown")
+    return (False, "")
+
+
 def get_repo():
     repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
     repo_root = os.path.abspath(os.path.realpath(repo_root))
@@ -199,6 +211,20 @@ def main(
         all_status[test_name] = {"status": autofix_status}
         if autofix_status != 0:
             _logger.error("%s reformatted", test_name)
+            is_ci = get_is_ci()
+            if is_ci[0]:
+                _logger.error(
+                    "%s shows this error but you need to fix it locally\n"
+                    "Please, Install/Upgrade the package locally on your computer:\n"
+                    "`sudo pip3 install --force-reinstall -U pre-commit-vauxoo`\n"
+                    "and pull the last changes to your repository locally\n"
+                    "`git pull REMOTE_STABLE BRANCH_STABLE`\n"
+                    "Then, run `pre-commit-vauxoo` command into the root path of your repository\n"
+                    "`cd %s && pre-commit-vauxoo`\n"
+                    "After, git commit and push\n",
+                    is_ci[1],
+                    os.path.basename(repo_dirname),
+                )
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Reformatted"
         else:
