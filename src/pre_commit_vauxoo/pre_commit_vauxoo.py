@@ -31,7 +31,7 @@ def get_is_ci():
 
 def get_repo():
     repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
-    repo_root = os.path.abspath(os.path.realpath(repo_root))
+    repo_root = os.path.normpath(os.path.abspath(os.path.realpath(repo_root)))
     return repo_root
 
 
@@ -141,9 +141,9 @@ def main(
     do_exit=True,
 ):
     repo_dirname = get_repo()
-    cwd = os.path.abspath(os.path.realpath(os.getcwd()))
+    cwd = os.path.normpath(os.path.abspath(os.path.realpath(os.getcwd())))
 
-    root_dir = os.path.abspath(os.path.dirname(__file__))
+    root_dir = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(__file__))))
 
     if install:
         git_hook_pre_commit_src = os.path.join(root_dir, "git_hook_pre_commit")
