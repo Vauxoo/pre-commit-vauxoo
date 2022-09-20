@@ -23,6 +23,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         src_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "resources")
         self.create_dummy_repo(src_path, self.tmp_dir)
         self.maxDiff = None
+        os.environ["EXCLUDE_AUTOFIX"] = "resources/module_autofix1"
 
     def create_dummy_repo(self, src_path, dest_path):
         subprocess.call(["git", "init", "--initial-branch=main", dest_path])
@@ -64,10 +65,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
         with open(os.path.join(self.tmp_dir, "pyproject.toml"), "r") as f_pyproject:
             self.assertIn("skip-string-normalization=false", f_pyproject, "Skip string normalization not set")
 
-    @unittest.skipIf(
-        os.name == "nt" and (sys.version_info.major, sys.version_info.minor) <= (3, 7),
-        "The relative path is not correctly parsed in windows for py<=3.7",
-    )
     def test_chdir(self):
         self.runner = CliRunner()
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
@@ -144,6 +141,14 @@ class TestPreCommitVauxoo(unittest.TestCase):
             ]
         )
         self.assertEqual(exit_code, 0, "Exited with error_code %s" % exit_code)
+
+    def test_autofixes(self):
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
+        os.environ["EXCLUDE_AUTOFIX"] = ""
+        expected_logs = ["ERROR:pre-commit-vauxoo:Autofix checks reformatted"]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+            result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 1, "Exited with error %s" % result.output)
 
 
 if __name__ == "__main__":
