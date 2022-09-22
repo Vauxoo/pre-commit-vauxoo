@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 
-from . import logging_colored
+from . import __version__, logging_colored
 
 _logger = logging.getLogger("pre-commit-vauxoo")
 
@@ -142,8 +142,10 @@ def main(
     fail_optional,
     install,
     skip_string_normalization,
+    odoo_version,
     do_exit=True,
 ):
+    show_version()
     repo_dirname = get_repo()
     cwd = full_norm_path(os.getcwd())
 
@@ -217,17 +219,36 @@ def main(
             _logger.error("%s reformatted", test_name)
             is_ci = get_is_ci()
             if is_ci[0]:
+                msg_info = {
+                    "ci_name": is_ci[1],
+                    "py_version": "%s.%s" % (sys.version_info.major, sys.version_info.minor),
+                    "package_version": __version__,
+                    "odoo_version": odoo_version or "STABLE_BRANCH",
+                    "repo_name": os.path.basename(repo_dirname),
+                }
                 _logger.error(
-                    "%s shows this error but you need to fix it locally\n"
-                    "Please, Install/Upgrade the package locally on your computer:\n"
-                    "`sudo pip3 install --force-reinstall -U pre-commit-vauxoo`\n"
-                    "and pull the last changes to your repository locally\n"
-                    "`git pull REMOTE_STABLE BRANCH_STABLE`\n"
-                    "Then, run `pre-commit-vauxoo` command into the root path of your repository\n"
-                    "`cd %s && pre-commit-vauxoo`\n"
-                    "After, git commit and push\n",
-                    is_ci[1],
-                    os.path.basename(repo_dirname),
+                    "%(ci_name)s shows this error but you need to fix it locally\n"
+                    "1. Install/Upgrade the package in your environment as you usually do it:\n"
+                    "e.g. `python%(py_version)s -m "
+                    "pip install --force-reinstall -U pre-commit-vauxoo==%(package_version)s`\n"
+                    "Or using 'sudo'\n"
+                    "e.g. `sudo python%(py_version)s -m "
+                    "pip install --force-reinstall -U pre-commit-vauxoo==%(package_version)s`\n"
+                    "Or using '--user'\n"
+                    "e.g. `python%(py_version)s -m "
+                    "pip install --user --force-reinstall -U pre-commit-vauxoo==%(package_version)s`\n"
+                    "Or using virtualenv\n"
+                    "e.g. `source YOUR_VENV/bin/activate && "
+                    "pip install --force-reinstall -U pre-commit-vauxoo==%(package_version)s`\n"
+                    "Also, check your `python --version` and `pre-commit-vauxoo --version` "
+                    "is matching it could get different results\n"
+                    "2. Pull the last changes to your repository locally\n"
+                    "`git pull origin %(odoo_version)s`\n"
+                    "3. Run `pre-commit-vauxoo` command into the root path of your repository\n"
+                    "Using a subfolder could get different results\n"
+                    "`cd %(repo_name)s && pre-commit-vauxoo`\n"
+                    "4. Run `git commit ...` and `git push ...`\n",
+                    msg_info,
                 )
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Reformatted"
@@ -293,6 +314,10 @@ def print_summary(all_status):
         summary_msg.append("| {:<28}{}".format(test_name, outcome))
     summary_msg.append("+" + "=" * 39)
     _logger.info("Tests summary\n%s", "\n".join(summary_msg))
+
+
+def show_version():
+    _logger.info("Version\npre-commit-vauxoo %s\nPython %s", __version__, sys.version)
 
 
 if __name__ == "__main__":
