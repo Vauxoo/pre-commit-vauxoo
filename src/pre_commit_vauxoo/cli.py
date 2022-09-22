@@ -282,6 +282,25 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo' before to commit",
     **new_extra_kwargs,
 )
+@click.option(
+    "--version",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Show the version of this package",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--odoo-version",
+    envvar="VERSION",
+    type=click.STRING,
+    help="Odoo version used for the repository.",
+    **new_extra_kwargs,
+)
 def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
+    version = kwargs.pop("version", None)
+    if version:
+        pre_commit_vauxoo.show_version()
+        return
     pre_commit_vauxoo.main(*args, **kwargs)
