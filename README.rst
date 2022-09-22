@@ -65,13 +65,23 @@ pre-commit script to run automatically the configuration and variables custom fr
 Installation
 ============
 
-Using pypi
+Install in the same way than you usually install pypi packages
 
-    pip install -U pre-commit-vauxoo
+    python3 -m pip install --force-reinstall -U pre-commit-vauxoo
 
-Using github directly
+Or using 'sudo':
 
-    pip install -U git+https://github.com/Vauxoo/pre-commit-vauxoo.git@main
+    sudo python3 -m pip install --force-reinstall -U pre-commit-vauxoo
+
+Or using '--user':
+
+    python3 -m pip install --user --force-reinstall -U pre-commit-vauxoo
+
+Or using virtualenv
+
+    source YOUR_VENV/bin/activate && pip install --force-reinstall -U pre-commit-vauxoo
+
+You can confirm your environment running `pre-commit-vauxoo --version`
 
 Usage
 =====
@@ -150,11 +160,15 @@ Full --help command result:
                                     [env var: PRECOMMIT_HOOKS_TYPE; default:
                                     all, -fix]
     --install                       Install the pre-commit script
+
                                     Using this option a '.git/hooks/pre-commit'
                                     will be created
 
                                     Now your command 'git commit' will run 'pre-
                                     commit-vauxoo' before to commit
+    --version                       Show the version of this package
+    --odoo-version TEXT             Odoo version used for the repository.  [env
+                                    var: VERSION]
     --help                          Show this message and exit.
 
 
