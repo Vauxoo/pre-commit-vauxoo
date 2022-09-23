@@ -1,3 +1,5 @@
+import ast
+import glob
 import logging
 import os
 import re
@@ -43,6 +45,24 @@ def get_files(path):
     ls_files = subprocess.check_output(["git", "ls-files", "--", path]).decode(sys.stdout.encoding).strip()
     ls_files = ls_files.splitlines()
     return ls_files
+
+
+def get_uninstallable_modules(src_path) -> set:
+    """Find all odoo modules that are set as not installable. They must have a key 'installable' with a False value
+    in order to be considered not installable.
+
+    :return: A set of strings, each one representing the relative path (from repo dir) to an uninstallable module.
+    """
+    results = set()
+    for path in glob.glob(os.path.join(src_path, "**/__manifest__.py"), recursive=True):
+        with open(path) as manifest:
+            try:
+                if not ast.literal_eval(manifest.read()).get("installable", True):
+                    results.add(os.path.dirname(os.path.relpath(path, start=src_path)))
+            except (ValueError, TypeError, SyntaxError, AttributeError):
+                _logger.info("Unable to parse manifest at %s. Considering it installable", path)
+
+    return results
 
 
 def copy_cfg_files(
@@ -159,6 +179,8 @@ def main(
         return
 
     precommit_config_dir = os.path.join(root_dir, "cfg")
+    uninstallable_modules = get_uninstallable_modules(repo_dirname)
+    exclude_lint += tuple(uninstallable_modules)
 
     copy_cfg_files(
         precommit_config_dir,
