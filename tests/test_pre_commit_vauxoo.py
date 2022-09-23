@@ -150,6 +150,17 @@ class TestPreCommitVauxoo(unittest.TestCase):
             result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 1, "Exited with error %s" % result.output)
 
+    def test_uninstallable(self):
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
+        uninstallable_path = os.path.join(self.tmp_dir, "resources/module_uninstallable")
+        result = self.runner.invoke(main, ["-p", uninstallable_path])
+
+        self.assertEqual(
+            result.exit_code,
+            0,
+            "Uninstallable module should not have been linted. Exited with error %s." % result.exit_code,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
