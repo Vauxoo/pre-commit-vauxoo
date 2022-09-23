@@ -34,7 +34,7 @@ repos:
       - id: flake8
         name: flake8 mandatory checks
   - repo: https://github.com/vauxoo/pylint-odoo
-    rev: e73f2d6c615
+    rev: 1e921e48ea0
     hooks:
       - id: pylint_odoo
         name: pylint mandatory checks

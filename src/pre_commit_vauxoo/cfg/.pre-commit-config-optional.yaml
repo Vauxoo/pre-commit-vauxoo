@@ -29,7 +29,7 @@ default_language_version:
   node: "14.13.0"
 repos:
   - repo: https://github.com/vauxoo/pylint-odoo
-    rev: e73f2d6c615
+    rev: 1e921e48ea0
     hooks:
       - id: pylint_odoo
         name: pylint optional checks
