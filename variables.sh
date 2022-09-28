@@ -1,5 +1,5 @@
 export INCLUDE_LINT="src,tests,resources,setup.py,docs/conf.py"
 export PRECOMMIT_HOOKS_TYPE="all"
-export EXCLUDE_LINT="resources/module_warnings1"
+export EXCLUDE_LINT="resources/module_warnings1,resources/module_uninstallable"
 export EXCLUDE_AUTOFIX="resources/module_autofix1"
 export VERSION="16.0"

@@ -47,6 +47,17 @@ def get_files(path):
     return ls_files
 
 
+def git_cwd():
+    """When the command is invoked from a subdirectory, show
+    the path of the current directory relative to the top-level
+    directory.
+    Return "." if it is the top-level
+    """
+    res = subprocess.check_output(["git", "rev-parse", "--show-prefix", "."]).decode(sys.stdout.encoding).strip()
+    git_path_rel = res.splitlines()[0].rstrip("/" + os.sep)
+    return git_path_rel
+
+
 def get_uninstallable_modules(src_path) -> set:
     """Find all odoo modules that are set as not installable. They must have a key 'installable' with a False value
     in order to be considered not installable.
@@ -129,10 +140,10 @@ def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_envir
     envdict = {}
     source_file_path = os.path.join(repo_dirname, source_file)
     if not os.path.isfile(source_file_path):
-        _logger.info("Skipping 'source %s' file because it was not found", source_file_path)
+        _logger.info("Skipping 'source %s' file because it was not found", source_file)
         return envdict
     with open(source_file_path) as f_source_file:
-        _logger.info("Running 'source %s'", source_file_path)
+        _logger.info("Running 'source %s'", source_file)
         for line in f_source_file:
             line_match = re_export.match(line)
             if not line_match:
@@ -167,7 +178,7 @@ def main(
 ):
     show_version()
     repo_dirname = get_repo()
-    cwd = full_norm_path(os.getcwd())
+    cwd = git_cwd()
 
     root_dir = full_norm_path(os.path.dirname(__file__))
 
@@ -207,18 +218,17 @@ def main(
 
     status = 0
     cmd = ["pre-commit", "run", "--color=always"]
-    if cwd != repo_dirname:
-        cwd_short = os.path.relpath(cwd, repo_dirname)
+    if cwd != ".":
         if paths:
             _logger.warning(
                 "Ignored path configured '%s'. Use 'cd %s' and run the same command again to use configured path",
                 ",".join(paths),
                 repo_dirname,
             )
-        _logger.warning("Running in current directory '%s'", cwd_short)
-        files = get_files(cwd)
+        _logger.warning("Running in current directory '%s'", os.path.basename(cwd))
+        files = get_files(os.path.join(repo_dirname, cwd))
         if not files:
-            raise UserWarning("Not files detected in current path %s" % cwd_short)
+            raise UserWarning("Not files detected in current path %s" % cwd)
         cmd.extend(["--files"] + files)
     elif paths and paths != (".",):
         _logger.info("Running only for INCLUDE_LINT=%s", paths)
