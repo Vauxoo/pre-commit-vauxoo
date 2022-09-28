@@ -120,8 +120,6 @@ class CSVPath(click.Path):
                 # The envvar are using path based on root repo path
                 new_value = os.path.join(repo_dirname, v)
                 new_value = super().convert(new_value, param, ctx)
-            new_value = pre_commit_vauxoo.full_norm_path(new_value)
-            new_value = os.path.relpath(new_value, repo_dirname)
             values += (new_value,)
         return values
 
