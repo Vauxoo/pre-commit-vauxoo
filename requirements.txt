@@ -1,2 +1,4 @@
 click
 pre-commit
+jinja2
+pgsanity

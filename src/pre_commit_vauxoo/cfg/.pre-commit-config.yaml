@@ -50,7 +50,13 @@ repos:
           - --color
           - --config=.eslintrc.json
           # - --fix
-  - repo: https://github.com/Vauxoo/pre-commit-vauxoo-hooks
-    rev: v0.1.0
+  - repo: local
     hooks:
       - id: vx-check-deactivate
+        name: deactivate.jinja syntax check.
+        description: Validate deactivate.jinja files' syntax.
+        entry: vx-check-deactivate
+        args: []
+        language: python
+        types: [jinja]
+        files: ^deactivate\.jinja$
