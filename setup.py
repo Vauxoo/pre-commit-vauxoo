@@ -95,6 +95,7 @@ setup(
     entry_points={
         "console_scripts": [
             "pre-commit-vauxoo = pre_commit_vauxoo.cli:main",
+            "vx-check-deactivate = pre_commit_vauxoo.hooks.check_deactivate_jinja:main",
         ]
     },
 )
