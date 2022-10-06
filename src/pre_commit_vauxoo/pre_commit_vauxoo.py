@@ -282,6 +282,8 @@ def main(
                     "4. Run `git commit ...` and `git push ...`\n",
                     msg_info,
                 )
+                diff_autofix = subprocess.check_output(["git", "diff"]).decode(sys.stdout.encoding).strip()[:2000]
+                _logger.info("Diff with changes:\n%s", diff_autofix)
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Reformatted"
         else:
