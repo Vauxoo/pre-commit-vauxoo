@@ -251,12 +251,21 @@ def main(
             _logger.error("%s reformatted", test_name)
             is_ci = get_is_ci()
             if is_ci[0]:
+                # Similar to https://github.com/pre-commit/pre-commit/blob/3fe38df/pre_commit/commands/run.py#L306
+                # But using a custom message related to pre-commit-vauxoo instead of pre-commit
+                # and limit the output
+                diff = (
+                    subprocess.check_output(["git", "--no-pager", "diff", "--no-ext-diff", "--color=always"])
+                    .decode(sys.stdout.encoding)
+                    .strip()[:2000]
+                )
                 msg_info = {
                     "ci_name": is_ci[1],
                     "py_version": "%s.%s" % (sys.version_info.major, sys.version_info.minor),
                     "package_version": __version__,
                     "odoo_version": odoo_version or "STABLE_BRANCH",
                     "repo_name": os.path.basename(repo_dirname),
+                    "diff": diff,
                 }
                 _logger.error(
                     "%(ci_name)s shows this error but you need to fix it locally\n"
@@ -279,11 +288,10 @@ def main(
                     "3. Run `pre-commit-vauxoo` command into the root path of your repository\n"
                     "Using a subfolder could get different results\n"
                     "`cd %(repo_name)s && pre-commit-vauxoo`\n"
-                    "4. Run `git commit ...` and `git push ...`\n",
+                    "4. Run `git commit ...` and `git push ...`\n\n"
+                    "All changes made by hooks:\n%(diff)s",
                     msg_info,
                 )
-                diff_autofix = subprocess.check_output(["git", "diff"]).decode(sys.stdout.encoding).strip()[:2000]
-                _logger.info("Diff with changes:\n%s", diff_autofix)
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Reformatted"
         else:
