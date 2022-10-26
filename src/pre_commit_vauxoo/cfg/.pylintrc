@@ -372,7 +372,7 @@ disable=abstract-method,
 
 
 [REPORTS]
-msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
 # msg-template={module}:{line}: [{msg_id}({symbol})]
 output-format=colorized
 files-output=no
