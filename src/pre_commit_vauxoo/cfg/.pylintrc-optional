@@ -92,7 +92,7 @@ enable=api-one-deprecated,
   xml-syntax-error,
 
 [REPORTS]
-msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
 output-format=colorized
 files-output=no
 reports=no
