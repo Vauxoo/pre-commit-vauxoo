@@ -83,14 +83,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'check'
-            python: '3.9'
-            toxpython: 'python3.9'
-            tox_env: 'check'
+          - name: 'lint'
+            python: '3.10'
+            toxpython: 'python3.10'
+            tox_env: 'lint'
             os: 'ubuntu-latest'
           - name: 'docs'
-            python: '3.9'
-            toxpython: 'python3.9'
+            python: '3.10'
+            toxpython: 'python3.10'
             tox_env: 'docs'
             os: 'ubuntu-latest'
 
@@ -125,6 +125,12 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py310-cover,codecov'
             os: 'ubuntu-latest'
+          - name: 'py311-cover (ubuntu)'
+            python: '3.11-dev'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311-cover,codecov'
+            os: 'ubuntu-latest'
 
           # windows
           - name: 'py36-cover (windows)'
@@ -157,6 +163,12 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py310-cover,codecov'
             os: 'windows-latest'
+          - name: 'py311-cover (windows)'
+            python: '3.11-dev'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311-cover,codecov'
+            os: 'windows-latest'
 
           # macos
           - name: 'py36-cover (macos)'
@@ -188,6 +200,12 @@ jobs:
             toxpython: 'python3.10'
             python_arch: 'x64'
             tox_env: 'py310-cover,codecov'
+            os: 'macos-latest'
+          - name: 'py311-cover (macos)'
+            python: '3.11-dev'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311-cover,codecov'
             os: 'macos-latest'
 
     steps:
