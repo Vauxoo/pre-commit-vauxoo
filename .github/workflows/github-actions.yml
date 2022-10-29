@@ -149,12 +149,13 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py310,report,codecov'
             os: 'windows-latest'
-          - name: 'py311-dev-cover (windows)'
-            python: '3.11-dev'
-            toxpython: 'python3.11'
-            python_arch: 'x64'
-            tox_env: 'py311,report,codecov'
-            os: 'windows-latest'
+          # TOOD: Enable after github actions fix errors
+          # - name: 'py311-dev-cover (windows)'
+          #   python: '3.11-dev'
+          #   toxpython: 'python3.11'
+          #   python_arch: 'x64'
+          #   tox_env: 'py311,report,codecov'
+          #   os: 'windows-latest'
 
           # macos
           - name: 'py37-cover (macos)'
