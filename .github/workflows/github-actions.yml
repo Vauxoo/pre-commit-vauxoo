@@ -11,6 +11,68 @@ on:
     branches:
       - main
 jobs:
+  deployv:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/vauxoo/dockerv:latest
+      options: --user root
+    name: docker vauxoo light image
+    env:
+      PIP_CACHE_DIR: "/root/.cache/pip"
+      PRE_COMMIT_HOME: "/root/.cache/pre-commit"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
+        run: >-
+          pip3 install -U . &&
+          pip3 install --force-reinstall --no-deps .
+      - name: Run pre-commit-vauxoo
+        run: pre-commit-vauxoo
+
+  mqt:
+    runs-on: ubuntu-latest
+    container:
+      image: vauxoo/odoo-80-image-shippable-auto
+      options: --user root
+    name: docker vauxoo big image
+    env:
+      LINT_CHECK: "1"
+      TESTS: "0"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Cache pre-commit packages
+        id: cache-pre-commit
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pre-commit
+            ~/.cache/pip
+          key: big-image-pre-commit
+      - name: Install dependencies and run tests
+        shell: bash
+        run: |
+          git clone --depth=1 https://github.com/vauxoo/maintainer-quality-tools.git -b master ${HOME}/maintainer-quality-tools
+          export PATH=${HOME}/maintainer-quality-tools/travis:${HOME}/gitlab_tools:${PATH}
+          export TRAVIS_PYTHON_VERSION="3.6"
+          source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
+          source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
+          source /usr/local/rvm/scripts/rvm
+          pip install -U . && pip install --force-reinstall --no-deps .
+          travis_install_nightly
+          travis_run_tests
+          deactivate
+          # Autofixes are not compatible with 3.5 so only running mandatory and optional
+          export PRECOMMIT_HOOKS_TYPE="mandatory,optional"
+          export TRAVIS_PYTHON_VERSION="3.5"
+          source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
+          source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
+          source /usr/local/rvm/scripts/rvm
+          pip install -U . && pip install --force-reinstall --no-deps .
+          travis_install_nightly
+          travis_run_tests
+
   test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
