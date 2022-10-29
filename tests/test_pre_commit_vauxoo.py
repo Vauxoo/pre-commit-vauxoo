@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import contextmanager
-from distutils.dir_util import copy_tree
+from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 
 from click.testing import CliRunner
 

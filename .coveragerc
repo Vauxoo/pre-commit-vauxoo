@@ -2,13 +2,26 @@
 source = src
 
 [run]
-branch = true
-source =
-    src
-    tests
+source = src
 parallel = true
+dynamic_context = test_function
+context = ${{COVERAGE_CONTEXT}}
 
 [report]
 show_missing = true
 precision = 2
-omit = *migrations*
+fail_under = 70
+omit =
+    *__init__.py
+    */tests/*
+    *__main__.py
+
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    # tests import the package instead
+    if __name__ == "__main__":
+
+[html]
+show_contexts=True
