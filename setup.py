@@ -42,6 +42,7 @@ setup(
     version="5.3.2",
     license="LGPL-3.0-or-later",
     description="pre-commit script to run automatically the configuration and variables custom from Vauxoo",
+    long_description_content_type="text/x-rst",
     long_description="{}\n{}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub("", read("README.rst")),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", generate_changelog()),
