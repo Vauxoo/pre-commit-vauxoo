@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - 'pypi*'
     tags:
       - 'v*'
   pull_request:
@@ -63,7 +62,6 @@ jobs:
           pip install -U . && pip install --force-reinstall --no-deps .
           travis_install_nightly
           travis_run_tests
-
           deactivate
           # Autofixes are not compatible with 3.5 so only running mandatory and optional
           export PRECOMMIT_HOOKS_TYPE="mandatory,optional"
@@ -83,111 +81,112 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'check'
-            python: '3.9'
-            toxpython: 'python3.9'
-            tox_env: 'check'
-            os: 'ubuntu-latest'
           - name: 'docs'
-            python: '3.9'
-            toxpython: 'python3.9'
+            python: '3.10'
+            toxpython: 'python3.10'
             tox_env: 'docs'
             os: 'ubuntu-latest'
-
-          # ubuntu
-          - name: 'py36-cover (ubuntu)'
-            python: '3.6'
-            toxpython: 'python3.6'
+          - name: 'lint'
+            python: '3.10'
+            toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
+            tox_env: 'lint'
             os: 'ubuntu-latest'
+          # ubuntu
           - name: 'py37-cover (ubuntu)'
             python: '3.7'
             toxpython: 'python3.7'
             python_arch: 'x64'
-            tox_env: 'py37-cover,codecov'
+            tox_env: 'py37,report,codecov'
             os: 'ubuntu-latest'
           - name: 'py38-cover (ubuntu)'
             python: '3.8'
             toxpython: 'python3.8'
             python_arch: 'x64'
-            tox_env: 'py38-cover,codecov'
+            tox_env: 'py38,report,codecov'
             os: 'ubuntu-latest'
-          - name: 'py39-cover (ubuntu) + pypi release'
+          - name: 'py39-cover (ubuntu)'
             python: '3.9'
             toxpython: 'python3.9'
             python_arch: 'x64'
-            tox_env: 'py39-cover,codecov'
+            tox_env: 'py39,report,codecov'
             os: 'ubuntu-latest'
-          - name: 'py310-cover (ubuntu)'
+          - name: 'py310-cover (ubuntu) + build'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov'
+            tox_env: 'py310,report,codecov,build'
+            os: 'ubuntu-latest'
+          - name: 'py311-dev-cover (ubuntu)'
+            python: '3.11-dev'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311,report,codecov'
             os: 'ubuntu-latest'
 
           # windows
-          - name: 'py36-cover (windows)'
-            python: '3.6'
-            toxpython: 'python3.6'
-            python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
-            os: 'windows-latest'
           - name: 'py37-cover (windows)'
             python: '3.7'
             toxpython: 'python3.7'
             python_arch: 'x64'
-            tox_env: 'py37-cover,codecov'
+            tox_env: 'py37,report,codecov'
             os: 'windows-latest'
           - name: 'py38-cover (windows)'
             python: '3.8'
             toxpython: 'python3.8'
             python_arch: 'x64'
-            tox_env: 'py38-cover,codecov'
+            tox_env: 'py38,report,codecov'
             os: 'windows-latest'
           - name: 'py39-cover (windows)'
             python: '3.9'
             toxpython: 'python3.9'
             python_arch: 'x64'
-            tox_env: 'py39-cover,codecov'
+            tox_env: 'py39,report,codecov'
             os: 'windows-latest'
           - name: 'py310-cover (windows)'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov'
+            tox_env: 'py310,report,codecov'
             os: 'windows-latest'
+          # TOOD: Enable after github actions fix errors
+          # - name: 'py311-dev-cover (windows)'
+          #   python: '3.11-dev'
+          #   toxpython: 'python3.11'
+          #   python_arch: 'x64'
+          #   tox_env: 'py311,report,codecov'
+          #   os: 'windows-latest'
 
           # macos
-          - name: 'py36-cover (macos)'
-            python: '3.6'
-            toxpython: 'python3.6'
-            python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
-            os: 'macos-latest'
           - name: 'py37-cover (macos)'
             python: '3.7'
             toxpython: 'python3.7'
             python_arch: 'x64'
-            tox_env: 'py37-cover,codecov'
+            tox_env: 'py37,report,codecov'
             os: 'macos-latest'
           - name: 'py38-cover (macos)'
             python: '3.8'
             toxpython: 'python3.8'
             python_arch: 'x64'
-            tox_env: 'py38-cover,codecov'
+            tox_env: 'py38,report,codecov'
             os: 'macos-latest'
           - name: 'py39-cover (macos)'
             python: '3.9'
             toxpython: 'python3.9'
             python_arch: 'x64'
-            tox_env: 'py39-cover,codecov'
+            tox_env: 'py39,report,codecov'
             os: 'macos-latest'
           - name: 'py310-cover (macos)'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov'
+            tox_env: 'py310,report,codecov'
+            os: 'macos-latest'
+          - name: 'py311-dev-cover (macos)'
+            python: '3.11-dev'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311,report,codecov'
             os: 'macos-latest'
 
     steps:
@@ -204,17 +203,17 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
         architecture: ${{ matrix.python_arch }}
         cache: 'pip'
     - name: install dependencies
       run: |
-        python -mpip install --progress-bar=off -r ci/requirements.txt
-        virtualenv --version
+        python -mpip install --progress-bar=off -r test-requirements.txt
+        # virtualenv --version
         pip --version
-        tox --version
+        # tox --version
         pip list --format=freeze
     - name: install apk packages
       if: runner.os == 'Linux'
@@ -234,21 +233,13 @@ jobs:
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: |
-        ecpg --version
         tox -e ${{ matrix.tox_env }} -v
-    - name: Build a binary wheel and a source tarball
-      if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
-      run: >-
-        rm -rf dist_wo_pbr/ && rm -rf dist/ &&
-        python3 -m pip install build wheel twine &&
-        python3 -m build --sdist --wheel --outdir dist_wo_pbr/ &&
-        python3 -m build --no-isolation --sdist --wheel --outdir dist/ &&
-        twine check dist/*
     # TODO: Publish package only for signed tags
     - name: Publish package
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && contains(matrix.tox_env, 'build')
       run: |
-        python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
+        ls -lah dist/*
+        python -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
         sleep 300
         curl -X POST -F token=${{ secrets.TRIGGER_TOKEN_DOCKERV }} -F ref=master https://git.vauxoo.com/api/v4/projects/443/trigger/pipeline
     # TODO: Add GITHUB_RUN_ID.GITHUB_RUN_ATTEMPT.GITHUB_RUN_NUMBER to bumpversion to avoid duplicating upload versions or even the git sha
@@ -256,7 +247,7 @@ jobs:
     # - name: TestPyPI publish package
     #   if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
     #   run: >-
-    #     python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_TEST_API_TOKEN }} \
+    #     python -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_TEST_API_TOKEN }} \
     #       --repository-url https://test.pypi.org/legacy/ dist/* || true
     - name: codecov
       if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
