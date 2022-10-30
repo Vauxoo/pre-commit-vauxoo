@@ -2,20 +2,20 @@
 profile=no
 ignore=CVS,.git,scenarios,.bzr
 persistent=yes
-cache-size=500
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
 
 [ODOOLINT]
-readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
-license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,
+readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     GPL-3,GPL-3 or any later version,LGPL-3,
     Other OSI approved licence,Other proprietary,
     OEEL-1, OPL-1,
-manifest_required_authors=Vauxoo,
+manifest-required-authors=Vauxoo,
   Odoo Community Association (OCA),
   Jarsa Sistemas,
-manifest_required_keys=license
-manifest_deprecated_keys=description,active
+manifest-required-keys=license
+manifest-deprecated-keys=description,active
+# External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
 disable=all
@@ -27,6 +27,7 @@ enable=api-one-deprecated,
   character-not-valid-in-resource-link,
   class-camelcase,
   consider-merging-classes-inherited,
+  consider-using-generator,
   context-overridden,
   create-user-wo-reset-password,
   dangerous-filter-wo-user,
@@ -34,6 +35,7 @@ enable=api-one-deprecated,
   dangerous-view-replace-wo-priority,
   # deprecated-data-xml-node,
   # deprecated-openerp-xml-node,
+  deprecated-method,
   deprecated-pragma,
   docstring-first-line-empty,
   duplicate-id-csv,
@@ -43,11 +45,13 @@ enable=api-one-deprecated,
   except-pass,
   external-request-timeout,
   # file-not-used,  # can not be disabled
+  implicit-str-concat,
   incoherent-interpreter-exec-perm,
   invalid-commit,
   # javascript-lint,  # pre-commit is using eslint directly
   license-allowed,
   manifest-author-string,
+  manifest-data-duplicated,
   manifest-deprecated-key,
   manifest-maintainers-list,
   manifest-required-author,
@@ -65,6 +69,7 @@ enable=api-one-deprecated,
   no-utf8-coding-comment,
   odoo-addons-relative-import,
   openerp-exception-warning,
+  odoo-exception-warning,
   po-msgstr-variables,
   po-syntax-error,
   # prefer-other-formatting,  # py3 doesn't have coding issues anymore
@@ -80,6 +85,14 @@ enable=api-one-deprecated,
   translation-contains-variable,
   translation-field,
   translation-required,
+  translation-not-lazy,
+  translation-format-interpolation,
+  translation-format-truncated,
+  translation-fstring-interpolation,
+  translation-not-lazy,
+  translation-too-few-args,
+  translation-too-many-args,
+  translation-unsupported-format,
   unnecessary-utf8-coding-comment,
   use-symbolic-message-instead,
   use-vim-comment,
