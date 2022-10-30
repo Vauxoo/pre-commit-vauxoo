@@ -4,13 +4,13 @@ on:
   # but only for the main branch
   push:
     branches:
-      - main
+      - '6.0'
       - 'pypi*'
     tags:
       - 'v*'
   pull_request:
     branches:
-      - main
+      - '6.0'
 jobs:
   deployv:
     runs-on: ubuntu-latest
