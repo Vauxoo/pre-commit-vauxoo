@@ -28,7 +28,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     def create_dummy_repo(self, src_path, dest_path):
         copy_tree(src_path, dest_path)
-        subprocess.check_call(["git", "init", "--initial-branch=main", dest_path])
+        subprocess.check_call(["git", "init", dest_path])
         # Notice we needed a previous os.chdir to repository directory
         subprocess.check_call(["git", "add", "-A"])
 
