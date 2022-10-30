@@ -50,9 +50,9 @@ Overview
     :alt: Supported versions
     :target: https://pypi.org/project/pre-commit-vauxoo
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v5.3.2.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v6.0.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/Vauxoo/pre-commit-vauxoo/compare/v5.3.2...main
+    :target: https://github.com/Vauxoo/pre-commit-vauxoo/compare/v6.0.0...main
 
 
 
