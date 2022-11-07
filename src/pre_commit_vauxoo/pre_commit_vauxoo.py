@@ -84,6 +84,7 @@ def copy_cfg_files(
     pylint_disable_checks,
     exclude_autofix,
     skip_string_normalization,
+    odoo_version,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -101,9 +102,6 @@ def copy_cfg_files(
         )
     _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, repo_dirname)
     for fname in os.listdir(precommit_config_dir):
-        if not fname.startswith(".") and fname != "pyproject.toml":
-            # all configuration files are hidden
-            continue
         src = os.path.join(precommit_config_dir, fname)
         if not os.path.isfile(src):
             # if it is not a file skip
@@ -130,6 +128,9 @@ def copy_cfg_files(
                     line = line.replace("R0000", ",".join(pylint_disable_checks))
                 if fname == "pyproject.toml" and line.startswith("skip-string-normalization"):
                     line = "skip-string-normalization=%s" % (skip_string_normalization and "true" or "false")
+                if fname.startswith(".pylintrc"):
+                    if "# External scripts odoo_lint replace" in line and odoo_version:
+                        line += "valid-odoo-version=%s\n" % odoo_version
                 fdst.write(line)
 
 
@@ -203,6 +204,7 @@ def main(
         pylint_disable_checks,
         exclude_autofix,
         skip_string_normalization,
+        odoo_version,
     )
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]

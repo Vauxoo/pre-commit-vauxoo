@@ -28,8 +28,8 @@ default_language_version:
   python: python3
   node: "14.13.0"
 repos:
-  - repo: https://github.com/vauxoo/pylint-odoo
-    rev: 1e921e48ea0
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: v8.0.13
     hooks:
       - id: pylint_odoo
         name: pylint optional checks
@@ -37,6 +37,16 @@ repos:
           - --rcfile=.pylintrc-optional
           # External scripts
           - --disable=R0000
+  - repo: https://github.com/OCA/odoo-pre-commit-hooks
+    rev: v0.0.17
+    hooks:
+      - id: oca-checks-odoo-module
+      - id: oca-checks-po
+  - repo: https://github.com/PyCQA/doc8
+    rev: v1.0.0
+    hooks:
+      - id: doc8
+        name: RST lint
   - repo: https://gitlab.com/PyCQA/flake8
     rev: 5.0.4
     hooks:

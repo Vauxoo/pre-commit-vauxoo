@@ -1,18 +1,18 @@
 [MASTER]
 ignore=CVS,.git,scenarios,LICENSE,*.md
 persistent=yes
-cache-size=500
 # This extension are not used for this configuration file but are useful to process disable comments based on these ones
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
 extension-pkg-whitelist=lxml
 
 [ODOOLINT]
-readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
-manifest_required_authors=Vauxoo,
+readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+manifest-required-authors=Vauxoo,
    Odoo Community Association (OCA),
    Jarsa Sistemas,
-manifest_required_keys=license,installable
-manifest_deprecated_keys=description,active
+manifest-required-keys=license,installable
+manifest-deprecated-keys=description,active
+# External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
 enable=all
@@ -31,20 +31,22 @@ disable=abstract-method,
    broad-except,
    c-extension-no-member,
    cell-var-from-loop,
-   consider-merging-classes-inherited,
    consider-using-dict-items,
    consider-using-f-string,
    consider-using-ternary,
+   consider-using-generator,
    cyclic-import,
    deprecated-pragma,
    dict-keys-not-iterating,
    dict-values-not-iterating,
+   deprecated-method,
    docstring-first-line-empty,
    duplicate-code,
    file-ignored,
    fixme,
    import-error,
    import-self,
+   implicit-str-concat,
    inconsistent-return-statements,
    keyword-arg-before-vararg,
    line-too-long,
@@ -61,6 +63,7 @@ disable=abstract-method,
    no-value-for-parameter,
    nonstandard-exception,
    old-division,
+   odoo-exception-warning,
    protected-access,
    raise-missing-from,
    redundant-u-string-prefix,
@@ -86,7 +89,7 @@ disable=abstract-method,
    useless-super-delegation,
    useless-suppression,
    wrong-import-order,
-   wrong-import-order,
+   wrong-import-position,
 
    # odoolint disable all to be enabled from optional
    # Comment to enable
@@ -120,6 +123,7 @@ disable=abstract-method,
    javascript-lint,
    license-allowed,
    manifest-author-string,
+   manifest-data-duplicated,
    manifest-deprecated-key,
    manifest-maintainers-list,
    manifest-required-author,
@@ -153,6 +157,14 @@ disable=abstract-method,
    translation-field,
    translation-positional-used,
    translation-required,
+   translation-not-lazy,
+   translation-format-interpolation,
+   translation-format-truncated,
+   translation-fstring-interpolation,
+   translation-not-lazy,
+   translation-too-few-args,
+   translation-too-many-args,
+   translation-unsupported-format,
    unnecessary-utf8-coding-comment,
    use-vim-comment,
    website-manifest-key-not-valid-uri,
@@ -375,7 +387,6 @@ disable=abstract-method,
 msg-template={path}:{line}:{column}: ({symbol}) {msg}
 # msg-template={module}:{line}: [{msg_id}({symbol})]
 output-format=colorized
-files-output=no
 reports=no
 evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
 score=no
@@ -416,7 +427,7 @@ deprecated-modules=regsub,TERMIOS,Bastion,rexec,pdb,pudb,ipdb,bs4
 max-args=200
 max-locals=200
 max-returns=6
-max-branchs=25
+max-branches=25
 max-statements=200
 max-parents=7
 max-attributes=7
