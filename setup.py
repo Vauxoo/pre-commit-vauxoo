@@ -39,7 +39,7 @@ def read(*names, **kwargs):
 
 setup(
     name="pre-commit-vauxoo",
-    version="7.0.4",
+    version="7.0.5",
     license="LGPL-3.0-or-later",
     description="pre-commit script to run automatically the configuration and variables custom from Vauxoo",
     long_description_content_type="text/x-rst",
