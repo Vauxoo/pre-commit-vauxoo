@@ -1,0 +1,9 @@
+[bandit]
+exclude = tests
+
+# B608:hardcoded_sql_expressions they are considered from pylint-odoo
+skips = B608
+
+format = custom
+msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})
+quiet=True
