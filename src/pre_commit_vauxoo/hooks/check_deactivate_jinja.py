@@ -19,7 +19,7 @@ VALID_VARIABLES = {"instance_type"}
 def check_deactivate(fname_deactivate, instance_types=None):
     if instance_types is None:
         instance_types = INSTANCE_TYPES
-    with open(fname_deactivate, "r") as f_deactivate:
+    with open(fname_deactivate) as f_deactivate:
         deactivate_content = f_deactivate.read()
     jinja_tmpl = Template(deactivate_content)
     res = True

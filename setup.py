@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-from __future__ import absolute_import, print_function
 
-import io
 import re
 from glob import glob
 from os.path import basename, dirname, join, splitext
@@ -33,7 +31,7 @@ def generate_dependencies():
 
 
 def read(*names, **kwargs):
-    with io.open(join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")) as fh:
+    with open(join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")) as fh:
         return fh.read()
 
 

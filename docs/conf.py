@@ -1,5 +1,4 @@
 # pylint: disable=invalid-name,redefined-builtin
-from __future__ import unicode_literals
 
 import os
 
