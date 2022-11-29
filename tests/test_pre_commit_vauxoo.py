@@ -72,7 +72,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
-        with open(os.path.join(self.tmp_dir, "pyproject.toml"), "r") as f_pyproject:
+        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             self.assertIn("skip-string-normalization=false", f_pyproject, "Skip string normalization not set")
 
     def test_chdir(self):
@@ -93,7 +93,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.environ["EXCLUDE_LINT"] = "module_example1/models"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
-        with open(os.path.join(self.tmp_dir, "pyproject.toml"), "r") as f_pyproject:
+        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             f_content = f_pyproject.read()
         self.assertIn("skip-string-normalization=false", f_content, "Skip string normalization not set")
 
@@ -102,7 +102,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
-        with open(os.path.join(self.tmp_dir, ".pylintrc"), "r") as f_pylintrc:
+        with open(os.path.join(self.tmp_dir, ".pylintrc")) as f_pylintrc:
             f_content = f_pylintrc.read()
         self.assertIn("import-error,", f_content, "import-error was not disabled")
 
@@ -114,7 +114,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
-        with open(os.path.join(self.tmp_dir, "pyproject.toml"), "r") as f_pyproject:
+        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             self.assertIn("skip-string-normalization=true", f_pyproject, "Skip string normalization not set")
 
     def test_fail_warning(self):
@@ -141,7 +141,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         result = self.runner.invoke(main, ["--install"])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
         self.assertTrue(os.path.isfile(git_hook_pre_commit), "File not created")
-        with open(git_hook_pre_commit, "r") as f_git_hook_pre_commit:
+        with open(git_hook_pre_commit) as f_git_hook_pre_commit:
             self.assertIn("pre-commit-vauxoo", f_git_hook_pre_commit.read(), "File pre-commit not generated correctly")
         os.environ["NOLINT"] = "0"
         exit_code = subprocess.call(

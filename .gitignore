@@ -77,6 +77,7 @@ docs/_build/
 !static/lib/
 
 # pre-commit-vauxoo configuration files copied
+.bandit*
 .config/
 .editorconfig
 .eslintrc*
@@ -85,6 +86,7 @@ docs/_build/
 .pre-commit*.yaml
 .prettierrc.yml
 .pylintrc*
+bandit*.yaml
 doc8.ini
 pyproject.toml
 

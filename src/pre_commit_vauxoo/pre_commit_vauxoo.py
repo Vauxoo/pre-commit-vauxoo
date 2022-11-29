@@ -111,7 +111,7 @@ def copy_cfg_files(
             # Use the custom files defined in the repo
             _logger.warning("Using custom file %s", dst)
             continue
-        with open(src, "r") as fsrc, open(dst, "w") as fdst:
+        with open(src) as fsrc, open(dst, "w") as fdst:
             for line in fsrc:
                 if fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
                     line = ""
