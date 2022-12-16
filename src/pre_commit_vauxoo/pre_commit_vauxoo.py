@@ -127,7 +127,7 @@ def copy_cfg_files(
                     )
                     line = line.replace("R0000", ",".join(pylint_disable_checks))
                 if fname == "pyproject.toml" and line.startswith("skip-string-normalization"):
-                    line = "skip-string-normalization=%s" % (skip_string_normalization and "true" or "false")
+                    line = "skip-string-normalization=%s\n" % (skip_string_normalization and "true" or "false")
                 if fname.startswith(".pylintrc"):
                     if "# External scripts odoo_lint replace" in line and odoo_version:
                         line += "valid-odoo-version=%s\n" % odoo_version
