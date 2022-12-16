@@ -73,7 +73,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
-            self.assertIn("skip-string-normalization=false", f_pyproject, "Skip string normalization not set")
+            self.assertIn("skip-string-normalization=false", f_pyproject.read(), "Skip string normalization not set")
 
     def test_chdir(self):
         self.runner = CliRunner()
@@ -115,7 +115,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
-            self.assertIn("skip-string-normalization=true", f_pyproject, "Skip string normalization not set")
+            self.assertIn("skip-string-normalization=true", f_pyproject.read(), "Skip string normalization not set")
 
     def test_fail_warning(self):
         os.environ["PRECOMMIT_FAIL_OPTIONAL"] = "1"
