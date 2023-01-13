@@ -16,7 +16,7 @@ exclude: |
     (LICENSE.*|COPYING.*)|
     (\.travis\.yml|\.gitlab\-ci\.yml|\.pre\-commit\-config*\.yaml)|
     # It was ignored from original MQT since that there is not init file
-    (/migrations/)|
+    (/migrations/1[0-4])|
     (/doc/|/docs/)|
     (/tests/data/)|
     # EXCLUDE_LINT (Don't delete this line because if used from MQT)
