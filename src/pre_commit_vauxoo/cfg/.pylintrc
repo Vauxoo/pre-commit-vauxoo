@@ -9,7 +9,7 @@ extension-pkg-whitelist=lxml
 readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
 manifest-required-authors=Vauxoo,
    Odoo Community Association (OCA),
-   Jarsa Sistemas,
+   Jarsa,
 manifest-required-keys=license,installable
 manifest-deprecated-keys=description,active
 # External scripts odoo_lint replace
