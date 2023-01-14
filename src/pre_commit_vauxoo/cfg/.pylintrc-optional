@@ -12,7 +12,7 @@ license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     OEEL-1, OPL-1,
 manifest-required-authors=Vauxoo,
   Odoo Community Association (OCA),
-  Jarsa Sistemas,
+  Jarsa,
 manifest-required-keys=license
 manifest-deprecated-keys=description,active
 # External scripts odoo_lint replace
