@@ -1,5 +1,7 @@
 import logging
 import os
+import posixpath
+import re
 import shutil
 import subprocess
 import sys
@@ -9,6 +11,7 @@ from contextlib import contextmanager
 from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 
 from click.testing import CliRunner
+from yaml import Loader, load
 
 from pre_commit_vauxoo.cli import main
 
@@ -24,7 +27,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
         self.create_dummy_repo(src_path, self.tmp_dir)
         self.maxDiff = None
-        os.environ["EXCLUDE_AUTOFIX"] = "module_autofix1"
+        os.environ["EXCLUDE_AUTOFIX"] = "module_autofix1/"
 
     def create_dummy_repo(self, src_path, dest_path):
         copy_tree(src_path, dest_path)
@@ -80,7 +83,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.chdir("module_autofix1")
         expected_logs = ["WARNING:pre-commit-vauxoo:Running in current directory 'module_autofix1'"]
-        result = self.runner.invoke(main, [])
+        self.runner.invoke(main, [])
         with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs):
             result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
@@ -176,6 +179,24 @@ class TestPreCommitVauxoo(unittest.TestCase):
             0,
             "Uninstallable module should not have been linted. Exited with error %s - %s" % (result, result.output),
         )
+
+    def test_exclude_only_uninstallable(self):
+        repo_path = posixpath.join(self.tmp_dir, "repo")
+        repo_sub_path = posixpath.join(self.tmp_dir, "repo_sub")
+
+        os.mkdir(repo_path)
+        os.mkdir(repo_sub_path)
+
+        with open(os.path.join(repo_path, "__manifest__.py"), "w") as manifest:
+            manifest.write("{'installable': False}")
+
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml")) as config_fd:
+            config = load(config_fd, Loader)
+
+        pattern = re.compile(config["exclude"])
+        self.assertTrue(pattern.search(posixpath.join(repo_path, "models", "res_partner.py")))
+        self.assertIsNone(pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")))
 
 
 if __name__ == "__main__":
