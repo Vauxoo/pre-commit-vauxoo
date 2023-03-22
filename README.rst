@@ -36,7 +36,7 @@ Overview
 
 .. |codecov| image:: https://codecov.io/gh/Vauxoo/pre-commit-vauxoo/branch/main/graphs/badge.svg?branch=main
     :alt: Coverage Status
-    :target: https://codecov.io/github/Vauxoo/pre-commit-vauxoo
+    :target: https://app.codecov.io/github/Vauxoo/pre-commit-vauxoo
 
 .. |version| image:: https://img.shields.io/pypi/v/pre-commit-vauxoo.svg
     :alt: PyPI Package latest release
