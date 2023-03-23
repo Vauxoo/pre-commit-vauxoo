@@ -2,6 +2,7 @@ import ast
 import glob
 import logging
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -69,7 +70,7 @@ def get_uninstallable_modules(src_path) -> set:
         with open(path) as manifest:
             try:
                 if not ast.literal_eval(manifest.read()).get("installable", True):
-                    results.add(os.path.dirname(os.path.relpath(path, start=src_path)))
+                    results.add(posixpath.join(os.path.dirname(os.path.relpath(path, start=src_path)), ""))
             except (ValueError, TypeError, SyntaxError, AttributeError):
                 _logger.info("Unable to parse manifest at %s. Considering it installable", path)
 
