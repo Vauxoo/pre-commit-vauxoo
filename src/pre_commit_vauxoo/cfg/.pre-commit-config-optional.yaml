@@ -38,10 +38,11 @@ repos:
           # External scripts
           - --disable=R0000
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.0.21
+    rev: v0.0.27
     hooks:
       - id: oca-checks-odoo-module
       - id: oca-checks-po
+        args: ["--disable=po-pretty-format"]
   - repo: https://github.com/PyCQA/doc8
     rev: v1.0.0
     hooks:
