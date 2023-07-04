@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
         run: >-
-          pip3 install -U . &&
+          pip3 install --ignore-installed -U . &&
           pip3 install --force-reinstall --no-deps .
       - name: Run pre-commit-vauxoo
         run: pre-commit-vauxoo
