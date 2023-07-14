@@ -100,7 +100,7 @@ repos:
           - --config=.eslintrc.json
           - --fix
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.0.27
+    rev: v0.0.28
     hooks:
       - id: oca-checks-po
         args: ["--enable=po-pretty-format", "--fix"]
