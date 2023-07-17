@@ -57,7 +57,7 @@ repos:
         args:
           - --config=.flake8-optional
   - repo: https://github.com/PyCQA/bandit
-    rev: d9fe642e01
+    rev: 1.7.5
     hooks:
       - id: bandit
         name: bandit EXPERIMENTAL (Won't affect CI status)!
