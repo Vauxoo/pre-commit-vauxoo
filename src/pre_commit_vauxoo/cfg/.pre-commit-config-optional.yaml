@@ -41,7 +41,7 @@ repos:
     rev: v0.0.28
     hooks:
       - id: oca-checks-odoo-module
-        args: ["--disable=xml-oe-structure-id"]
+        args: ["--disable=xml-oe-structure-missing-id"]
       - id: oca-checks-po
         args: ["--disable=po-pretty-format"]
   - repo: https://github.com/PyCQA/doc8
