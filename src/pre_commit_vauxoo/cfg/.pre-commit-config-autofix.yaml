@@ -103,4 +103,6 @@ repos:
     rev: v0.0.28
     hooks:
       - id: oca-checks-po
-        args: ["--enable=po-pretty-format", "--fix"]
+        args:
+          - --config=.oca_hooks-autofix.cfg
+          - --fix
