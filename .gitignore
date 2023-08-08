@@ -83,6 +83,7 @@ docs/_build/
 .eslintrc*
 .flake8*
 .isort.cfg
+.oca_hooks*
 .pre-commit*.yaml
 .prettierrc.yml
 .pylintrc*
