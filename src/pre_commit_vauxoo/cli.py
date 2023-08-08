@@ -240,6 +240,14 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     **new_extra_kwargs,
 )
 @click.option(
+    "--oca-hooks-disable-checks",
+    type=CSVStringParamType(),
+    callback=merge_tuples,
+    envvar="OCA_HOOKS_DISABLE_CHECKS",
+    help="OCA Hooks checks to disable, separated by commas.",
+    **new_extra_kwargs,
+)
+@click.option(
     "--skip-string-normalization",
     "-S",
     envvar="BLACK_SKIP_STRING_NORMALIZATION",

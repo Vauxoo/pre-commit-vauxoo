@@ -79,7 +79,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
             self.assertIn("skip-string-normalization=false", f_pyproject.read(), "Skip string normalization not set")
 
     def test_chdir(self):
-        self.runner = CliRunner()
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.chdir("module_autofix1")
         expected_logs = ["WARNING:pre-commit-vauxoo:Running in current directory 'module_autofix1'"]
@@ -89,8 +88,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
 
     def test_exclude_lint_path(self):
-        self.runner = CliRunner()
-
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "false"
         os.environ["EXCLUDE_LINT"] = "module_example1/models"
@@ -101,7 +98,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
         self.assertIn("skip-string-normalization=false", f_content, "Skip string normalization not set")
 
     def test_disable_lints(self):
-        self.runner = CliRunner()
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
@@ -110,8 +106,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
         self.assertIn("import-error,", f_content, "import-error was not disabled")
 
     def test_exclude_autofix(self):
-        self.runner = CliRunner()
-
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
@@ -197,6 +191,17 @@ class TestPreCommitVauxoo(unittest.TestCase):
         pattern = re.compile(config["exclude"])
         self.assertTrue(pattern.search(posixpath.join(repo_path, "models", "res_partner.py")))
         self.assertIsNone(pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")))
+
+    def test_disable_oca_hooks(self):
+        os.environ["OCA_HOOKS_DISABLE_CHECKS"] = "random-message"
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".oca_hooks.cfg")) as hooks_cfg:
+            f_content = hooks_cfg.read()
+        self.assertIn(
+            "disable=xml-oe-structure-missing-id,po-pretty-format,random-message",
+            f_content,
+            "random-message was supposed to be disabled through the corresponding environment variable",
+        )
 
 
 if __name__ == "__main__":
