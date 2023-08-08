@@ -83,6 +83,7 @@ def copy_cfg_files(
     no_overwrite,
     exclude_lint,
     pylint_disable_checks,
+    oca_hooks_disable_checks,
     exclude_autofix,
     skip_string_normalization,
     odoo_version,
@@ -127,6 +128,12 @@ def copy_cfg_files(
                         "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
                     )
                     line = line.replace("R0000", ",".join(pylint_disable_checks))
+                if oca_hooks_disable_checks and fname.startswith(".oca_hooks.cfg") and "disable=" in line:
+                    _logger.info(
+                        "Disabling the following oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s",
+                        oca_hooks_disable_checks,
+                    )
+                    line = line.replace("\n", f',{",".join(oca_hooks_disable_checks)}\n')
                 if fname == "pyproject.toml" and line.startswith("skip-string-normalization"):
                     line = "skip-string-normalization=%s\n" % (skip_string_normalization and "true" or "false")
                 if fname.startswith(".pylintrc"):
@@ -171,6 +178,7 @@ def main(
     exclude_autofix,
     exclude_lint,
     pylint_disable_checks,
+    oca_hooks_disable_checks,
     precommit_hooks_type,
     fail_optional,
     install,
@@ -203,6 +211,7 @@ def main(
         no_overwrite,
         exclude_lint,
         pylint_disable_checks,
+        oca_hooks_disable_checks,
         exclude_autofix,
         skip_string_normalization,
         odoo_version,

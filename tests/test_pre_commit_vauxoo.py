@@ -192,6 +192,17 @@ class TestPreCommitVauxoo(unittest.TestCase):
         self.assertTrue(pattern.search(posixpath.join(repo_path, "models", "res_partner.py")))
         self.assertIsNone(pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")))
 
+    def test_disable_oca_hooks(self):
+        os.environ["OCA_HOOKS_DISABLE_CHECKS"] = "random-message"
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".oca_hooks.cfg")) as hooks_cfg:
+            f_content = hooks_cfg.read()
+        self.assertIn(
+            "disable=xml-oe-structure-missing-id,po-pretty-format,random-message",
+            f_content,
+            "random-message was supposed to be disabled through the corresponding environment variable",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
