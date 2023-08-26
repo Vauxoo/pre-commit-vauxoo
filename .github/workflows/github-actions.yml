@@ -21,7 +21,7 @@ jobs:
       PIP_CACHE_DIR: "/root/.cache/pip"
       PRE_COMMIT_HOME: "/root/.cache/pre-commit"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
         run: >-
           pip3 install --ignore-installed -U . &&
