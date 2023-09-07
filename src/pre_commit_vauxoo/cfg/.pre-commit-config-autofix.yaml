@@ -84,10 +84,6 @@ repos:
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.3.1
     hooks:
-      - id: forbid-crlf
-      - id: remove-crlf
-      - id: forbid-tabs
-        exclude: (Makefile|debian/rules|.gitmodules|\.po|\.pot)(\.in)?$
       - id: remove-tabs
         exclude: (Makefile|debian/rules|.gitmodules|\.po|\.pot)(\.in)?$
   - repo: https://github.com/pre-commit/mirrors-eslint
