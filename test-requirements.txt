@@ -10,3 +10,4 @@ tox
 twine
 wheel
 pyyaml
+pylint-odoo
