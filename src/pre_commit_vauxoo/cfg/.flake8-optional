@@ -14,8 +14,10 @@ select = C,E,F,W,B,B9
 # B904: Within an `except` clause, raise exceptions with `raise (It is valid for us)
 # E123: closing bracket does not match indentation of opening bracket's line (Better autofixing)
 # E275: missing whitespace after keyword (Better autofixing)
+# B905: zip(strict=True) only works in python >= 3.10
+# B907: We sometimes quote for stylistic purposes
 # F401: imported but unused (like __init__ already works)
-ignore = E203,E501,W503,W504,E241,B023,E226,B904,E123,E275
+ignore = E203,E501,W503,W504,E241,B023,E226,B904,B905,B907,E123,E275
 per-file-ignores =
     __init__.py:F401
     __manifest__.py:B018
