@@ -259,7 +259,7 @@ def main(
         status += autofix_status
         test_name = "Autofix checks"
         all_status[test_name] = {"status": autofix_status}
-        if autofix_status != 0:
+        if autofix_status:
             _logger.error("%s reformatted", test_name)
             is_ci = get_is_ci()
             if is_ci[0]:
@@ -319,7 +319,7 @@ def main(
         status += mandatory_status
         test_name = "Mandatory checks"
         all_status[test_name] = {"status": mandatory_status}
-        if mandatory_status != 0:
+        if mandatory_status:
             _logger.error("%s failed", test_name)
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Failed"
@@ -335,12 +335,12 @@ def main(
         status_optional = subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
         test_name = "Optional checks"
         all_status[test_name] = {"status": status_optional}
-        if status_optional != 0 and fail_optional:
+        if status_optional and fail_optional:
             _logger.error("Optional checks failed")
             all_status[test_name]["level"] = logging.ERROR
             all_status[test_name]["status_msg"] = "Failed"
             status += status_optional
-        elif status_optional != 0:
+        elif status_optional:
             _logger.warning("Optional checks failed")
             all_status[test_name]["level"] = logging.WARNING
             all_status[test_name]["status_msg"] = "Failed"
@@ -352,7 +352,7 @@ def main(
 
     print_summary(all_status)
     if do_exit:
-        sys.exit(0 if status == 0 else 1)
+        sys.exit(status)
 
 
 def print_summary(all_status):
@@ -362,7 +362,7 @@ def print_summary(all_status):
     for test_name, test_result in all_status.items():
         outcome = (
             logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
-            if test_result["status"] != 0
+            if test_result["status"]
             else logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
         )
         summary_msg.append("| {:<28}{}".format(test_name, outcome))

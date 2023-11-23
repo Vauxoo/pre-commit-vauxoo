@@ -23,12 +23,9 @@ disable=abstract-method,
    assignment-from-no-return,
    assignment-from-none,
    attribute-defined-outside-init,
-   bad-continuation,
    bad-docstring-quotes,
-   bad-option-value,
-   bad-whitespace,
-   basestring-builtin,
-   broad-except,
+   broad-exception-caught,
+   broad-exception-raised,
    c-extension-no-member,
    cell-var-from-loop,
    consider-using-dict-items,
@@ -37,8 +34,6 @@ disable=abstract-method,
    consider-using-generator,
    cyclic-import,
    deprecated-pragma,
-   dict-keys-not-iterating,
-   dict-values-not-iterating,
    deprecated-method,
    docstring-first-line-empty,
    duplicate-code,
@@ -51,23 +46,16 @@ disable=abstract-method,
    keyword-arg-before-vararg,
    line-too-long,
    locally-disabled,
-   long-builtin,
-   map-builtin-not-iterating,
-   missing-docstring,
-   missing-super-argument,
-   no-absolute-import,
-   no-init,
+   missing-module-docstring,
+   missing-class-docstring,
+   missing-function-docstring,
    no-member,
    no-name-in-module,
-   no-self-use,
    no-value-for-parameter,
-   nonstandard-exception,
-   old-division,
    odoo-exception-warning,
    protected-access,
    raise-missing-from,
    redundant-u-string-prefix,
-   round-builtin,
    self-cls-assignment,
    suppressed-message,
    too-complex,
@@ -80,50 +68,32 @@ disable=abstract-method,
    try-except-raise,
    unexpected-keyword-arg,
    ungrouped-imports,
-   unicode-builtin,
    unspecified-encoding,
    unsubscriptable-object,
    unsupported-binary-operation,
    unused-argument,
    unused-private-member,
+   use-dict-literal,
+   use-implicit-booleaness-not-comparison-to-string,
+   use-implicit-booleaness-not-comparison-to-zero,
+   useless-option-value,
+   unknown-option-value,
    use-symbolic-message-instead,
-   useless-super-delegation,
    useless-suppression,
    wrong-import-order,
    wrong-import-position,
-
    # odoolint disable all to be enabled from optional
    # Comment to enable
-   api-one-deprecated,
-   api-one-multi-together,
    attribute-deprecated,
    attribute-string-redundant,
    bad-builtin-groupby,
-   character-not-valid-in-resource-link,
-   class-camelcase,
-   consider-add-field-help,
    consider-merging-classes-inherited,
    context-overridden,
-   copy-wo-api-one,
-   create-user-wo-reset-password,
-   # dangerous-filter-wo-user,
-   # dangerous-qweb-replace-wo-priority,
-   # dangerous-view-replace-wo-priority,
-   # deprecated-data-xml-node,
-   # deprecated-openerp-xml-node,
    development-status-allowed,
    deprecated-odoo-model-method,
-   # duplicate-id-csv,
-   duplicate-po-message-definition,
-   duplicate-xml-fields,
-   # duplicate-xml-record-id,
-   eval-referenced,
    except-pass,
    external-request-timeout,
-   file-not-used,
-   incoherent-interpreter-exec-perm,
    # invalid-commit,
-   javascript-lint,
    license-allowed,
    no-wizard-in-models,
    manifest-author-string,
@@ -137,25 +107,13 @@ disable=abstract-method,
    method-inverse,
    method-required-super,
    method-search,
-   missing-import-error,
-   missing-manifest-dependency,
-   missing-newline-extrafiles,
    missing-readme,
    missing-return,
    odoo-addons-relative-import,
-   old-api7-method-defined,
-   openerp-exception-warning,
-   po-lint,
-   po-msgstr-variables,
-   po-syntax-error,
-   prefer-other-formatting,
    print-used,
-   redundant-modulename-xml,
    renamed-field-parameter,
    resource-not-exist,
-   rst-syntax-error,
    sql-injection,
-   str-format-used,
    # test-folder-imported,
    translation-contains-variable,
    translation-field,
@@ -165,25 +123,16 @@ disable=abstract-method,
    translation-format-interpolation,
    translation-format-truncated,
    translation-fstring-interpolation,
-   translation-not-lazy,
    translation-too-few-args,
    translation-too-many-args,
    translation-unsupported-format,
-   unnecessary-utf8-coding-comment,
    use-vim-comment,
-   website-manifest-key-not-valid-uri,
-   wrong-tabs-instead-of-spaces,
-   xml-attribute-translatable,
-   xml-deprecated-qweb-directive,
-   xml-deprecated-tree-attribute,
-   # xml-syntax-error,
+   website-manifest-key-not-valid-uri
 
 # odoolint disabled because this checks is available just in changed modules in PR conf.
 # import-error Because odoo use incompatible sys-modules https://bitbucket.org/logilab/pylint/issues/616/modules-renamed-with-sysmodules-are-unable
-# nonstandard-exception disabled because we use follow custom exceptions: https://github.com/OCA/maintainer-tools/blob/master/template/module/exceptions.py#L8
 # wrong-import-order: Disabled here but enabled in pr-conf
 # consider-merging-classes-inherited: Disabled here but enabled in pr-conf
-# useless-super-delegation: Disabled here but enabled in pr-conf
 # unsubscriptable-object: TODO: Enabled after fix https://github.com/PyCQA/pylint/issues/811
 # access-member-before-definition: Disable because odoo use decorator to asign variables
 # too-complex: Disabled here but enabled in pr-conf
@@ -191,12 +140,7 @@ disable=abstract-method,
 # docstring-first-line-empty: Disabled here but enabled in pr-conf
 # consider-using-ternary: Disabled because I'm not sure of use even this way (and waiting PyCQA/pylint#1239)
 # inconsistent-return-statements: Disabled because all methods returns "None" by default if is not defined
-# dict-keys-not-iterating: Disabled because we are sending dict.keys() like as valid parameters.
-# dict-values-not-iterating: Disabled because we are checking if a value exists e.g. "value in dict.values()"
 # wrong-import-order: Disabled because this check requires a full installed environment, and MQT is not installing requirements for lints
-# missing-super-argument: Disable because py3 now is supporting super without parameters.
-# old-division: Disable because py3 doesn't require this parameter, but it is checked for this version. Maybe it is a temp bug but I prefer disable it
-# broad-except: It is a valid case when you don't know all custom cases of exception
 # self-cls-assignment: Odoo uses this valid sentence self = self.with_context(...)
 # try-except-raise: Valid case when you want to raise a exception but not another one.
 # raise-missing-from: We are not using this style right now
@@ -324,7 +268,6 @@ disable=abstract-method,
 #   You can just use the new-style class instead. More info here: - http://stackoverflow.com/questions/54867/old-style-and-new-style-classes-in-python
 #   Fix changing "class amount_to_text:" by "class amount_to_text(object):" .
 #W0640 - ("Cell variable defined in loop"). You must not define a local function inside a loop. You can either extract the local function outside the loop into a varaible and then use this variable inside the loop or modify the logic to do not use a local function using another tools like orm methods https://bitbucket.org/logilab/pylint/issue/271/spurious-warning-w0640-issued-for-loop
-# W8201 - incoherent-interpreter-exec-perm: Execute chmod -x myfile.py or delete the interpreter comment #!/bin/BINPATH or if you really want a binary file use: chmod +x myfile.py and add the interpreter comment #!/bin/BINPATH.
 # R1260 - too-complex: To fix it use the following rules https://github.com/FreeCodeCamp/FreeCodeCamp/wiki/The-Return-Early-Pattern
 
 #*** How to fix pylint-odoo***
@@ -349,13 +292,10 @@ disable=abstract-method,
 #W0212 (protected-access) - Odoo use many underscore methods
 #W0221 (arguments-differ) - Odoo 8.0 use decorator and rewrite original function and make this false error.
 #W0223 (abstract-method) - Odoo use abstract method without overriden.
-#W0232 (no-init) - odoo use class without __init__
 #W0511 (fixme) - Used when a warning note as FIXME or TODO is detected. This is not a error.
 #W0613 (unused-argument) odoo use many unused argument. Example cr, uid, name o super method.
-#C0111 (missing-docstring) - Missing docstring http://pylint-messages.wikidot.com/messages:c0111. Too much work. WIP
+#C0111 (missing-*-docstring) - Too much work. WIP
 #C0301 (line-too-long) - Enabled from flake8
-#C0326 (bad-whitespace) - Enabled from flake8
-#C0330 (bad-continuation) - Enabled from flake8
 #R0201 (no-self-use) - Method could be a function http://pylint-messages.wikidot.com/messages:r0201. odoo use many method without decorator.
 #R0902 (too-many-instance-attributes) - Odoo use many initial attributes into __init__ of class myclass: myAttr1
 #R0903 (too-few-public-methods) - odoo use many public methods in classes
@@ -380,12 +320,6 @@ disable=abstract-method,
       # for more information see the following example bad case: https://gist.github.com/moylop260/ec534248e35ab193a84501b8fd96b1fd
 
 #R0915 (too-many-statements) - TODO: Enable if mccabe isn't detect this cases... Can be fixed split method in more mini-function. More info here: http://doc.openerp.co.id/contribute/15_guidelines/coding_guidelines_framework.html#keep-your-methods-short-simple-when-possible
-# basestring-builtin For py27 is valid yet (py3 even use unicode string)
-# unicode-builtin For py27 is valid yet (py3 even use unicode string)
-# map-builtin-not-iterating For py27 map return a list (py3 return a generator)
-# round-builtin For py27 the round is valid yet (py3 return a integer TODO: Enable if you use py3 to check that don't fails)
-# long-builtin For py27 is long is valid yet (py3 merge long and integer TODO: Enable if you use py3 to check that don't fails)
-
 
 [REPORTS]
 msg-template={path}:{line}:{column}: ({symbol}) {msg}

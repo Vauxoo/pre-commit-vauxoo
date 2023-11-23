@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import posixpath
@@ -7,10 +9,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import contextmanager
+from configparser import ConfigParser
+from contextlib import contextmanager, redirect_stdout
 from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
+from io import StringIO
 
 from click.testing import CliRunner
+from pylint.lint import Run
 from yaml import Loader, load
 
 from pre_commit_vauxoo.cli import main
@@ -69,6 +74,16 @@ class TestPreCommitVauxoo(unittest.TestCase):
         else:
             # bypassing for dual compatibility with py<3.4
             yield
+
+    def get_pylint_messages(self):
+        output = StringIO()
+        with self.assertRaises(SystemExit) as ex, redirect_stdout(output):
+            Run(["--load-plugins=pylint.extensions.docstyle,pylint.extensions.mccabe,pylint_odoo", "--list-msgs"])
+        self.assertEqual(ex.exception.code, 0, "There was an error obtaining messages from pylint")
+
+        output.seek(0)
+        output = output.read()
+        return set(re.findall(r"^:([a-z\-]+)", output, re.MULTILINE))
 
     def test_basic(self):
         os.environ["INCLUDE_LINT"] = os.path.join(self.tmp_dir, "module_example1")
@@ -202,6 +217,29 @@ class TestPreCommitVauxoo(unittest.TestCase):
             f_content,
             "random-message was supposed to be disabled through the corresponding environment variable",
         )
+
+    def test_valid_pylintrc_messages(self):
+        pylint_messages = self.get_pylint_messages()
+        rc_files = [
+            os.path.abspath(os.path.join(__file__, "..", "..", "src", "pre_commit_vauxoo", "cfg", pylintrc))
+            for pylintrc in [".pylintrc", ".pylintrc-optional"]
+        ]
+        for rc_file in rc_files:
+            config = ConfigParser()
+            config.read(rc_file)
+            for action in ["enable", "disable"]:
+                if config["MESSAGES CONTROL"][action] == "all":
+                    continue
+
+                messages = config["MESSAGES CONTROL"][action].split(",\n")
+                duplicates = set()
+                messages_set = set()
+                for message in messages:
+                    self.assertIn(message, pylint_messages, f"{message} in {rc_file} is not a valid message")
+                    self.assertNotIn(message, messages_set, f"Duplicate '{message}' in {rc_file}")
+                    messages_set.add(message)
+
+                self.assertFalse(duplicates, f"Duplicate messages found in {rc_file}")
 
 
 if __name__ == "__main__":
