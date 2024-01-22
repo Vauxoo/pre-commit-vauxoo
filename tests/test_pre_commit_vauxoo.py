@@ -26,7 +26,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         super().setUp()
         self.old_environ = os.environ.copy()
         self.original_work_dir = os.getcwd()
-        self.tmp_dir = tempfile.mkdtemp(suffix="_pre_commit_vauxoo")
+        self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_pre_commit_vauxoo"))
         os.chdir(self.tmp_dir)
         self.runner = CliRunner()
         src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
