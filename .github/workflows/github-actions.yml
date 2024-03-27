@@ -10,6 +10,11 @@ on:
   pull_request:
     branches:
       - main
+
+env:
+  CACHE_VERSION: 1
+  PRE_COMMIT_CACHE: ~/.cache/pre-commit
+
 jobs:
   deployv:
     runs-on: ubuntu-latest
@@ -34,17 +39,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.8', '3.9', '3.10', '3.11']
+        python: ['3.8', '3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ['py']
         include:
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'lint'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'docs'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'build'
     steps:
@@ -56,7 +61,7 @@ jobs:
       id: cache-pre-commit
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pre-commit
+        path: ${{ env.PRE_COMMIT_CACHE }}
         key: ${{ runner.os }}-py${{ matrix.python }}-pre-commit
     - uses: actions/checkout@v3
       with:
