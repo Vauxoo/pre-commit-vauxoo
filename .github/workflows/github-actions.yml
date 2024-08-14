@@ -120,7 +120,7 @@ jobs:
     #       --repository-url https://test.pypi.org/legacy/ dist/* || true
     - name: codecov
       if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: false  # TODO: Set true after fix token for win&macosx
         verbose: true
