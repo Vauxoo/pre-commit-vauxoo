@@ -3,11 +3,12 @@ bump2version
 coverage
 pbr
 pre-commit
+pylint-odoo
 pytest
 pytest-cov
 pytest-xdist
+pyyaml
+setuptools >=42
 tox
 twine
 wheel
-pyyaml
-pylint-odoo
