@@ -52,6 +52,12 @@ repos:
           # - --fix
   - repo: local
     hooks:
+      - id: name-non-ascii
+        name: Use only ASCII (no accents or special characters) for filenames and directory names
+        description: It may raise errors on OS without locale settings configured
+        entry: Use only ASCII (no accents or special characters) for filenames and directory names
+        language: fail
+        files: '[^\x00-\x7F]'
       - id: vx-check-deactivate
         name: deactivate.jinja syntax check.
         description: Validate deactivate.jinja files' syntax.
