@@ -241,6 +241,30 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
                 self.assertFalse(duplicates, f"Duplicate messages found in {rc_file}")
 
+    def test_special_char_filename(self):
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
+        fname_wrong = os.path.join(self.tmp_dir, "module_example1", "leéme.rst")
+        with open(fname_wrong, "w"):
+            pass
+        subprocess.check_call(["git", "add", "-A"])
+        expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+            result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 1, "Exited without error")
+
+    def test_special_char_dirname(self):
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
+        dirname_wrong = os.path.join(self.tmp_dir, "module_example1", "moisé")
+        os.mkdir(dirname_wrong)
+        fname = os.path.join(dirname_wrong, "empty_file.txt")
+        with open(fname, "w"):
+            pass
+        subprocess.check_call(["git", "add", "-A"])
+        expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+            result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 1, "Exited without error")
+
 
 if __name__ == "__main__":
     unittest.main()
