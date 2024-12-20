@@ -34,13 +34,14 @@ repos:
       - id: flake8
         name: flake8 mandatory checks
   - repo: https://github.com/OCA/pylint-odoo
-    rev: v9.0.5
+    rev: v9.2.0
     hooks:
       - id: pylint_odoo
         name: pylint mandatory checks
         args:
           # External scripts
           - --disable=R0000
+          - --jobs=0  # 0 will auto-detect the number of processors available to use
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.51.0
     hooks:
