@@ -92,6 +92,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update -qq
+        sudo rm -rf /var/lib/man-db/auto-update  # Avoid unnecessary time-consuming "Processing triggers for man-db" after using "apt install"
         sudo apt install -y libecpg-dev  # Required for vx-check-deactivate hook
     - name: Test == windows
       if: runner.os == 'Windows'
