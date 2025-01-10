@@ -77,6 +77,10 @@ def get_uninstallable_modules(src_path) -> set:
     return results
 
 
+# copy_cfg_files has too many "for-if" sentences
+# because it is a switch-case dummy logic
+# TODO: Migrate this method to use configuration files with jinja template
+# pylint: disable=too-complex
 def copy_cfg_files(
     precommit_config_dir,
     repo_dirname,
@@ -87,6 +91,7 @@ def copy_cfg_files(
     exclude_autofix,
     skip_string_normalization,
     odoo_version,
+    py_version,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -139,6 +144,8 @@ def copy_cfg_files(
                 if fname.startswith(".pylintrc"):
                     if "# External scripts odoo_lint replace" in line and odoo_version:
                         line += "valid-odoo-version=%s\n" % odoo_version
+                    elif py_version and line.startswith("# External scripts main replace"):
+                        line += f"py-version={py_version}\n"
                 fdst.write(line)
 
 
@@ -184,6 +191,7 @@ def main(
     install,
     skip_string_normalization,
     odoo_version,
+    py_version,
     do_exit=True,
 ):
     show_version()
@@ -215,6 +223,7 @@ def main(
         exclude_autofix,
         skip_string_normalization,
         odoo_version,
+        py_version,
     )
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
