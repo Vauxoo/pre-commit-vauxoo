@@ -30,7 +30,8 @@ jobs:
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
         run: >-
           pip3 install --ignore-installed -U . &&
-          pip3 install --force-reinstall --no-deps .
+          pip3 install --force-reinstall --no-deps . &&
+          git config --global --add safe.directory '*'
       - name: Run pre-commit-vauxoo
         run: pre-commit-vauxoo
   test:
