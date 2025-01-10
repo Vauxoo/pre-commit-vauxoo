@@ -128,11 +128,14 @@ def copy_cfg_files(
                     if fname == ".pre-commit-config-autofix.yaml" and exclude_autofix:
                         _logger.info("Applying EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
                         line += "    %s\n" % exclude_autofix_regex
-                if pylint_disable_checks and fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
-                    _logger.info(
-                        "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
-                    )
-                    line = line.replace("R0000", ",".join(pylint_disable_checks))
+                if fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
+                    if pylint_disable_checks:
+                        _logger.info(
+                            "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
+                        )
+                        line = line.replace("R0000", ",".join(pylint_disable_checks))
+                    else:
+                        line = ""
                 if oca_hooks_disable_checks and fname.startswith(".oca_hooks.cfg") and "disable=" in line:
                     _logger.info(
                         "Disabling the following oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s",

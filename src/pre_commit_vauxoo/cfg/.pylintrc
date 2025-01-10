@@ -1,4 +1,4 @@
-[MASTER]
+[MAIN]
 ignore=CVS,.git,scenarios,LICENSE,*.md
 persistent=yes
 # This extension are not used for this configuration file but are useful to process disable comments based on these ones
@@ -65,6 +65,7 @@ disable=abstract-method,
    too-many-branches,
    too-many-function-args,
    too-many-instance-attributes,
+   too-many-positional-arguments,
    too-many-statements,
    try-except-raise,
    unexpected-keyword-arg,
@@ -158,6 +159,7 @@ disable=abstract-method,
 # ungrouped-imports: We uses a lot "from odoo import fields;from odoo.tools import ..." so it is a valid case for us
 # duplicate-code: Enable after fix https://github.com/PyCQA/pylint/issues/214
 # assignment-from-no-return: pylint doesn't have the full context of all modules even we could return the same
+# useless-option-value: Raises error when a check doesn't exists but what about multi-compatibility
 
 #***Enabled and how to fix***
 #E1103 - maybe-no-member

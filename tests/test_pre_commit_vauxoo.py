@@ -36,7 +36,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     def create_dummy_repo(self, src_path, dest_path):
         copy_tree(src_path, dest_path)
-        subprocess.check_call(["git", "init", dest_path])
+        subprocess.check_call(["git", "init", dest_path, "--initial-branch=main"])
         # Notice we needed a previous os.chdir to repository directory
         subprocess.check_call(["git", "add", "-A"])
 
@@ -228,7 +228,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
             config = ConfigParser()
             config.read(rc_file)
             for action in ["enable", "disable"]:
-                if config["MESSAGES CONTROL"][action] == "all":
+                if "all" in config["MESSAGES CONTROL"][action].split(","):
                     continue
 
                 messages = config["MESSAGES CONTROL"][action].split(",\n")
