@@ -54,11 +54,13 @@ def check_deactivate(fname_deactivate, instance_types=None):
             # Return instead of continue because the package is not installed
             return res
         if not res:
+            only_msg = msg
+            sql_line_error = sql
             error_re = re.search(r"^line (\d+): ([^/]+)", msg)
             if error_re:
                 sql_lineno, only_msg = error_re.groups()
                 sql_lineno = int(sql_lineno)
-            sql_line_error = "\n".join(sql.splitlines()[sql_lineno - 1 : sql_lineno])  # noqa: E203
+                sql_line_error = "\n".join(sql.splitlines()[sql_lineno - 1 : sql_lineno])
             print(
                 "%s->json->sql instance_type=%s - %s\n\t%s\nsql content:\n%s"
                 % (fname_deactivate, instance_type, only_msg, sql_line_error, sql)

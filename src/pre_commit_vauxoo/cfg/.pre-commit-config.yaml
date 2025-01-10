@@ -34,11 +34,12 @@ repos:
       - id: flake8
         name: flake8 mandatory checks
   - repo: https://github.com/OCA/pylint-odoo
-    rev: v9.2.0
+    rev: v9.3.2
     hooks:
       - id: pylint_odoo
         name: pylint mandatory checks
         args:
+          - --rcfile=.pylintrc
           # External scripts
           - --disable=R0000
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
