@@ -4,6 +4,7 @@ persistent=yes
 # This extension are not used for this configuration file but are useful to process disable comments based on these ones
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
 extension-pkg-whitelist=lxml
+# External scripts main replace
 
 [ODOOLINT]
 readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"

@@ -303,6 +303,13 @@ PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
     help="Odoo version used for the repository.",
     **new_extra_kwargs,
 )
+@click.option(
+    "--py-version",
+    envvar="TRAVIS_PYTHON_VERSION",
+    type=click.STRING,
+    help="Python version used for the repository.",
+    **new_extra_kwargs,
+)
 def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     version = kwargs.pop("version", None)

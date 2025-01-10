@@ -3,6 +3,7 @@ profile=no
 ignore=CVS,.git,scenarios,.bzr
 persistent=yes
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
+# External scripts main replace
 
 [ODOOLINT]
 readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
