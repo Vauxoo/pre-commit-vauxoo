@@ -186,6 +186,21 @@ To run all the tests run::
 
     tox
 
+Use extra parameters to change the test behaviour.
+
+e.g. particular python version::
+
+    tox -e py310
+
+e.g. particular unittest method::
+
+    tox -e py310 -- -k test_basic
+
+e.g. all the tests at the same time in parallel::
+
+    tox -p auto
+
+
 Note, to combine the coverage data from all the tox environments run:
 
 .. list-table::
