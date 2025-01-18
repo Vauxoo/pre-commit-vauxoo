@@ -29,7 +29,7 @@ default_language_version:
   node: "14.13.0"
 repos:
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         name: flake8 mandatory checks
@@ -45,7 +45,7 @@ repos:
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.51.0
+    rev: v9.18.0
     hooks:
       - id: eslint
         name: javascript mandatory checks
@@ -70,14 +70,15 @@ repos:
         types: [text]
         files: (^deactivate\.jinja$|/data/neutralize\.sql$)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
-      - id: debug-statements
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs
+      - id: check-json
       - id: check-merge-conflict
         # exclude files where underlines are not distinguishable from merge conflicts
         exclude: /README\.rst$|^docs/.*\.rst$
       - id: check-symlinks
       - id: check-xml
+      - id: debug-statements
