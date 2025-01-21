@@ -27,7 +27,7 @@ exclude: |
   )
 default_language_version:
   python: python3
-  node: "14.13.0"
+  node: "23.6.0"
 repos:
   - repo: https://github.com/psf/black-pre-commit-mirror.git
     rev: 24.10.0
@@ -85,15 +85,25 @@ repos:
     hooks:
       - id: remove-tabs
         exclude: (Makefile|debian/rules|.gitmodules|\.po|\.pot)(\.in)?$
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.18.0
+  - repo: local
     hooks:
       - id: eslint
-        name: javascript lints
+        name: eslint
+        entry: eslint
         args:
           - --color
-          - --config=.eslintrc.json
+          - --config=.eslint.config.cjs
           - --fix
+        verbose: true
+        types: [javascript]
+        language: node
+        additional_dependencies:
+          - eslint@9.18.0
+          - eslint-plugin-jsdoc@50.3.1
+          - eslint-config-google@0.7.1
+          - eslint-loader@1.6.1
+          - eslint-plugin-react@6.10.3
+          - babel-eslint@6.1.2
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
     rev: v0.1.4
     hooks:
