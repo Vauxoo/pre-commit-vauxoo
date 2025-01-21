@@ -92,7 +92,7 @@ repos:
         entry: eslint
         args:
           - --color
-          - --config=.eslint.config.cjs
+          - --config=.eslintrc.cjs
           - --fix
         verbose: true
         types: [javascript]
