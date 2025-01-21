@@ -26,7 +26,7 @@ exclude: |
   )
 default_language_version:
   python: python3
-  node: "14.13.0"
+  node: "23.6.0"
 repos:
   - repo: https://github.com/PyCQA/flake8
     rev: 7.1.1
@@ -44,15 +44,24 @@ repos:
           - --disable=R0000
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.18.0
+  - repo: local
     hooks:
       - id: eslint
-        name: javascript mandatory checks
+        name: eslint
+        entry: eslint
         args:
           - --color
-          - --config=.eslintrc.json
-          # - --fix
+          - --config=.eslint.config.cjs
+        verbose: true
+        types: [javascript]
+        language: node
+        additional_dependencies:
+          - eslint@9.18.0
+          - eslint-plugin-jsdoc@50.3.1
+          - eslint-config-google@0.7.1
+          - eslint-loader@1.6.1
+          - eslint-plugin-react@6.10.3
+          - babel-eslint@6.1.2
   - repo: local
     hooks:
       - id: name-non-ascii
