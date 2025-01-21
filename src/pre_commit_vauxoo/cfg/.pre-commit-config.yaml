@@ -57,11 +57,6 @@ repos:
         language: node
         additional_dependencies:
           - eslint@9.18.0
-          - eslint-plugin-jsdoc@50.3.1
-          - eslint-config-google@0.7.1
-          - eslint-loader@1.6.1
-          - eslint-plugin-react@6.10.3
-          - babel-eslint@6.1.2
   - repo: local
     hooks:
       - id: name-non-ascii
