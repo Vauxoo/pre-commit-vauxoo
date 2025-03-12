@@ -12,8 +12,15 @@ import sys
 from jinja2 import Environment, Template, meta
 from pgsanity import pgsanity
 
+# Based on https://git.vauxoo.com/deployv/deployv/blob/330144c3d7848a60ce/deployv/instance/instancev.py#L101
 INSTANCE_TYPES = ["test", "develop", "updates"]
-VALID_VARIABLES = {"instance_type"}
+# Based on https://git.vauxoo.com/deployv/orchest/blob/0d2dfca2e1dd6d3268f149/orchestv/models/deploy_deploy.py#L1252
+# It is parsed from https://git.vauxoo.com/deployv/deployv/blob/330144c3d7848a60/deployv/instance/instancev.py#L1638
+VALID_VARIABLES = {"instance_type", "nginx_url"}
+VALID_VARIABLES_CODE = (
+    "https://github.com/Vauxoo/pre-commit-vauxoo/blob/6f4828c192849804"
+    "/src/pre_commit_vauxoo/hooks/check_deactivate_jinja.py#L16"
+)
 
 
 def check_deactivate(fname_deactivate, instance_types=None):
@@ -71,8 +78,8 @@ def check_deactivate(fname_deactivate, instance_types=None):
         invalid_variables = meta.find_undeclared_variables(parsed_content) - VALID_VARIABLES
         if invalid_variables:
             print(
-                "%s - There are invalid variables: (%s). Expected: (%s)"
-                % (fname_deactivate, ", ".join(invalid_variables), ", ".join(VALID_VARIABLES))
+                "%s - There are invalid variables: (%s). Expected: (%s). Please, add your variable to %s"
+                % (fname_deactivate, ", ".join(invalid_variables), ", ".join(VALID_VARIABLES), VALID_VARIABLES_CODE)
             )
             return False
 
