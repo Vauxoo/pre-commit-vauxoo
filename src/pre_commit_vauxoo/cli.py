@@ -18,6 +18,7 @@ Why does this file exist, and why not put this in __main__?
 import contextlib
 import os
 import subprocess
+from importlib.metadata import version as version_meth
 
 import click
 
@@ -47,14 +48,20 @@ def env_clear():
 
 def monkey_patch_make_context():
     """monkey patch to run source variables.sh before to parse the click.options"""
-    original_make_context = click.core.BaseCommand.make_context
+    try:
+        # Fix DeprecationWarning: 'BaseCommand' is deprecated and will be removed in Click 9.0. Use 'Command' instead.
+        command = click.core.Command
+    except AttributeError:
+        command = click.core.BaseCommand
+
+    original_make_context = command.make_context
 
     def custom_make_context(*args, **kwargs):
         with env_clear():
             source_variables()
             return original_make_context(*args, **kwargs)
 
-    click.core.BaseCommand.make_context = custom_make_context
+    command.make_context = custom_make_context
 
 
 def strcsv2tuple(strcsv, lower=False):
@@ -157,7 +164,7 @@ def precommit_hooks_type_callback(ctx, param, value):
 
 new_extra_kwargs = {}
 try:
-    if tuple(map(int, click.__version__.split("."))) >= (7, 0):
+    if tuple(map(int, version_meth("click").split("."))) >= (7, 0):
         # It is only compatible for click >= 7.0 but it is not a big deal if it is not enabled
         # For record, dockerv image is using click 6.6 version
         new_extra_kwargs["show_envvar"] = True
