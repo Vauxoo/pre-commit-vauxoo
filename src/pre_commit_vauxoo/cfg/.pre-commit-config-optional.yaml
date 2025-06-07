@@ -68,3 +68,12 @@ repos:
           - --ini=.bandit
         # reduce the INFO logger
         require_serial: true
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: v9.3.7
+    hooks:
+      - id: pylint_odoo
+        name: pylint EXPERIMENTAL checks (Won't affect CI status)!
+        verbose: True  # exit-zero needs verbose
+        args:
+          - --rcfile=.pylintrc-experimental
+          - --exit-zero
