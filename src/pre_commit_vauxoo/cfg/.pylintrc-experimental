@@ -1,0 +1,15 @@
+[MAIN]
+ignore=CVS,.git,scenarios,.bzr
+persistent=yes
+load-plugins=pylint_odoo
+
+[MESSAGES CONTROL]
+disable=all,unknown-option-value
+enable=no-search-all
+
+[REPORTS]
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
+output-format=colorized
+reports=no
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+score=no
