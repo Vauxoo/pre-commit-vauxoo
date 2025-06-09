@@ -4,7 +4,8 @@ coverage
 pbr
 pre-commit
 pylint-odoo
-pytest
+pytest ; python_version < '3.13'
+pytest<8.3.5  ; python_version >= '3.13' # Latest pytest==8.3.5 and py3.13 raises "ResourceWarning: unclosed database in sqlite3.Connection" and "pytest.PytestUnraisableExceptionWarning"
 pytest-cov
 pytest-xdist
 pyyaml
