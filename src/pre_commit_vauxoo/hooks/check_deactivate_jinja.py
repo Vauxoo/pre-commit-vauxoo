@@ -23,13 +23,29 @@ VALID_VARIABLES_CODE = (
 )
 
 
-def check_deactivate(fname_deactivate, instance_types=None):
+def check_json_variables(fname_deactivate):
+    env = Environment()
+    with open(fname_deactivate) as f_deactivate:
+        deactivate_content = f_deactivate.read()
+    parsed_content = env.parse(deactivate_content)
+    invalid_variables = meta.find_undeclared_variables(parsed_content) - VALID_VARIABLES
+    if invalid_variables:
+        print(
+            "%s - There are invalid variables: (%s). Expected: (%s). Please, add your variable to %s"
+            % (fname_deactivate, ", ".join(invalid_variables), ", ".join(VALID_VARIABLES), VALID_VARIABLES_CODE)
+        )
+        return False
+    return True
+
+
+def json2sql(fname_deactivate, instance_types=None):
     if instance_types is None:
         instance_types = INSTANCE_TYPES
     with open(fname_deactivate) as f_deactivate:
         deactivate_content = f_deactivate.read()
     jinja_tmpl = Template(deactivate_content)
     res = True
+    sql = ""
     for instance_type in instance_types:
         json_content = jinja_tmpl.render(instance_type=instance_type)
         try:
@@ -43,47 +59,50 @@ def check_deactivate(fname_deactivate, instance_types=None):
             res = False
             continue
 
-        sql = ";\n".join(json_obj.values()) + ";"
-        try:
-            res, msg = pgsanity.check_string(sql)
-        except OSError as oserr:
-            res = False
-            if platform.system() == "Darwin":
-                # MACOSX
-                msg = "'brew install postgresql'"
-            elif os.name == "posix":
-                # LINUX
-                msg = "'apt install -y libecpg-dev'"
-            else:
-                # WINDOWS
-                msg = "Install postgresql and add to PATH the PGBIN folder"
-            print("%s - %s" % (oserr, msg))
-            # Return instead of continue because the package is not installed
-            return res
-        if not res:
-            only_msg = msg
-            sql_line_error = sql
-            error_re = re.search(r"^line (\d+): ([^/]+)", msg)
-            if error_re:
-                sql_lineno, only_msg = error_re.groups()
-                sql_lineno = int(sql_lineno)
-                sql_line_error = "\n".join(sql.splitlines()[sql_lineno - 1 : sql_lineno])
-            print(
-                "%s->json->sql instance_type=%s - %s\n\t%s\nsql content:\n%s"
-                % (fname_deactivate, instance_type, only_msg, sql_line_error, sql)
-            )
-            return res
-        env = Environment()
-        parsed_content = env.parse(deactivate_content)
-        invalid_variables = meta.find_undeclared_variables(parsed_content) - VALID_VARIABLES
-        if invalid_variables:
-            print(
-                "%s - There are invalid variables: (%s). Expected: (%s). Please, add your variable to %s"
-                % (fname_deactivate, ", ".join(invalid_variables), ", ".join(VALID_VARIABLES), VALID_VARIABLES_CODE)
-            )
-            return False
+        sql += ";\n".join(json_obj.values()) + ";"
+    return (sql, res)
 
-    return res
+
+def check_deactivate(fname_deactivate, instance_types=None):
+    json_res = True
+    json_var_res = True
+    ext = os.path.splitext(fname_deactivate)[1].lower()
+    if ext == ".jinja":
+        sql, json_res = json2sql(fname_deactivate, instance_types)
+        json_var_res = check_json_variables(fname_deactivate)
+    elif ext == ".sql":
+        with open(fname_deactivate) as f_neutralize:
+            sql = f_neutralize.read()
+    else:
+        print(f"File extension {fname_deactivate} not supported")
+        return False
+    try:
+        res, msg = pgsanity.check_string(sql)
+    except OSError as oserr:
+        res = False
+        if platform.system() == "Darwin":
+            # MACOSX
+            msg = "'brew install postgresql'"
+        elif os.name == "posix":
+            # LINUX
+            msg = "'apt install -y libecpg-dev'"
+        else:
+            # WINDOWS
+            msg = "Install postgresql and add to PATH the PGBIN folder"
+        print("%s - %s" % (oserr, msg))
+    if not res:
+        only_msg = msg
+        sql_line_error = sql
+        error_re = re.search(r"^line (\d+): ([^/]+)", msg)
+        line_to_show = 1  # json not match sql lineno but sql
+        if error_re:
+            sql_lineno, only_msg = error_re.groups()
+            sql_lineno = int(sql_lineno)
+            sql_line_error = "\n".join(sql.splitlines()[sql_lineno - 1 : sql_lineno])
+            if ext == ".sql":
+                line_to_show = sql_lineno - 1
+        print("%s:%s - %s\n\t%s\nsql content:\n%s" % (fname_deactivate, line_to_show, only_msg, sql_line_error, sql))
+    return all((res, json_res, json_var_res))
 
 
 def main():

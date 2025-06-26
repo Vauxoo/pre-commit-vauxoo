@@ -62,13 +62,13 @@ repos:
         language: fail
         files: '[^\x00-\x7F]'
       - id: vx-check-deactivate
-        name: deactivate.jinja syntax check.
-        description: Validate deactivate.jinja files' syntax.
+        name: deactivate.jinja and neutralize.sql syntax check.
+        description: Validate deactivate.jinja and neutralize.sql files' syntax.
         entry: vx-check-deactivate
         args: []
         language: python
-        types: [jinja]
-        files: ^deactivate\.jinja$
+        types: [text]
+        files: (^deactivate\.jinja$|/data/neutralize\.sql$)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
