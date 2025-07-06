@@ -13,6 +13,8 @@ manifest-required-authors=Vauxoo,
    Jarsa,
 manifest-required-keys=license,installable
 manifest-deprecated-keys=description,active
+manifest-required-keys-app=
+odoo-required-files=
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
@@ -44,6 +46,7 @@ disable=abstract-method,
    import-self,
    implicit-str-concat,
    inconsistent-return-statements,
+   invalid-email,
    keyword-arg-before-vararg,
    line-too-long,
    locally-disabled,
