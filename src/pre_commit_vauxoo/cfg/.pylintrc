@@ -357,7 +357,6 @@ method-rgx=([a-z_][a-z0-9_]{2,59}|addTypeEqualityFunc|addCleanup|setUp|setUpClas
 attr-rgx=[a-z_][a-z0-9_]{2,59}$
 argument-rgx=([a-z_][a-z0-9_]{2,59}$)
 variable-rgx=[a-z_][a-z0-9_]{1,59}$
-class-const-naming-style=snake_case
 inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 good-names=_,cr,uid,id,ids,_logger,o,e,i,k,v,checks,fast_suite,maxDiff
 bad-names=

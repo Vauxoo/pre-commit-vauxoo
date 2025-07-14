@@ -63,7 +63,6 @@ setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
@@ -85,7 +84,7 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=generate_dependencies(),
     extras_require={
         # eg:
