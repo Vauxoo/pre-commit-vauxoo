@@ -174,8 +174,8 @@ except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
 monkey_patch_make_context()
 
 
-PRECOMMIT_HOOKS_TYPE = ["mandatory", "optional", "fix", "experimental"]
-PRECOMMIT_HOOKS_TYPE += ["all"] + ["-%s" % i for i in PRECOMMIT_HOOKS_TYPE]
+_BASE_HOOK_TYPES = ["mandatory", "optional", "fix", "experimental"]
+PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HOOK_TYPES]
 
 
 @click.command()
