@@ -26,7 +26,7 @@ jobs:
       PIP_CACHE_DIR: "/root/.cache/pip"
       PRE_COMMIT_HOME: "/root/.cache/pre-commit"
     steps:
-      - uses: actions/checkout@v4.1.2
+      - uses: actions/checkout@v4
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
         run: >-
           pip3 install --ignore-installed -U . &&
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14-dev']
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         tox_env: ['py']
         include:
@@ -72,10 +72,10 @@ jobs:
       with:
         path: ${{ env.PRE_COMMIT_CACHE }}
         key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
-    - uses: actions/checkout@v4.1.2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v5.0.0
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
         architecture: 'x64'
