@@ -40,17 +40,17 @@ repos:
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.1.4
+    rev: v0.1.6
     hooks:
       - id: oca-checks-odoo-module
       - id: oca-checks-po
   - repo: https://github.com/PyCQA/doc8
-    rev: v1.1.2
+    rev: v2.0.0
     hooks:
       - id: doc8
         name: RST lint
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
       - id: flake8
         name: flake8 + bugbear optional checks
@@ -58,7 +58,7 @@ repos:
         args:
           - --config=.flake8-optional
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.2
+    rev: 1.8.6
     hooks:
       - id: bandit
         name: bandit EXPERIMENTAL (Won't affect CI status)!
