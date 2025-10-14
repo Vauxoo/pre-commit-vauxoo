@@ -5,7 +5,8 @@ load-plugins=pylint_odoo
 
 [MESSAGES CONTROL]
 disable=all,unknown-option-value
-enable=no-search-all
+enable=manifest-superfluous-key,
+   no-search-all
 
 [REPORTS]
 msg-template={path}:{line}:{column}: ({symbol}) {msg}

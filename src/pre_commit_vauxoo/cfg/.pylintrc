@@ -55,7 +55,6 @@ disable=abstract-method,
    missing-function-docstring,
    no-member,
    no-name-in-module,
-   no-search-all,
    no-value-for-parameter,
    odoo-exception-warning,
    protected-access,
@@ -88,6 +87,9 @@ disable=abstract-method,
    useless-suppression,
    wrong-import-order,
    wrong-import-position,
+   # Disabled here because enabled from Experimental
+   manifest-superfluous-key,
+   no-search-all,
    # odoolint disable all to be enabled from optional
    # Comment to enable
    attribute-deprecated,
