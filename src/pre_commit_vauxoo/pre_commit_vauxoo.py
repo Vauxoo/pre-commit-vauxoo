@@ -92,6 +92,7 @@ def copy_cfg_files(
     skip_string_normalization,
     odoo_version,
     py_version,
+    is_project_for_apps,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -149,6 +150,8 @@ def copy_cfg_files(
                         line += "valid-odoo-version=%s\n" % odoo_version
                     elif py_version and line.startswith("# External scripts main replace"):
                         line += f"py-version={py_version}\n"
+                    elif "# Checks for modules with price" in line and is_project_for_apps:
+                        line = ""
                 fdst.write(line)
 
 
@@ -195,6 +198,7 @@ def main(
     skip_string_normalization,
     odoo_version,
     py_version,
+    is_project_for_apps,
     do_exit=True,
 ):
     show_version()
@@ -227,6 +231,7 @@ def main(
         skip_string_normalization,
         odoo_version,
         py_version,
+        is_project_for_apps,
     )
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]

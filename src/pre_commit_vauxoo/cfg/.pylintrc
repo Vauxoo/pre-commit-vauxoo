@@ -13,13 +13,12 @@ manifest-required-authors=Vauxoo,
    Jarsa,
 manifest-required-keys=license,installable
 manifest-deprecated-keys=description,active
-manifest-required-keys-app=
-odoo-required-files=
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
 enable=all
 disable=abstract-method,
+   category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps). This line is deleted if the flag --is-project-for-apps is enabled
    access-member-before-definition,
    arguments-differ,
    arguments-renamed,
@@ -46,7 +45,6 @@ disable=abstract-method,
    import-self,
    implicit-str-concat,
    inconsistent-return-statements,
-   invalid-email,
    keyword-arg-before-vararg,
    line-too-long,
    locally-disabled,
@@ -109,7 +107,6 @@ disable=abstract-method,
    manifest-deprecated-key,
    manifest-maintainers-list,
    manifest-required-author,
-   manifest-required-key,
    manifest-version-format,
    method-compute,
    method-inverse,
