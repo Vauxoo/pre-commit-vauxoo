@@ -225,13 +225,12 @@ class TestPreCommitVauxoo(unittest.TestCase):
             for pylintrc in [".pylintrc", ".pylintrc-optional"]
         ]
         for rc_file in rc_files:
-            config = ConfigParser()
+            config = ConfigParser(inline_comment_prefixes=("#", ";"))
             config.read(rc_file)
             for action in ["enable", "disable"]:
                 if "all" in config["MESSAGES CONTROL"][action].split(","):
                     continue
-
-                messages = config["MESSAGES CONTROL"][action].split(",\n")
+                messages = [val.strip() for val in config["MESSAGES CONTROL"][action].split(",")]
                 duplicates = set()
                 messages_set = set()
                 for message in messages:
@@ -264,6 +263,37 @@ class TestPreCommitVauxoo(unittest.TestCase):
         with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
             result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 1, "Exited without error")
+
+    def test_apps_checks_disable(self):
+        os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+            f_content = pylintrc.read()
+        self.assertNotIn(
+            "category-allowed-app",
+            f_content,
+            "app check disabled for a project for apps",
+        )
+
+        os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+            f_content = pylintrc.read()
+        self.assertIn(
+            "category-allowed-app",
+            f_content,
+            "app check enabled for a project for non apps",
+        )
+
+        os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
+        self.runner.invoke(main, [])
+        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+            f_content = pylintrc.read()
+        self.assertIn(
+            "category-allowed-app",
+            f_content,
+            "app check enabled for a project for non apps (default value)",
+        )
 
 
 if __name__ == "__main__":

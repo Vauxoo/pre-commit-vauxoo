@@ -317,6 +317,14 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     help="Python version used for the repository.",
     **new_extra_kwargs,
 )
+@click.option(
+    "--is-project-for-apps",
+    type=click.BOOL,
+    default=False,
+    help="It is a project for apps (manifest with price) enabling special pylint checks",
+    envvar="PRECOMMIT_IS_PROJECT_FOR_APPS",
+    **new_extra_kwargs,
+)
 def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     version = kwargs.pop("version", None)
