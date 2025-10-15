@@ -5,7 +5,6 @@ load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
 # External scripts main replace
 
 [ODOOLINT]
-readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
 license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     GPL-3,GPL-3 or any later version,LGPL-3,
     Other OSI approved licence,Other proprietary,
@@ -13,10 +12,7 @@ license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
 manifest-required-authors=Vauxoo,
   Odoo Community Association (OCA),
   Jarsa,
-manifest-required-keys=license
 manifest-deprecated-keys=description,active
-manifest-required-keys-app=
-odoo-required-files=
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
