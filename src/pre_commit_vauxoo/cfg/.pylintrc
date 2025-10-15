@@ -11,7 +11,7 @@ readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/templat
 manifest-required-authors=Vauxoo,
    Odoo Community Association (OCA),
    Jarsa,
-manifest-required-keys=license,installable
+manifest-required-keys=license
 manifest-deprecated-keys=description,active
 # External scripts odoo_lint replace
 
