@@ -92,8 +92,12 @@ repos:
           - --config=.eslintrc.json
           - --fix
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.1.4
+    rev: v0.1.8
     hooks:
+      - id: oca-checks-odoo-module
+        args:
+          - --config=.oca_hooks-autofix.cfg
+          - --fix
       - id: oca-checks-po
         args:
           - --config=.oca_hooks-autofix.cfg
