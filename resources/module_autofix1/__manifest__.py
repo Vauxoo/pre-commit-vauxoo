@@ -22,4 +22,5 @@
     'demo': [
         'demo/demo.xml',
     ],
+    'installable': True,
 }
