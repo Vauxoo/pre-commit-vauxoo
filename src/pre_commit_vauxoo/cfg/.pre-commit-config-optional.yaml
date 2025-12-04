@@ -40,7 +40,7 @@ repos:
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.2.0
+    rev: v0.2.2
     hooks:
       - id: oca-checks-odoo-module
       - id: oca-checks-po

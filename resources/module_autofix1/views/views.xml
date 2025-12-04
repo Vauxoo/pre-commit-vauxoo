@@ -56,4 +56,5 @@
     <menuitem name="Server to list" id="module_warnings1" parent="module_warnings1.menu_2"
               action="module_warnings1.action_server"/>
 -->
+  <menuitem name="module_warnings1" id="module_autofix1.menu_root" />
 </odoo>
