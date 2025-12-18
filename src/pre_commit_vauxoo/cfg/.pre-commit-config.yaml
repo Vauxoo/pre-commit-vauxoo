@@ -68,7 +68,7 @@ repos:
         args: []
         language: python
         types: [text]
-        files: (^deactivate\.jinja$|/data/neutralize\.sql$)
+        files: (^deactivate\.jinja$|/data/neutralize\.sql$|^deactivate\_neutralize\.jinja$)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
