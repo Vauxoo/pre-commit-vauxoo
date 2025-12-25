@@ -1,4 +1,4 @@
-name: build
+hename: build
 on:
   # Trigger the workflow on push or pull request,
   # but only for the main branch
@@ -11,9 +11,9 @@ on:
     branches:
       - main
 
-env:
-  CACHE_VERSION: 1
-  PRE_COMMIT_CACHE: ~/.cache/pre-commit
+# env:
+#   CACHE_VERSION: 1
+#   PRE_COMMIT_CACHE: ~/.cache/pre-commit
 
 jobs:
   deployv:
@@ -23,8 +23,8 @@ jobs:
       options: --user root
     name: docker vauxoo light image
     env:
-      PIP_CACHE_DIR: "/root/.cache/pip"
-      PRE_COMMIT_HOME: "/root/.cache/pre-commit"
+      # PIP_CACHE_DIR: "/root/.cache/pip"
+      # PRE_COMMIT_HOME: "/root/.cache/pre-commit"
     steps:
       - uses: actions/checkout@v4
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
@@ -67,12 +67,12 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         git config --global core.autocrlf false
-    - name: Cache pre-commit packages
-      id: cache-pre-commit
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.PRE_COMMIT_CACHE }}
-        key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
+    # - name: Cache pre-commit packages
+    #   id: cache-pre-commit
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ${{ env.PRE_COMMIT_CACHE }}
+    #     key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -80,7 +80,7 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
         architecture: 'x64'
-        cache: 'pip'
+        # cache: 'pip'
     - name: Install system dependencies (Linux only)
       if: runner.os == 'Linux'
       run: |
