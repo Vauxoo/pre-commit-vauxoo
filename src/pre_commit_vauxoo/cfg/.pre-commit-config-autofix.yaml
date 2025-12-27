@@ -73,7 +73,7 @@ repos:
           - --xml-whitespace-sensitivity=preserve
           - --xml-self-closing-space=true
           - --tab-width=4
-          - --plugin=@prettier/plugin-xml
+          - --plugin=node_modules/@prettier/plugin-xml/src/plugin.js
         types: [text]
         files: \.(js|xml)$
         language: node
