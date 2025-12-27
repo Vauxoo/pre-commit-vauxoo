@@ -65,7 +65,7 @@ repos:
           - --list-different
           - --ignore-unknown
           # use this specific name because it is already listed in our .gitignore
-          - --config=.oca_hooks_prettier.config.cjs
+          - --config=.eslintrc_prettier.config.cjs
         types: [text]
         files: \.(js|xml)$
         language: node
