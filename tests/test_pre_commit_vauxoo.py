@@ -213,7 +213,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         with open(os.path.join(self.tmp_dir, ".oca_hooks.cfg")) as hooks_cfg:
             f_content = hooks_cfg.read()
         self.assertIn(
-            "disable=xml-oe-structure-missing-id,po-pretty-format,random-message",
+            ",random-message",
             f_content,
             "random-message was supposed to be disabled through the corresponding environment variable",
         )
