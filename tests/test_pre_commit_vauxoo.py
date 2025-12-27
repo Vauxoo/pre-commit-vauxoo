@@ -105,7 +105,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
     def test_exclude_lint_path(self):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "false"
-        os.environ["EXCLUDE_LINT"] = "module_example1/models"
+        os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
@@ -122,7 +122,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
 
     def test_exclude_autofix(self):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
-        os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/"
+        os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/,module_warnings1/"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
