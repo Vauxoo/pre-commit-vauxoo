@@ -30,7 +30,7 @@ default_language_version:
   node: "22.9.0"
 repos:
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.2.11
+    rev: v0.2.12
     hooks:
       - id: oca-checks-odoo-module
         args:
