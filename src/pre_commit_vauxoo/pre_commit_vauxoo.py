@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import sys
 
+import copier
+
 from . import __version__, logging_colored
 
 _logger = logging.getLogger("pre-commit-vauxoo")
@@ -109,50 +111,46 @@ def copy_cfg_files(
             ]
         )
     _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, repo_dirname)
-    for fname in os.listdir(precommit_config_dir):
-        src = os.path.join(precommit_config_dir, fname)
-        if not os.path.isfile(src):
-            # if it is not a file skip
-            continue
-        dst = os.path.join(repo_dirname, fname)
-        if no_overwrite and os.path.isfile(dst):
-            # Use the custom files defined in the repo
-            _logger.warning("Using custom file %s", dst)
-            continue
-        with open(src) as fsrc, open(dst, "w") as fdst:
-            for line in fsrc:
-                if fname.startswith(".pre-commit-config") and "# EXCLUDE_LINT" in line:
-                    line = ""
-                    if exclude_lint:
-                        _logger.info("Applying EXCLUDE_LINT=%s to %s", exclude_lint, dst)
-                        line += "    %s\n" % exclude_lint_regex
-                    if fname == ".pre-commit-config-autofix.yaml" and exclude_autofix:
-                        _logger.info("Applying EXCLUDE_AUTOFIX=%s to %s", exclude_autofix, dst)
-                        line += "    %s\n" % exclude_autofix_regex
-                if fname.startswith(".pre-commit-config") and "--disable=R0000" in line:
-                    if pylint_disable_checks:
-                        _logger.info(
-                            "Disabling the following pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks
-                        )
-                        line = line.replace("R0000", ",".join(pylint_disable_checks))
-                    else:
-                        line = ""
-                if oca_hooks_disable_checks and fname.startswith(".oca_hooks.cfg") and "disable=" in line:
-                    _logger.info(
-                        "Disabling the following oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s",
-                        oca_hooks_disable_checks,
-                    )
-                    line = line.replace("\n", f',{",".join(oca_hooks_disable_checks)}\n')
-                if fname == "pyproject.toml" and line.startswith("skip-string-normalization"):
-                    line = "skip-string-normalization=%s\n" % (skip_string_normalization and "true" or "false")
-                if fname.startswith(".pylintrc"):
-                    if "# External scripts odoo_lint replace" in line and odoo_version:
-                        line += "valid-odoo-version=%s\n" % odoo_version
-                    elif py_version and line.startswith("# External scripts main replace"):
-                        line += f"py-version={py_version}\n"
-                    elif "# Checks for modules with price" in line and is_project_for_apps:
-                        line = ""
-                fdst.write(line)
+    if no_overwrite:
+        # Use the custom files defined in the repo
+        _logger.warning("Using custom files")
+        return
+    data = {
+        "exclude_autofix_regex": exclude_autofix_regex,
+        "exclude_lint_regex": exclude_lint_regex,
+        "is_project_for_apps": is_project_for_apps,
+        "oca_hooks_disable_checks": oca_hooks_disable_checks,
+        "odoo_version": odoo_version,
+        "prettier_version": 20,  # TODO: Use a environment variable to define version
+        "py_version": py_version,
+        "pylint_disable_checks": pylint_disable_checks,
+        "skip_string_normalization": skip_string_normalization,
+    }
+    worker = copier.run_copy(
+        src_path=precommit_config_dir,
+        dst_path=repo_dirname,
+        data=data,
+        unsafe=True,
+        defaults=True,
+        overwrite=not no_overwrite,
+        quiet=True,
+    )
+    if exclude_autofix:
+        _logger.info("Applying EXCLUDE_AUTOFIX=%s", exclude_autofix)
+    if exclude_lint:
+        _logger.info("Applying EXCLUDE_LINT=%s", exclude_lint)
+    if pylint_disable_checks:
+        _logger.info("Disabling pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks)
+    if oca_hooks_disable_checks:
+        _logger.info("Disabling oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s", oca_hooks_disable_checks)
+    if skip_string_normalization:
+        _logger.info("Skip string normalization")
+    if odoo_version:
+        _logger.info("Using odoo_version=%s", odoo_version)
+    if py_version:
+        _logger.info("Using py_version=%s", py_version)
+    if is_project_for_apps:
+        _logger.info("Enabling checks for Odoo Apps")
 
 
 def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_environ=True):

@@ -1,2 +1,5 @@
 [MESSAGES_CONTROL]
 enable=manifest-superfluous-key,po-pretty-format,prefer-env-translation,prefer-readme-rst,unused-logger,xml-field-bool-without-eval,xml-field-numeric-without-eval,xml-header-missing,xml-header-wrong,xml-id-position-first,xml-redundant-module-name,use-header-comments
+{% if oca_hooks_disable_checks -%}
+{{ "disable=" + ",".join(oca_hooks_disable_checks) -}}
+{%- endif %}

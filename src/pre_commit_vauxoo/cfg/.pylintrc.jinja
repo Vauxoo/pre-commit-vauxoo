@@ -4,7 +4,13 @@ persistent=yes
 # This extension are not used for this configuration file but are useful to process disable comments based on these ones
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
 extension-pkg-whitelist=lxml
-# External scripts main replace
+{% if odoo_version -%}
+valid-odoo-version={{ odoo_version }}
+{%- endif %}
+{% if py_version -%}
+py-version={{ py_version }}
+{%- endif %}
+
 
 [ODOOLINT]
 manifest-required-authors=Vauxoo,
@@ -16,7 +22,9 @@ manifest-deprecated-keys=description,active
 [MESSAGES CONTROL]
 enable=all
 disable=abstract-method,
-   category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps). This line is deleted if the flag --is-project-for-apps is enabled
+   {% if not is_project_for_apps -%}
+   category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps).
+   {%- endif -%}
    access-member-before-definition,
    arguments-differ,
    arguments-renamed,
