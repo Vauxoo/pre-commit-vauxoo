@@ -18,7 +18,10 @@ exclude: |
     # It was ignored from original MQT since that there is not init file
     (/migrations/1[0-4])|
     (/doc/|/docs/)|
-    # EXCLUDE_LINT (Don't delete this line because if used from MQT)
+    {% if exclude_lint_regex -%}
+    {{ "# EXCLUDE_LINT" }}
+    {{ exclude_lint_regex }}
+    {%- endif %}
     # Legacy modules absa: galaxy
     (galaxy/)|
     # External scripts
@@ -35,8 +38,7 @@ repos:
         name: pylint optional checks
         args:
           - --rcfile=.pylintrc-optional
-          # External scripts
-          - --disable=R0000
+          - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
   - repo: https://github.com/OCA/odoo-pre-commit-hooks

@@ -2,7 +2,12 @@
 ignore=CVS,.git,scenarios,.bzr
 persistent=yes
 load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
-# External scripts main replace
+{% if odoo_version -%}
+valid-odoo-version={{ odoo_version }}
+{%- endif %}
+{% if py_version -%}
+py-version={{ py_version }}
+{%- endif %}
 
 [ODOOLINT]
 license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,

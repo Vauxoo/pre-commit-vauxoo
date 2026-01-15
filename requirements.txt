@@ -1,4 +1,5 @@
 click<=8.1.8
-pre-commit
+copier
 jinja2
 pgsanity
+pre-commit

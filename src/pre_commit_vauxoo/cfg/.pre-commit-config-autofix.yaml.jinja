@@ -19,7 +19,14 @@ exclude: |
     (/migrations/1[0-4])|
     (/doc/|/docs/)|
     (/tests/data/)|
-    # EXCLUDE_LINT (Don't delete this line because if used from MQT)
+    {% if exclude_autofix_regex -%}
+    {{ "# EXCLUDE_AUTOFIX" }}
+    {{ exclude_autofix_regex }}
+    {%- endif %}
+    {% if exclude_lint_regex -%}
+    {{ "# EXCLUDE_LINT" }}
+    {{ exclude_lint_regex }}
+    {%- endif %}
     # Legacy modules absa: galaxy
     (galaxy/)|
     # External scripts
