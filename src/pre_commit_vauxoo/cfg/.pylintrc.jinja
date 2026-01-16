@@ -24,7 +24,7 @@ enable=all
 disable=abstract-method,
    {% if not is_project_for_apps -%}
    category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps).
-   {%- endif -%}
+   {%- endif %}
    access-member-before-definition,
    arguments-differ,
    arguments-renamed,
