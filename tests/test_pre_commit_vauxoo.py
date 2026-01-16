@@ -115,7 +115,6 @@ class TestPreCommitVauxoo(unittest.TestCase):
     def test_disable_lints(self):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
-        import pdb; pdb.set_trace()
         self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as f_pylintrc:
             f_content = f_pylintrc.read()
@@ -220,10 +219,10 @@ class TestPreCommitVauxoo(unittest.TestCase):
         )
 
     def test_valid_pylintrc_messages(self):
+        self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()
         rc_files = [
-            os.path.abspath(os.path.join(__file__, "..", "..", "src", "pre_commit_vauxoo", "cfg", pylintrc))
-            for pylintrc in [".pylintrc", ".pylintrc-optional"]
+            os.path.abspath(os.path.join(self.tmp_dir, pylintrc)) for pylintrc in [".pylintrc", ".pylintrc-optional"]
         ]
         for rc_file in rc_files:
             config = ConfigParser(inline_comment_prefixes=("#", ";"))
