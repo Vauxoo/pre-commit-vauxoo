@@ -6,9 +6,7 @@ import posixpath
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
-import unittest
 from configparser import ConfigParser
 from contextlib import contextmanager, redirect_stdout
 from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
@@ -20,10 +18,14 @@ from yaml import Loader, load
 
 from pre_commit_vauxoo.cli import main
 
+ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
-class TestPreCommitVauxoo(unittest.TestCase):
-    def setUp(self):
-        super().setUp()
+
+class TestPreCommitVauxoo:
+    def strip_ansi(self, text: str) -> str:
+        return ANSI_ESCAPE_RE.sub("", text)
+
+    def setup_method(self, method):
         self.old_environ = os.environ.copy()
         self.original_work_dir = os.getcwd()
         self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_pre_commit_vauxoo"))
@@ -40,8 +42,7 @@ class TestPreCommitVauxoo(unittest.TestCase):
         # Notice we needed a previous os.chdir to repository directory
         subprocess.check_call(["git", "add", "-A"])
 
-    def tearDown(self):
-        super().tearDown()
+    def teardown_method(self, method):
         # change to original work dir
         os.chdir(self.original_work_dir)
         # Cleanup temporary files
@@ -61,100 +62,105 @@ class TestPreCommitVauxoo(unittest.TestCase):
             os.chdir(original_dir)
 
     @contextmanager
-    def custom_assert_logs(self, module, level, expected_logs):
-        if (sys.version_info.major, sys.version_info.minor) >= (3, 4):
-            with self.assertLogs(module, level=level) as logs:
-                yield
-            logger = logging.getLogger(module)
-            level_no = getattr(logging, level)
-            for log in logs.output:
-                logger.log(level_no, log)
-            diff = set(expected_logs) - set(logs.output)
-            self.assertFalse(diff, "Logs expected not raised %s" % diff)
-        else:
-            # bypassing for dual compatibility with py<3.4
+    def custom_assert_logs(self, module, level, expected_logs, caplog):
+        level_no = getattr(logging, level)
+
+        with caplog.at_level(level_no, logger=module):
             yield
+        formatted_logs = {
+            self.strip_ansi(f"{record.levelname}:{record.name}:{record.getMessage()}")
+            for record in caplog.records
+            if record.name == module
+        }
+        diff = set(expected_logs) - formatted_logs
+        assert not diff, f"Logs expected not raised {diff}"
 
     def get_pylint_messages(self):
         output = StringIO()
-        with self.assertRaises(SystemExit) as ex, redirect_stdout(output):
-            Run(["--load-plugins=pylint.extensions.docstyle,pylint.extensions.mccabe,pylint_odoo", "--list-msgs"])
-        self.assertEqual(ex.exception.code, 0, "There was an error obtaining messages from pylint")
+        with redirect_stdout(output):
+            try:
+                Run(
+                    [
+                        "--load-plugins=pylint.extensions.docstyle," "pylint.extensions.mccabe,pylint_odoo",
+                        "--list-msgs",
+                    ]
+                )
+            except SystemExit as ex:
+                assert ex.code == 0, "There was an error obtaining messages from pylint"
 
         output.seek(0)
         output = output.read()
         return set(re.findall(r"^:([a-z\-]+)", output, re.MULTILINE))
 
-    def test_basic(self):
+    def test_basic(self, caplog):
         os.environ["INCLUDE_LINT"] = os.path.join(self.tmp_dir, "module_example1")
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
-            self.assertIn("skip-string-normalization=false", f_pyproject.read(), "Skip string normalization not set")
+            assert "skip-string-normalization=false" in f_pyproject.read(), "Skip string normalization not set"
 
-    def test_chdir(self):
+    def test_chdir(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.chdir("module_autofix1")
         expected_logs = ["WARNING:pre-commit-vauxoo:Running in current directory 'module_autofix1'"]
         self.runner.invoke(main, [])
-        with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
 
-    def test_exclude_lint_path(self):
+    def test_exclude_lint_path(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "false"
         os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
         result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             f_content = f_pyproject.read()
-        self.assertIn("skip-string-normalization=false", f_content, "Skip string normalization not set")
+        assert "skip-string-normalization=false" in f_content, "Skip string normalization not set"
 
-    def test_disable_lints(self):
+    def test_disable_lints(self, caplog):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as f_pylintrc:
             f_content = f_pylintrc.read()
-        self.assertIn("import-error,", f_content, "import-error was not disabled")
+        assert "import-error," in f_content, "import-error was not disabled"
 
-    def test_exclude_autofix(self):
+    def test_exclude_autofix(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/,module_warnings1/"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
-            self.assertIn("skip-string-normalization=true", f_pyproject.read(), "Skip string normalization not set")
+            assert "skip-string-normalization=true" in f_pyproject.read(), "Skip string normalization not set"
 
-    def test_fail_warning(self):
+    def test_fail_warning(self, caplog):
         os.environ["PRECOMMIT_FAIL_OPTIONAL"] = "1"
         # Only optional
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "optional"
         expected_logs = ["ERROR:pre-commit-vauxoo:Optional checks failed"]
-        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 1, "Exited without error")
+        assert result.exit_code == 1, "Exited without error"
 
-    def test_rm_options(self):
+    def test_rm_options(self, caplog):
         # Only mandatory
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all,-optional,-fix,-experimental"
         expected_logs = ["INFO:pre-commit-vauxoo:Mandatory checks passed!"]
-        with self.custom_assert_logs("pre-commit-vauxoo", level="INFO", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="INFO", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
 
-    def test_install_git_hook_pre_commit(self):
-        """Test .git/hooks/pre-commit script"""
+    def test_install_git_hook_pre_commit(self, caplog):
         git_hook_pre_commit = os.path.join(self.tmp_dir, ".git", "hooks", "pre-commit")
-        self.assertFalse(os.path.isfile(git_hook_pre_commit), "File created before to install it")
+        assert not os.path.isfile(git_hook_pre_commit), "File created before to install it"
         result = self.runner.invoke(main, ["--install"])
-        self.assertEqual(result.exit_code, 0, "Exited with error %s - %s" % (result, result.output))
-        self.assertTrue(os.path.isfile(git_hook_pre_commit), "File not created")
+        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert os.path.isfile(git_hook_pre_commit), "File not created"
         with open(git_hook_pre_commit) as f_git_hook_pre_commit:
-            self.assertIn("pre-commit-vauxoo", f_git_hook_pre_commit.read(), "File pre-commit not generated correctly")
+            assert "pre-commit-vauxoo" in f_git_hook_pre_commit.read(), "File pre-commit not generated correctly"
         os.environ["NOLINT"] = "0"
         exit_code = subprocess.call(
             [
@@ -169,27 +175,25 @@ class TestPreCommitVauxoo(unittest.TestCase):
                 "testing",
             ]
         )
-        self.assertEqual(exit_code, 0, "Exited with error_code %s" % exit_code)
+        assert exit_code == 0, "Exited with error_code %s" % exit_code
 
-    def test_autofixes(self):
+    def test_autofixes(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = ""
         expected_logs = ["ERROR:pre-commit-vauxoo:Autofix checks reformatted"]
-        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 1, "Exited without error")
+        assert result.exit_code == 1, "Exited without error"
 
-    def test_uninstallable(self):
+    def test_uninstallable(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         uninstallable_path = os.path.join(self.tmp_dir, "module_uninstallable")
         result = self.runner.invoke(main, ["-p", uninstallable_path])
-        self.assertEqual(
-            result.exit_code,
-            0,
-            "Uninstallable module should not have been linted. Exited with error %s - %s" % (result, result.output),
-        )
+        assert (
+            result.exit_code == 0
+        ), "Uninstallable module should not have been linted. " "Exited with error %s - %s" % (result, result.output)
 
-    def test_exclude_only_uninstallable(self):
+    def test_exclude_only_uninstallable(self, caplog):
         repo_path = posixpath.join(self.tmp_dir, "repo")
         repo_sub_path = posixpath.join(self.tmp_dir, "repo_sub")
 
@@ -204,21 +208,19 @@ class TestPreCommitVauxoo(unittest.TestCase):
             config = load(config_fd, Loader)
 
         pattern = re.compile(config["exclude"])
-        self.assertTrue(pattern.search(posixpath.join(repo_path, "models", "res_partner.py")))
-        self.assertIsNone(pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")))
+        assert pattern.search(posixpath.join(repo_path, "models", "res_partner.py"))
+        assert pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")) is None
 
-    def test_disable_oca_hooks(self):
+    def test_disable_oca_hooks(self, caplog):
         os.environ["OCA_HOOKS_DISABLE_CHECKS"] = "random-message"
         self.runner.invoke(main, [])
         with open(os.path.join(self.tmp_dir, ".oca_hooks.cfg")) as hooks_cfg:
             f_content = hooks_cfg.read()
-        self.assertIn(
-            ",random-message",
-            f_content,
-            "random-message was supposed to be disabled through the corresponding environment variable",
-        )
+        assert (
+            ",random-message" in f_content
+        ), "random-message was supposed to be disabled through the corresponding environment variable"
 
-    def test_valid_pylintrc_messages(self):
+    def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()
         rc_files = [
@@ -231,27 +233,24 @@ class TestPreCommitVauxoo(unittest.TestCase):
                 if "all" in config["MESSAGES CONTROL"][action].split(","):
                     continue
                 messages = [val.strip() for val in config["MESSAGES CONTROL"][action].split(",")]
-                duplicates = set()
                 messages_set = set()
                 for message in messages:
-                    self.assertIn(message, pylint_messages, f"{message} in {rc_file} is not a valid message")
-                    self.assertNotIn(message, messages_set, f"Duplicate '{message}' in {rc_file}")
+                    assert message in pylint_messages, f"{message} in {rc_file} is not a valid message"
+                    assert message not in messages_set, f"Duplicate '{message}' in {rc_file}"
                     messages_set.add(message)
 
-                self.assertFalse(duplicates, f"Duplicate messages found in {rc_file}")
-
-    def test_special_char_filename(self):
+    def test_special_char_filename(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
         fname_wrong = os.path.join(self.tmp_dir, "module_example1", "leéme.rst")
         with open(fname_wrong, "w"):
             pass
         subprocess.check_call(["git", "add", "-A"])
         expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
-        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 1, "Exited without error")
+        assert result.exit_code == 1, "Exited without error"
 
-    def test_special_char_dirname(self):
+    def test_special_char_dirname(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
         dirname_wrong = os.path.join(self.tmp_dir, "module_example1", "moisé")
         os.mkdir(dirname_wrong)
@@ -260,41 +259,25 @@ class TestPreCommitVauxoo(unittest.TestCase):
             pass
         subprocess.check_call(["git", "add", "-A"])
         expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
-        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs):
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        self.assertEqual(result.exit_code, 1, "Exited without error")
+        assert result.exit_code == 1, "Exited without error"
 
-    def test_apps_checks_disable(self):
+    def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
         self.runner.invoke(main, [])
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
-        self.assertNotIn(
-            "category-allowed-app",
-            f_content,
-            "app check disabled for a project for apps",
-        )
+        assert "category-allowed-app" not in f_content, "app check disabled for a project for apps"
 
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
         self.runner.invoke(main, [])
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
-        self.assertIn(
-            "category-allowed-app",
-            f_content,
-            "app check enabled for a project for non apps",
-        )
+        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps"
 
         os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
         self.runner.invoke(main, [])
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
-        self.assertIn(
-            "category-allowed-app",
-            f_content,
-            "app check enabled for a project for non apps (default value)",
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
