@@ -131,6 +131,26 @@ class CSVPath(click.Path):
         return values
 
 
+class CompatibilityMatrixType(click.ParamType):
+    name = "compatibility-matrix"
+
+    def convert(self, value, param, ctx):
+        if value is None or value == "":
+            return value
+
+        parts = value.split(".")
+
+        for part in parts:
+            if not part.isdigit():
+                self.fail(
+                    f"Invalid compatibility matrix '{value}'. "
+                    "Expected integers separated by dots (e.g. 10.20.10.20).",
+                    param,
+                    ctx,
+                )
+        return value
+
+
 def merge_tuples(ctx, param, value):
     """Convert (('value1', 'value2'), ('value3')) to ('value1', 'value2', 'value3')
     It is useful for csv separated by commas parameters but using multiple number of args
@@ -331,6 +351,39 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     is_flag=True,
     default=False,
     help="Only copy configuration files without running the pre-commit script",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--compatibility-matrix",
+    envvar="LINT_COMPATIBILITY_MATRIX",
+    type=CompatibilityMatrixType(),
+    help="""Defines the compatibility and behavior level for each linter tooling.
+
+This parameter controls how aggressive or modern the enabled linters, formatters, and autofixes are.
+Each position in the matrix represents a specific tool and its behavior level.
+
+Lower values prioritize backward compatibility and minimal diffs.
+Higher values enable newer versions, stricter rules, and more aggressive autofixes.
+
+Default: Latest newers and aggressive behavior for all tools.
+
+Example:
+* 0.0.0.0.0.0 → Using zero 0 or not defined will use the latest behavior ever
+* 10.10.10.10.10.10 → Freeze old behavior <=2025 year (safe, backward-compatible)
+* 20.20.20.20.20.20 → Enable new 2026 behaviors and aggressive autofixes
+* (future changes may add more values)
+* Mixed values (e.g. 10.20.10.20.0.20) allow fine-grained control per tool
+
+Tool order:
+🟢 1. Prettier (20 → Enable XML aggressive whitespace fixes)
+🟢 2. OCA hooks https://github.com/OCA/odoo-pre-commit-hooks (20 → rm py headers, rm unused logger, change xml id position first, change xml bool/integer to eval, add xml-header-missing uppercase, mv README.md to README.rst, change py _('translation') to self.env._('translation'), rm manifest superfluous keys)
+🟢 3. ESLint
+🟢 4. Black / Autoflake
+🟢 5. pre-commit framework
+🟢 6. Pylint/pylint-odoo
+
+⚠️ Higher values or empty valuesmay introduce formatting changes, stricter linting,
+or non-backward-compatible fixes (especially for XML, Python, and JS files).""",
     **new_extra_kwargs,
 )
 def main(*args, **kwargs):
