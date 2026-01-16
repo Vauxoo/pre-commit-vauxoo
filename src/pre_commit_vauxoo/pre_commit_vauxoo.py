@@ -21,6 +21,15 @@ re_export = re.compile(
     re.M,
 )
 
+TOOLS_ORDER = (
+    "prettier_matrix_value",
+    "oca_hooks_matrix_value",
+    "eslint_matrix_value",
+    "black_autoflake_matrix_value",
+    "pre_commit_matrix_value",
+    "pylint_matrix_value",
+)
+
 
 def full_norm_path(path):
     return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
@@ -79,6 +88,23 @@ def get_uninstallable_modules(src_path) -> set:
     return results
 
 
+def parse_matrix_compatibility(matrix_compatibility_string):
+    value = matrix_compatibility_string
+    matrix = {}
+
+    parts = value.split(".") if value else []
+    values = tuple(int(p) for p in parts)
+
+    for idx, tool in enumerate(TOOLS_ORDER):
+        value = 1000000
+        try:
+            value = values[idx] if values[idx] != 0 else value
+        except IndexError:
+            pass
+        matrix[tool] = value
+    return matrix
+
+
 # copy_cfg_files has too many "for-if" sentences
 # because it is a switch-case dummy logic
 # TODO: Migrate this method to use configuration files with jinja template
@@ -95,6 +121,7 @@ def copy_cfg_files(
     odoo_version,
     py_version,
     is_project_for_apps,
+    compatibility_matrix,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -121,10 +148,10 @@ def copy_cfg_files(
         "is_project_for_apps": is_project_for_apps,
         "oca_hooks_disable_checks": oca_hooks_disable_checks,
         "odoo_version": odoo_version,
-        "prettier_version": 20,  # TODO: Use a environment variable to define version
         "py_version": py_version,
         "pylint_disable_checks": pylint_disable_checks,
         "skip_string_normalization": skip_string_normalization,
+        **parse_matrix_compatibility(compatibility_matrix),
     }
     copier.run_copy(
         src_path=precommit_config_dir,
@@ -198,6 +225,7 @@ def main(
     py_version,
     is_project_for_apps,
     only_cp_cfg,
+    compatibility_matrix,
     do_exit=True,
 ):
     show_version()
@@ -231,6 +259,7 @@ def main(
         odoo_version,
         py_version,
         is_project_for_apps,
+        compatibility_matrix,
     )
     if only_cp_cfg:
         _logger.info("Only copied configuration files. Exiting now.")
