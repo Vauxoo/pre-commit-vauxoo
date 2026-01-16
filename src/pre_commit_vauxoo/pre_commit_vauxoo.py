@@ -29,7 +29,7 @@ TOOLS_ORDER = (
     "pre_commit_matrix_value",
     "pylint_matrix_value",
 )
-
+DEFAULT_MAX_COMPATIBILITY = 1000000
 
 def full_norm_path(path):
     return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
@@ -96,11 +96,12 @@ def parse_matrix_compatibility(matrix_compatibility_string):
     values = tuple(int(p) for p in parts)
 
     for idx, tool in enumerate(TOOLS_ORDER):
-        value = 1000000
         try:
-            value = values[idx] if values[idx] != 0 else value
+            value = values[idx] if values[idx] != 0 else DEFAULT_MAX_COMPATIBILITY
         except IndexError:
-            pass
+            value = DEFAULT_MAX_COMPATIBILITY
+        if value != DEFAULT_MAX_COMPATIBILITY:
+            _logger.info("Using %s=%s from compatibility matrix", tool, value)
         matrix[tool] = value
     return matrix
 
