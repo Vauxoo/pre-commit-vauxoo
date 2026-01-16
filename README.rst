@@ -216,9 +216,9 @@ Full --help command result:
                                     uppercase, mv README.md to README.rst,
                                     change py _('translation') to
                                     self.env._('translation'), rm manifest
-                                    superfluous keys) 🟢 3. ESLint 🟢 4. Black /
-                                    Autoflake 🟢 5. pre-commit framework 🟢 6.
-                                    Pylint/pylint-odoo
+                                    superfluous keys, rm field-string-redundant)
+                                    🟢 3. ESLint 🟢 4. Black / Autoflake 🟢 5. pre-
+                                    commit framework 🟢 6. Pylint/pylint-odoo
 
                                     ⚠️ Higher values or empty valuesmay
                                     introduce formatting changes, stricter

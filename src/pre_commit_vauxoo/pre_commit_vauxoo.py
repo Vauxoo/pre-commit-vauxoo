@@ -31,6 +31,7 @@ TOOLS_ORDER = (
 )
 DEFAULT_MAX_COMPATIBILITY = 1000000
 
+
 def full_norm_path(path):
     return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
 
