@@ -325,6 +325,14 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     envvar="PRECOMMIT_IS_PROJECT_FOR_APPS",
     **new_extra_kwargs,
 )
+@click.option(
+    "--only-cp-cfg",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    help="Only copy configuration files without running the pre-commit script",
+    **new_extra_kwargs,
+)
 def main(*args, **kwargs):
     """pre-commit-vauxoo run pre-commit with custom validations and configuration files"""
     version = kwargs.pop("version", None)

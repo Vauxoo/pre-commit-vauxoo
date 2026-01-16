@@ -1,4 +1,3 @@
-
 import ast
 import glob
 import logging
@@ -127,7 +126,7 @@ def copy_cfg_files(
         "pylint_disable_checks": pylint_disable_checks,
         "skip_string_normalization": skip_string_normalization,
     }
-    worker = copier.run_copy(
+    copier.run_copy(
         src_path=precommit_config_dir,
         dst_path=repo_dirname,
         data=data,
@@ -198,6 +197,7 @@ def main(
     odoo_version,
     py_version,
     is_project_for_apps,
+    only_cp_cfg,
     do_exit=True,
 ):
     show_version()
@@ -232,6 +232,9 @@ def main(
         py_version,
         is_project_for_apps,
     )
+    if only_cp_cfg:
+        _logger.info("Only copied configuration files. Exiting now.")
+        return
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
