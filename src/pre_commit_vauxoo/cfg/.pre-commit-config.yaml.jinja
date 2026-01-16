@@ -72,14 +72,15 @@ repos:
         types: [text]
         files: (^deactivate\.jinja$|/data/neutralize\.sql$)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
-      - id: debug-statements
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs
+      - id: check-json
       - id: check-merge-conflict
         # exclude files where underlines are not distinguishable from merge conflicts
         exclude: /README\.rst$|^docs/.*\.rst$
       - id: check-symlinks
       - id: check-xml
+      - id: debug-statements
