@@ -376,7 +376,10 @@ Example:
 
 Tool order:
 🟢 1. Prettier (20 → Enable XML aggressive whitespace fixes)
-🟢 2. OCA hooks https://github.com/OCA/odoo-pre-commit-hooks (20 → rm py headers, rm unused logger, change xml id position first, change xml bool/integer to eval, add xml-header-missing uppercase, mv README.md to README.rst, change py _('translation') to self.env._('translation'), rm manifest superfluous keys)
+🟢 2. OCA hooks https://github.com/OCA/odoo-pre-commit-hooks
+    (20 → rm py headers, rm unused logger, change xml id position first, change xml bool/integer to eval,
+     add xml-header-missing uppercase, mv README.md to README.rst,
+     change py _('translation') to self.env._('translation'), rm manifest superfluous keys, rm field-string-redundant)
 🟢 3. ESLint
 🟢 4. Black / Autoflake
 🟢 5. pre-commit framework
