@@ -4,6 +4,7 @@ jobs = 0
 # B = bugbear
 # B9 = bugbear opinionated (incl line length +10% tolerance)
 select = C,E,F,W,B,B9
+# B036: Don't except `BaseException` unless you plan to re-raise it. (covered by pylint)
 # E203 whitespace before ':' (black behaviour)
 # E501: flake8 line length (covered by bugbear B950)
 # W503: line break before binary operator (black behaviour)
@@ -17,7 +18,7 @@ select = C,E,F,W,B,B9
 # B905: zip(strict=True) only works in python >= 3.10
 # B907: We sometimes quote for stylistic purposes
 # F401: imported but unused (like __init__ already works)
-ignore = E203,E501,W503,W504,E241,B023,E226,B904,B905,B907,E123,E275
+ignore = B036,E203,E501,W503,W504,E241,B023,E226,B904,B905,B907,E123,E275
 per-file-ignores =
     __init__.py:F401
     __manifest__.py:B018
