@@ -28,6 +28,7 @@ TOOLS_ORDER = (
     "black_autoflake_matrix_value",
     "pre_commit_matrix_value",
     "pylint_matrix_value",
+    "flake8_matrix_value",
 )
 DEFAULT_MAX_COMPATIBILITY = 1000000
 

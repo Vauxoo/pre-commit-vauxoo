@@ -1,8 +1,9 @@
-
-
 export default [
     {
         files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
+        linterOptions: {
+            reportUnusedDisableDirectives: "off",
+        },
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: "module",
