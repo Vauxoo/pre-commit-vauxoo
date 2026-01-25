@@ -134,7 +134,7 @@ class CompatibilityVersionType(click.ParamType):
     name = "compatibility-version"
 
     def convert(self, value, param, ctx):
-        if value is None or value == "":
+        if not value:
             return value
 
         parts = value.split(".")

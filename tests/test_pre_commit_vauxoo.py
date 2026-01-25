@@ -81,12 +81,12 @@ class TestPreCommitVauxoo:
             try:
                 Run(
                     [
-                        "--load-plugins=pylint.extensions.docstyle," "pylint.extensions.mccabe,pylint_odoo",
+                        "--load-plugins=pylint.extensions.docstyle,pylint.extensions.mccabe,pylint_odoo",
                         "--list-msgs",
                     ]
                 )
             except SystemExit as ex:
-                assert ex.code == 0, "There was an error obtaining messages from pylint"
+                assert not ex.code, "There was an error obtaining messages from pylint"
 
         output.seek(0)
         output = output.read()
@@ -96,7 +96,7 @@ class TestPreCommitVauxoo:
         os.environ["INCLUDE_LINT"] = os.path.join(self.tmp_dir, "module_example1")
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             assert "skip-string-normalization=false" in f_pyproject.read(), "Skip string normalization not set"
 
@@ -107,14 +107,14 @@ class TestPreCommitVauxoo:
         self.runner.invoke(main, [])
         with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
 
     def test_exclude_lint_path(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "false"
         os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
         result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             f_content = f_pyproject.read()
         assert "skip-string-normalization=false" in f_content, "Skip string normalization not set"
@@ -122,7 +122,7 @@ class TestPreCommitVauxoo:
     def test_disable_lints(self, caplog):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as f_pylintrc:
             f_content = f_pylintrc.read()
         assert "import-error," in f_content, "import-error was not disabled"
@@ -132,7 +132,7 @@ class TestPreCommitVauxoo:
         os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/,module_warnings1/"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
             assert "skip-string-normalization=true" in f_pyproject.read(), "Skip string normalization not set"
 
@@ -151,13 +151,13 @@ class TestPreCommitVauxoo:
         expected_logs = ["INFO:pre-commit-vauxoo:Mandatory checks passed!"]
         with self.custom_assert_logs("pre-commit-vauxoo", level="INFO", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
 
     def test_install_git_hook_pre_commit(self, caplog):
         git_hook_pre_commit = os.path.join(self.tmp_dir, ".git", "hooks", "pre-commit")
         assert not os.path.isfile(git_hook_pre_commit), "File created before to install it"
         result = self.runner.invoke(main, ["--install"])
-        assert result.exit_code == 0, "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         assert os.path.isfile(git_hook_pre_commit), "File not created"
         with open(git_hook_pre_commit) as f_git_hook_pre_commit:
             assert "pre-commit-vauxoo" in f_git_hook_pre_commit.read(), "File pre-commit not generated correctly"
@@ -175,7 +175,7 @@ class TestPreCommitVauxoo:
                 "testing",
             ]
         )
-        assert exit_code == 0, "Exited with error_code %s" % exit_code
+        assert not exit_code, "Exited with error_code %s" % exit_code
 
     def test_autofixes(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
@@ -190,7 +190,7 @@ class TestPreCommitVauxoo:
         uninstallable_path = os.path.join(self.tmp_dir, "module_uninstallable")
         result = self.runner.invoke(main, ["-p", uninstallable_path])
         assert (
-            result.exit_code == 0
+            not result.exit_code
         ), "Uninstallable module should not have been linted. " "Exited with error %s - %s" % (result, result.output)
 
     def test_exclude_only_uninstallable(self, caplog):
