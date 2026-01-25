@@ -130,8 +130,8 @@ class CSVPath(click.Path):
         return values
 
 
-class CompatibilityMatrixType(click.ParamType):
-    name = "compatibility-matrix"
+class CompatibilityVersionType(click.ParamType):
+    name = "compatibility-version"
 
     def convert(self, value, param, ctx):
         if value is None or value == "":
@@ -142,7 +142,7 @@ class CompatibilityMatrixType(click.ParamType):
         for part in parts:
             if not part.isdigit():
                 self.fail(
-                    f"Invalid compatibility matrix '{value}'. "
+                    f"Invalid compatibility version '{value}'. "
                     "Expected integers separated by dots (e.g. 10.20.10.20).",
                     param,
                     ctx,
@@ -353,14 +353,14 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     **new_extra_kwargs,
 )
 @click.option(
-    "--compatibility-matrix",
+    "--compatibility-version",
     default="10.10.10.10.10.10.10.10.10.10",
-    envvar="LINT_COMPATIBILITY_MATRIX",
-    type=CompatibilityMatrixType(),
+    envvar="LINT_COMPATIBILITY_VERSION",
+    type=CompatibilityVersionType(),
     help="""Defines the compatibility and behavior level for each linter tooling.
 
 This parameter controls how aggressive or modern the enabled linters, formatters, and autofixes are.
-Each position in the matrix represents a specific tool and its behavior level.
+Each position in the version represents a specific tool and its behavior level.
 
 Lower values prioritize backward compatibility and minimal diffs.
 Higher values enable newer versions, stricter rules, and more aggressive autofixes.

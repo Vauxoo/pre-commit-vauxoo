@@ -103,7 +103,7 @@ def parse_matrix_compatibility(matrix_compatibility_string):
         except IndexError:
             value = DEFAULT_MAX_COMPATIBILITY
         if value != DEFAULT_MAX_COMPATIBILITY:
-            _logger.info("Using %s=%s from compatibility matrix", tool, value)
+            _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx+1)
         matrix[tool] = value
     return matrix
 
@@ -124,7 +124,7 @@ def copy_cfg_files(
     odoo_version,
     py_version,
     is_project_for_apps,
-    compatibility_matrix,
+    compatibility_version,
 ):
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
@@ -154,7 +154,7 @@ def copy_cfg_files(
         "py_version": py_version,
         "pylint_disable_checks": pylint_disable_checks,
         "skip_string_normalization": skip_string_normalization,
-        **parse_matrix_compatibility(compatibility_matrix),
+        **parse_matrix_compatibility(compatibility_version),
     }
     copier.run_copy(
         src_path=precommit_config_dir,
@@ -228,7 +228,7 @@ def main(
     py_version,
     is_project_for_apps,
     only_cp_cfg,
-    compatibility_matrix,
+    compatibility_version,
     do_exit=True,
 ):
     show_version()
@@ -262,7 +262,7 @@ def main(
         odoo_version,
         py_version,
         is_project_for_apps,
-        compatibility_matrix,
+        compatibility_version,
     )
     if only_cp_cfg:
         _logger.info("Only copied configuration files. Exiting now.")
