@@ -179,13 +179,13 @@ Full --help command result:
                                     var: PRECOMMIT_IS_PROJECT_FOR_APPS]
     --only-cp-cfg                   Only copy configuration files without
                                     running the pre-commit script
-    --compatibility-matrix COMPATIBILITY-MATRIX
+    --compatibility-version COMPATIBILITY-VERSION
                                     Defines the compatibility and behavior level
                                     for each linter tooling.
 
                                     This parameter controls how aggressive or
                                     modern the enabled linters, formatters, and
-                                    autofixes are. Each position in the matrix
+                                    autofixes are. Each position in the version
                                     represents a specific tool and its behavior
                                     level.
 
@@ -194,37 +194,37 @@ Full --help command result:
                                     values enable newer versions, stricter
                                     rules, and more aggressive autofixes.
 
-                                    Default: Latest newers and aggressive
-                                    behavior for all tools.
+                                    Default: 10.10.10.10.10.10.10.10.10.10
 
-                                    Example: * 0.0.0.0.0.0 → Using zero 0 or not
-                                    defined will use the latest behavior ever *
-                                    10.10.10.10.10.10 → Freeze old behavior
-                                    <=2025 year (safe, backward-compatible) *
-                                    20.20.20.20.20.20 → Enable new 2026
-                                    behaviors and aggressive autofixes * (future
-                                    changes may add more values) * Mixed values
-                                    (e.g. 10.20.10.20.0.20) allow fine-grained
-                                    control per tool
+                                    Example: * 0.0.0.0.0.0.0 → Using zero 0 or
+                                    not defined will use the latest behavior
+                                    ever * 10.10.10.10.10.10.10 → Freeze old
+                                    behavior <=2025 year (safe, backward-
+                                    compatible) * 20.20.20.20.20.20.20 → Enable
+                                    new 2026 behaviors and aggressive autofixes
+                                    * (future changes may add more values) *
+                                    Mixed values (e.g. 10.20.10.20.0.20) allow
+                                    fine-grained control per tool
 
                                     Tool order: 🟢 1. Prettier (20 → Enable XML
                                     aggressive whitespace fixes) 🟢 2. OCA hooks
                                     https://github.com/OCA/odoo-pre-commit-hooks
                                     (20 → rm py headers, rm unused logger,
                                     change xml id position first, change xml
-                                    bool/integer to eval, add xml-header-missing
-                                    uppercase, mv README.md to README.rst,
-                                    change py _('translation') to
-                                    self.env._('translation'), rm manifest
+                                    bool/integer to eval,      add xml-header-
+                                    missing uppercase, mv README.md to
+                                    README.rst,      change py _('translation')
+                                    to self.env._('translation'), rm manifest
                                     superfluous keys, rm field-string-redundant)
                                     🟢 3. ESLint 🟢 4. Black / Autoflake 🟢 5. pre-
-                                    commit framework 🟢 6. Pylint/pylint-odoo
+                                    commit framework 🟢 6. Pylint/pylint-odoo 🟢
+                                    7. flake8
 
                                     ⚠️ Higher values or empty valuesmay
                                     introduce formatting changes, stricter
                                     linting, or non-backward-compatible fixes
                                     (especially for XML, Python, and JS files).
-                                    [env var: LINT_COMPATIBILITY_MATRIX]
+                                    [env var: LINT_COMPATIBILITY_VERSION]
     --help                          Show this message and exit.
 
 
