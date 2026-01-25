@@ -38,17 +38,17 @@ default_language_version:
 repos:
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
 {%- if oca_hooks_matrix_value >= 20 %}
-    rev: v0.2.19
+    rev: v0.2.20
     hooks:
       - id: oca-checks-odoo-module
         args:
           - --config=.oca_hooks-autofix.cfg
           - --fix
-      - id: oca-checks-po
+      - id: oca-checks-odoo-module-fixit
         args:
           - --config=.oca_hooks-autofix.cfg
           - --fix
-      - id: oca-checks-odoo-module-fixit
+      - id: oca-checks-po
         args:
           - --config=.oca_hooks-autofix.cfg
           - --fix
