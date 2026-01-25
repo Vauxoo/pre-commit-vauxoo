@@ -99,11 +99,11 @@ def parse_matrix_compatibility(matrix_compatibility_string):
 
     for idx, tool in enumerate(TOOLS_ORDER):
         try:
-            value = values[idx] if values[idx] != 0 else DEFAULT_MAX_COMPATIBILITY
+            value = values[idx] if values[idx] else DEFAULT_MAX_COMPATIBILITY
         except IndexError:
             value = DEFAULT_MAX_COMPATIBILITY
         if value != DEFAULT_MAX_COMPATIBILITY:
-            _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx+1)
+            _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx + 1)
         matrix[tool] = value
     return matrix
 
