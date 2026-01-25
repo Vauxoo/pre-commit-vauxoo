@@ -12,6 +12,7 @@ from contextlib import contextmanager, redirect_stdout
 from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from io import StringIO
 
+import pytest
 from click.testing import CliRunner
 from pylint.lint import Run
 from yaml import Loader, load
@@ -21,6 +22,16 @@ from pre_commit_vauxoo.cli import main
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
+@pytest.fixture(params=[None, "0.0.0.0.0.0.0.0", "10.10.10.10.10.10.10.10", "20.20.20.20.20.20.20.20"])
+def env_mode(request, monkeypatch):
+    if request.param is None:
+        monkeypatch.delenv("LINT_COMPATIBILITY_VERSION", raising=False)
+    else:
+        monkeypatch.setenv("LINT_COMPATIBILITY_VERSION", request.param)
+    return request.param
+
+
+@pytest.mark.usefixtures("env_mode")
 class TestPreCommitVauxoo:
     def strip_ansi(self, text: str) -> str:
         return ANSI_ESCAPE_RE.sub("", text)

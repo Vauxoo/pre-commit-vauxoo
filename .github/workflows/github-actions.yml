@@ -22,9 +22,18 @@ jobs:
       image: quay.io/vauxoo/dockerv:latest
       options: --user root
     name: docker vauxoo light image
+    strategy:
+      fail-fast: false
+    matrix:
+      lint_compatibility_version:
+        - "__UNSET__"
+        - "0.0.0.0.0.0.0.0"
+        - "10.10.10.10.10.10.10.10"
+        - "20.20.20.20.20.20.20.20"
     env:
       PIP_CACHE_DIR: "/root/.cache/pip"
       PRE_COMMIT_HOME: "/root/.cache/pre-commit"
+      LINT_COMPATIBILITY_VERSION: ${{ matrix.lint_compatibility_version }}
     steps:
       - uses: actions/checkout@v4
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
