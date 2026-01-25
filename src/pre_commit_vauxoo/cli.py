@@ -354,6 +354,7 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
 )
 @click.option(
     "--compatibility-matrix",
+    default="10.10.10.10.10.10.10.10.10.10",
     envvar="LINT_COMPATIBILITY_MATRIX",
     type=CompatibilityMatrixType(),
     help="""Defines the compatibility and behavior level for each linter tooling.
@@ -364,12 +365,12 @@ Each position in the matrix represents a specific tool and its behavior level.
 Lower values prioritize backward compatibility and minimal diffs.
 Higher values enable newer versions, stricter rules, and more aggressive autofixes.
 
-Default: Latest newers and aggressive behavior for all tools.
+Default: 10.10.10.10.10.10.10.10.10.10
 
 Example:
-* 0.0.0.0.0.0 → Using zero 0 or not defined will use the latest behavior ever
-* 10.10.10.10.10.10 → Freeze old behavior <=2025 year (safe, backward-compatible)
-* 20.20.20.20.20.20 → Enable new 2026 behaviors and aggressive autofixes
+* 0.0.0.0.0.0.0 → Using zero 0 or not defined will use the latest behavior ever
+* 10.10.10.10.10.10.10 → Freeze old behavior <=2025 year (safe, backward-compatible)
+* 20.20.20.20.20.20.20 → Enable new 2026 behaviors and aggressive autofixes
 * (future changes may add more values)
 * Mixed values (e.g. 10.20.10.20.0.20) allow fine-grained control per tool
 
@@ -383,6 +384,7 @@ Tool order:
 🟢 4. Black / Autoflake
 🟢 5. pre-commit framework
 🟢 6. Pylint/pylint-odoo
+🟢 7. flake8
 
 ⚠️ Higher values or empty valuesmay introduce formatting changes, stricter linting,
 or non-backward-compatible fixes (especially for XML, Python, and JS files).""",
