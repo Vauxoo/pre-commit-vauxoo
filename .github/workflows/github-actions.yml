@@ -17,22 +17,43 @@ env:
 
 jobs:
   deployv:
+    name: docker vauxoo light image (LINT_COMPATIBILITY_VERSION=${{ matrix.lint_compatibility_version }})
     runs-on: ubuntu-latest
+
     container:
       image: quay.io/vauxoo/dockerv:latest
       options: --user root
-    name: docker vauxoo light image
+
+    strategy:
+      fail-fast: false
+      matrix:
+        lint_compatibility_version:
+          - "__UNSET__"
+          - "0.0.0.0.0.0.0.0"
+          - "10.10.10.10.10.10.10.10"
+          - "20.20.20.20.20.20.20.20"
+
     env:
       PIP_CACHE_DIR: "/root/.cache/pip"
       PRE_COMMIT_HOME: "/root/.cache/pre-commit"
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
         run: >-
           pip3 install --ignore-installed -U . &&
           pip3 install --force-reinstall --no-deps . &&
           git config --global --add safe.directory '*'
-      - name: Run pre-commit-vauxoo
+
+      - name: Run pre-commit-vauxoo (unset LINT_COMPATIBILITY_VERSION)
+        if: ${{ matrix.lint_compatibility_version == '__UNSET__' }}
+        run: pre-commit-vauxoo
+
+      - name: Run pre-commit-vauxoo (with LINT_COMPATIBILITY_VERSION)
+        if: ${{ matrix.lint_compatibility_version != '__UNSET__' }}
+        env:
+          LINT_COMPATIBILITY_VERSION: ${{ matrix.lint_compatibility_version }}
         run: pre-commit-vauxoo
   test:
     runs-on: ${{ matrix.os }}
