@@ -11,6 +11,7 @@ from configparser import ConfigParser
 from contextlib import contextmanager, redirect_stdout
 from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from io import StringIO
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -225,13 +226,21 @@ class TestPreCommitVauxoo:
         assert pattern.search(posixpath.join(repo_sub_path, "wizard", "invoice_send.py")) is None
 
     def test_disable_oca_hooks(self, caplog):
-        os.environ["OCA_HOOKS_DISABLE_CHECKS"] = "random-message"
+        expected_disabled = {"random-msg1", "random-msg2"}
+        os.environ["OCA_HOOKS_DISABLE_CHECKS"] = ",".join(expected_disabled)
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, ".oca_hooks.cfg")) as hooks_cfg:
-            f_content = hooks_cfg.read()
-        assert (
-            ",random-message" in f_content
-        ), "random-message was supposed to be disabled through the corresponding environment variable"
+        oca_hooks_cfg_paths = [
+            Path(self.tmp_dir) / ".oca_hooks.cfg",
+            Path(self.tmp_dir) / ".oca_hooks-autofix.cfg",
+        ]
+        for oca_hooks_cfg_path in oca_hooks_cfg_paths:
+            config = ConfigParser(inline_comment_prefixes=("#", ";"))
+            config.read(oca_hooks_cfg_path)
+            disable_raw = config.get("MESSAGES_CONTROL", "disable")
+            disabled = {item.strip(", ") for item in disable_raw.replace("\n", "").split(",") if item.strip()}
+            assert expected_disabled.issubset(
+                disabled
+            ), f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
 
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
