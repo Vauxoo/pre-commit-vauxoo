@@ -11,7 +11,7 @@ const config = {
   proseWrap: "always",
   semi: true,
   trailingComma: "es5",
-  xmlWhitespaceSensitivity: "{{ 'preserve' if prettier_matrix_value >= 20 else 'strict' }}",
+  xmlWhitespaceSensitivity: "{{ 'preserve' if prettier_matrix_value >= 30 else 'strict' }}",
 {%- if prettier_matrix_value >= 20 %}
   xmlQuoteAttributes: "double",
 {%- endif %}

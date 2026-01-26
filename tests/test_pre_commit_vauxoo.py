@@ -22,7 +22,9 @@ from pre_commit_vauxoo.cli import main
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
-@pytest.fixture(params=[None, "0.0.0.0.0.0.0.0", "10.10.10.10.10.10.10.10", "20.20.20.20.20.20.20.20"])
+@pytest.fixture(
+    params=[None, "0.0.0.0.0.0.0.0", "10.10.10.10.10.10.10.10", "20.20.20.20.20.20.20.20", "30.30.30.30.30.30.30.30"]
+)
 def env_mode(request, monkeypatch):
     if request.param is None:
         monkeypatch.delenv("LINT_COMPATIBILITY_VERSION", raising=False)
