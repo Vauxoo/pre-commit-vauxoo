@@ -1,10 +1,8 @@
 [MESSAGES_CONTROL]
-{% if oca_hooks_matrix_value <=10 -%}
 enable=po-pretty-format,
-{% else -%}
-enable=field-string-redundant,
+{%- if oca_hooks_matrix_value >= 20 %}
+    field-string-redundant,
     manifest-superfluous-key,
-    po-pretty-format,
     prefer-env-translation,
     prefer-readme-rst,
     unused-logger,
