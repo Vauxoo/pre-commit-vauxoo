@@ -19,6 +19,13 @@ from pylint.lint import Run
 from yaml import Loader, load
 
 from pre_commit_vauxoo.cli import main
+from pre_commit_vauxoo.hooks.check_commit_msg import (
+    check_commit_messages_since_version,
+    check_commit_msg_file,
+    get_invalid_commit_messages,
+    resolve_commit_message_base_ref,
+    validate_commit_message_header,
+)
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
@@ -175,21 +182,212 @@ class TestPreCommitVauxoo:
         assert os.path.isfile(git_hook_pre_commit), "File not created"
         with open(git_hook_pre_commit) as f_git_hook_pre_commit:
             assert "pre-commit-vauxoo" in f_git_hook_pre_commit.read(), "File pre-commit not generated correctly"
-        os.environ["NOLINT"] = "0"
+        os.environ["NOLINT"] = "1"
         exit_code = subprocess.call(
             [
                 "git",
                 "-c",
-                "user.name='Test'",
+                "user.name=Test",
                 "-c",
                 "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
                 "commit",
                 "--allow-empty",
-                "-am",
-                "testing",
+                "-m",
+                "[FIX] module_example1: testing",
             ]
         )
         assert not exit_code, "Exited with error_code %s" % exit_code
+
+    def test_commit_msg_valid_single_module(self):
+        commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")
+        with open(commit_msg_path, "w", encoding="utf-8") as commit_msg:
+            commit_msg.write("[FIX] module_example1: correct typo\n\nBody\n")
+
+        assert check_commit_msg_file(commit_msg_path, repo_root=self.tmp_dir)
+
+    def test_commit_msg_valid_multiple_modules(self):
+        commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")
+        with open(commit_msg_path, "w", encoding="utf-8") as commit_msg:
+            commit_msg.write("[IMP] module_example1, module_warnings1: improve shared logic\n")
+
+        assert check_commit_msg_file(commit_msg_path, repo_root=self.tmp_dir)
+
+    def test_commit_msg_valid_multiple_tags(self):
+        errors = validate_commit_message_header(
+            "[MIG,FIX] module_example1: migrate and fix behavior", repo_root=self.tmp_dir
+        )
+        assert not errors
+
+    def test_commit_msg_valid_multiple_tags_with_slash(self):
+        errors = validate_commit_message_header(
+            "[REM/MOV] module_example1: move deprecated code", repo_root=self.tmp_dir
+        )
+        assert not errors
+
+    def test_commit_msg_valid_multiple_modules_with_slash(self):
+        errors = validate_commit_message_header(
+            "[IMP] module_example1/module_warnings1: improve shared logic", repo_root=self.tmp_dir
+        )
+        assert not errors
+
+    def test_commit_msg_invalid_unknown_module(self):
+        errors = validate_commit_message_header("[FIX] missing_module: fix bug", repo_root=self.tmp_dir)
+        assert any("Unknown module or file target(s): missing_module" in error for error in errors)
+        assert any("Use one or more targets separated by ',' or '/'." in error for error in errors)
+
+    def test_commit_msg_invalid_format(self):
+        errors = validate_commit_message_header("module_example1: fix bug", repo_root=self.tmp_dir)
+        assert errors[:3] == [
+            "Invalid commit message header.",
+            "Expected format: [TAG] module_name[,module_name2]: concise summary",
+            "You can also use multiple tags or targets separated by ',' or '/'.",
+        ]
+        assert errors[3].startswith("Allowed tags are:")
+        assert "[FIX] bug fixes" in errors[3]
+
+    def test_commit_msg_invalid_tag_help(self):
+        errors = validate_commit_message_header("[BAD] module_example1: fix bug", repo_root=self.tmp_dir)
+        assert any("Invalid tag(s): [BAD]." in error for error in errors)
+        invalid_tag_error = next(error for error in errors if "Invalid tag(s): [BAD]." in error)
+        assert "Use one or more tags separated by ',' or '/'." in invalid_tag_error
+        assert "[FIX] bug fixes" in invalid_tag_error
+        assert "[IMP] incremental improvements to existing behavior" in invalid_tag_error
+        assert "[MIG] migrating a module or project changes to another Odoo version" in invalid_tag_error
+        assert "[REF] refactoring existing code without changing expected behavior" in invalid_tag_error
+
+    def test_commit_msg_valid_mig_tag(self):
+        errors = validate_commit_message_header("[MIG] module_example1: migrate to 18.0", repo_root=self.tmp_dir)
+        assert not errors
+
+    def test_commit_msg_valid_global_target(self):
+        errors = validate_commit_message_header("[MOV] *: move shared logic to base module", repo_root=self.tmp_dir)
+        assert not errors
+
+    def test_commit_msg_valid_file_target(self):
+        file_target = os.path.join(self.tmp_dir, "custom_script.py")
+        with open(file_target, "w", encoding="utf-8") as target_fd:
+            target_fd.write("print('hello')\n")
+        errors = validate_commit_message_header(
+            "[MIG] custom_script.py: adjust package metadata", repo_root=self.tmp_dir
+        )
+        assert not errors
+
+    def test_commit_msg_valid_merge_without_target(self):
+        errors = validate_commit_message_header(
+            "[MERGE] Forward-port changes from 16.0 to 18.0 up to 94948e424",
+            repo_root=self.tmp_dir,
+        )
+        assert not errors
+
+    def test_commit_msg_invalid_composite_merge_still_requires_target(self):
+        errors = validate_commit_message_header("[MERGE/FIX] some automatic text", repo_root=self.tmp_dir)
+        assert errors[:3] == [
+            "Invalid commit message header.",
+            "Expected format: [TAG] module_name[,module_name2]: concise summary",
+            "You can also use multiple tags or targets separated by ',' or '/'.",
+        ]
+        assert errors[3].startswith("Allowed tags are:")
+
+    def test_resolve_commit_message_base_ref_prefers_stable_remote_url(self):
+        subprocess.check_call(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "[FIX] module_example1: initial baseline",
+            ]
+        )
+        subprocess.check_call(["git", "branch", "18.0"])
+        subprocess.check_call(["git", "remote", "add", "origin", "git@example.com:project.git"])
+        subprocess.check_call(["git", "remote", "add", "devremote", "git@example.com:dev/project.git"])
+        subprocess.check_call(["git", "update-ref", "refs/remotes/origin/18.0", "HEAD"])
+        subprocess.check_call(["git", "update-ref", "refs/remotes/devremote/18.0", "HEAD"])
+
+        assert resolve_commit_message_base_ref("18.0") == "origin/18.0"
+
+    def test_resolve_commit_message_base_ref_falls_back_to_local_branch(self):
+        subprocess.check_call(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "[FIX] module_example1: initial baseline",
+            ]
+        )
+        subprocess.check_call(["git", "branch", "18.0"])
+        subprocess.check_call(["git", "remote", "add", "origin", "git@example.com:dev/project.git"])
+        subprocess.check_call(["git", "update-ref", "refs/remotes/origin/18.0", "HEAD"])
+
+        assert resolve_commit_message_base_ref("18.0") == "18.0"
+
+    def test_get_invalid_commit_messages_since_base(self):
+        subprocess.check_call(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "[FIX] module_example1: initial baseline",
+            ]
+        )
+        subprocess.check_call(["git", "branch", "18.0"])
+        with open(os.path.join(self.tmp_dir, "custom_file.txt"), "w", encoding="utf-8") as custom_fd:
+            custom_fd.write("content\n")
+        subprocess.check_call(["git", "add", "custom_file.txt"])
+        subprocess.check_call(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "-m",
+                "[BAD] custom_file.txt: invalid tag",
+            ]
+        )
+
+        invalid_commits = get_invalid_commit_messages("18.0", self.tmp_dir)
+        assert len(invalid_commits) == 1
+        assert invalid_commits[0]["subject"] == "[BAD] custom_file.txt: invalid tag"
+
+    def test_commit_msg_hook_is_in_optional_config(self):
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml"), encoding="utf-8") as mandatory_cfg:
+            mandatory_content = mandatory_cfg.read()
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config-optional.yaml"), encoding="utf-8") as optional_cfg:
+            optional_content = optional_cfg.read()
+
+        assert "vx-check-commit-msg" not in mandatory_content
+        assert "vx-check-commit-msg" not in optional_content
+        assert "vx-check-commit-log" in optional_content
+
+    def test_check_commit_messages_since_version_passes_without_version(self):
+        assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True
 
     def test_autofixes(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"

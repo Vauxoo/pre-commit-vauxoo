@@ -5,6 +5,7 @@ import os
 import posixpath
 import re
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -211,6 +212,23 @@ def subprocess_call(command, *args, **kwargs):
     return subprocess.call(command, *args, **kwargs)
 
 
+def install_git_hook(src_path, dest_path, replacements):
+    with open(src_path, encoding="utf-8") as hook_src:
+        hook_content = hook_src.read()
+    for placeholder, value in replacements.items():
+        hook_content = hook_content.replace(placeholder, value)
+    with open(dest_path, "w", encoding="utf-8") as hook_dest:
+        hook_dest.write(hook_content)
+    os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IXUSR)
+
+
+def resolve_console_script(script_name):
+    script_path = os.path.join(os.path.dirname(sys.executable), script_name)
+    if os.path.isfile(script_path):
+        return script_path
+    return shutil.which(script_name) or script_name
+
+
 # There are a lot of if validations in this method. It is expected for now.
 # pylint: disable=too-complex
 def main(
@@ -240,8 +258,13 @@ def main(
     if install:
         git_hook_pre_commit_src = os.path.join(root_dir, "git_hook_pre_commit")
         git_hook_pre_commit_dest = os.path.join(repo_dirname, ".git", "hooks", "pre-commit")
+        pre_commit_vauxoo_bin = resolve_console_script("pre-commit-vauxoo")
         _logger.info("pre-commit installed at %s", git_hook_pre_commit_dest)
-        shutil.copy(git_hook_pre_commit_src, git_hook_pre_commit_dest)
+        install_git_hook(
+            git_hook_pre_commit_src,
+            git_hook_pre_commit_dest,
+            {"__PRE_COMMIT_VAUXOO_BIN__": pre_commit_vauxoo_bin},
+        )
         if do_exit:
             sys.exit(0)
         return
