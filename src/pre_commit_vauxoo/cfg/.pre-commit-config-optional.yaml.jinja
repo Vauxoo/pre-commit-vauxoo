@@ -59,6 +59,15 @@ repos:
     hooks:
       - id: doc8
         name: RST lint
+  - repo: local
+    hooks:
+      - id: vx-check-commit-log
+        name: commit message range check
+        description: Validate commit messages from VERSION..HEAD using the Odoo/Vauxoo structure.
+        entry: vx-check-commit-log
+        language: python
+        pass_filenames: false
+        always_run: true
   - repo: https://github.com/PyCQA/flake8
 {%- if flake8_matrix_value >= 20 %}
     rev: 7.3.0

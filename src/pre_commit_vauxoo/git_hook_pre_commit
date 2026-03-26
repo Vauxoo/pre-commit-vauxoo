@@ -11,8 +11,8 @@ if [ "$TRAVIS" != true ] && [ -z ${NOLINT+x} ]; then
     esac
 fi
 
-if command -v pre-commit-vauxoo > /dev/null; then
-    exec pre-commit-vauxoo
+if [ -x "__PRE_COMMIT_VAUXOO_BIN__" ]; then
+    exec "__PRE_COMMIT_VAUXOO_BIN__"
 else
     echo '`pre-commit-vauxoo` not found.  Did you forget to activate your virtualenv?' 1>&2
     exit 1
