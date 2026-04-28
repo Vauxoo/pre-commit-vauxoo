@@ -235,6 +235,25 @@ Full --help command result:
 .. https://pre-commit-vauxoo.readthedocs.io/
 
 
+AI Agents Integration
+=====================
+
+``pre-commit-vauxoo`` natively ships with an AI Agent Skill (located in the ``.agents/skills/`` directory). This skill provides context to your AI assistants (such as Cursor, Claude Desktop, or Gemini) on how to properly handle pre-commit hooks in Vauxoo and OCA repositories, preventing silent CI failures and handling headless TTY environments correctly.
+
+To enable this globally across all your projects, create a symbolic link from your local clone of ``pre-commit-vauxoo`` to your global AI skills directory.
+
+For **Gemini / Antigravity**:
+::
+
+    ln -sfn /path/to/your/clone/pre-commit-vauxoo/.agents/skills/vauxoo-pre-commit ~/.gemini/antigravity/skills/vauxoo-pre-commit
+
+For **Cursor** (using custom rules):
+::
+
+    ln -sfn /path/to/your/clone/pre-commit-vauxoo/.agents/skills/vauxoo-pre-commit/SKILL.md ~/.cursorrules_precommit
+
+Once linked, your AI agents will automatically know they must verify and enforce ``pre-commit`` rules before attempting to commit code in the ecosystem.
+
 Development
 ===========
 

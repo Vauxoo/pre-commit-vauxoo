@@ -4,15 +4,35 @@
 if [ "$NOLINT" == "1" ] || [ "$NOLINT" == true ]; then exit 0; fi
 
 if [ "$TRAVIS" != true ] && [ -z ${NOLINT+x} ]; then
-    read -p "Do you want to run pre-commit-vauxoo? (y/N): " yn </dev/tty
-    case $yn in
-        [Yy]* ) true;;
-        * ) exit 0;;
-    esac
+    if [ -c /dev/tty ] && [ -t 1 ]; then
+        # Use a 10s timeout so agents running in pseudo-TTYs (like Cursor) don't hang forever
+        read -t 10 -p "Do you want to run pre-commit-vauxoo? (Y/n) [auto-yes in 10s]: " yn </dev/tty
+        if [ $? -gt 128 ]; then
+            echo "Y"
+            yn="y"
+        fi
+        case $yn in
+            [Nn]* ) exit 0;;
+            * ) true;;
+        esac
+    fi
 fi
 
 if [ -x "__PRE_COMMIT_VAUXOO_BIN__" ]; then
-    exec "__PRE_COMMIT_VAUXOO_BIN__"
+    "__PRE_COMMIT_VAUXOO_BIN__"
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo ""
+        echo "======================================================================================="
+        echo "🤖 AUTOMATION & AI AGENT INSTRUCTION: Pre-commit failed or reformatted files."
+        echo "1. FORMATTING: If tools like Black/isort modified files, the working tree is now dirty."
+        echo "   -> ACTION: Run 'git status', 'git add <files>' and RETRY 'git commit'."
+        echo "2. LINTING: If Flake8/Pylint found errors, the code needs manual fixing."
+        echo "   -> ACTION: Read the errors above, FIX the python code, 'git add', and RETRY 'git commit'."
+        echo "3. DO NOT silence lints without explicit user permission."
+        echo "======================================================================================="
+    fi
+    exit $EXIT_CODE
 else
     echo '`pre-commit-vauxoo` not found.  Did you forget to activate your virtualenv?' 1>&2
     exit 1
