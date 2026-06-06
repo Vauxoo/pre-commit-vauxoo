@@ -401,9 +401,10 @@ class TestPreCommitVauxoo:
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         uninstallable_path = os.path.join(self.tmp_dir, "module_uninstallable")
         result = self.runner.invoke(main, ["-p", uninstallable_path])
-        assert (
-            not result.exit_code
-        ), "Uninstallable module should not have been linted. " "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Uninstallable module should not have been linted. Exited with error %s - %s" % (
+            result,
+            result.output,
+        )
 
     def test_exclude_only_uninstallable(self, caplog):
         repo_path = posixpath.join(self.tmp_dir, "repo")
@@ -436,9 +437,10 @@ class TestPreCommitVauxoo:
             config.read(oca_hooks_cfg_path)
             disable_raw = config.get("MESSAGES_CONTROL", "disable")
             disabled = {item.strip(", ") for item in disable_raw.replace("\n", "").split(",") if item.strip()}
-            assert expected_disabled.issubset(
-                disabled
-            ), f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
+            assert expected_disabled.issubset(disabled), (
+                "random-msg was supposed to be disabled for %s through the corresponding environment variable"
+                % oca_hooks_cfg_path
+            )
 
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])

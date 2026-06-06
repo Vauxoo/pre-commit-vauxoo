@@ -68,6 +68,15 @@ repos:
         language: python
         pass_filenames: false
         always_run: true
+{%- if ruff_matrix_value >= 20 %}
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff
+        name: ruff optional rules (SIM/RUF/C90)
+        args: [--extend-select, "SIM,RUF,C90", --exit-non-zero-on-fix]
+{%- endif %}
+{%- if ruff_matrix_value < 30 %}
   - repo: https://github.com/PyCQA/flake8
 {%- if flake8_matrix_value >= 20 %}
     rev: 7.3.0
@@ -84,6 +93,7 @@ repos:
 {%- endif %}
         args:
           - --config=.flake8-optional
+{%- endif %}
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.2
     hooks:
