@@ -705,3 +705,115 @@ class TestRuffTemplateRendering:
         self._render_with_ruff_value(20)
         content = self._read_config("ruff.toml")
         assert 'quote-style = "preserve"' in content
+
+
+class TestRuffViolationDetection:
+    """End-to-end tests that invoke ruff against Odoo-specific Python fixtures.
+
+    Group A — Suppression: verify Odoo-specific ignores in ruff.toml.jinja prevent
+    false positives on idiomatic Odoo patterns.
+    Group B — Signal: verify modernization rules fire on real improvement opportunities.
+    """
+
+    def setup_method(self, method):
+        self.old_environ = os.environ.copy()
+        self.original_work_dir = os.getcwd()
+        self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_ruff_violations"))
+        os.chdir(self.tmp_dir)
+        self.runner = CliRunner()
+        src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
+        copy_tree(src_path, self.tmp_dir)
+        subprocess.check_call(["git", "init", self.tmp_dir, "--initial-branch=main"])
+        subprocess.check_call(["git", "add", "-A"])
+        os.environ["LINT_COMPATIBILITY_VERSION"] = "10.10.10.10.10.10.10.20"
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        self.ruff_toml = os.path.join(self.tmp_dir, "ruff.toml")
+
+    def teardown_method(self, method):
+        os.chdir(self.original_work_dir)
+        if os.path.isdir(self.tmp_dir) and self.tmp_dir != "/":
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        os.environ.clear()
+        os.environ.update(self.old_environ)
+
+    def _write_fixture(self, filename, code):
+        filepath = os.path.join(self.tmp_dir, filename)
+        with open(filepath, "w", encoding="utf-8") as fh:
+            fh.write(code)
+        return filepath
+
+    def _ruff_output(self, filepath):
+        result = subprocess.run(
+            ["ruff", "check", "--config", self.ruff_toml, filepath],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return result.stdout
+
+    # --- Group A: Odoo-specific suppressions ---
+
+    def test_up031_suppressed_for_odoo_percent_logging(self):
+        # UP031 (printf-string-formatting) must stay silent for _logger.info("%s" % x)
+        filepath = self._write_fixture("log_odoo.py", "_logger.info('%s' % 'value')\n")
+        assert "UP031" not in self._ruff_output(filepath)
+
+    def test_b018_suppressed_in_odoo_manifest(self):
+        # B018 (useless-expression) must not fire on the bare dict that IS the Odoo manifest
+        filepath = self._write_fixture(
+            "__manifest__.py",
+            '{"name": "My Module", "version": "16.0.1.0.0"}\n',
+        )
+        assert "B018" not in self._ruff_output(filepath)
+
+    def test_f401_suppressed_in_odoo_init(self):
+        # F401 (unused-import) must not fire in __init__.py used for Odoo re-exports
+        filepath = self._write_fixture("__init__.py", "from .models import MyModel\n")
+        assert "F401" not in self._ruff_output(filepath)
+
+    def test_b006_suppressed_for_odoo_field_mutable_default(self):
+        # B006 (mutable-argument-default) must stay silent — Odoo uses [] in field defs
+        filepath = self._write_fixture("field_b006.py", "def f(x=[]):\n    return x\n")
+        assert "B006" not in self._ruff_output(filepath)
+
+    def test_b008_suppressed_for_odoo_callable_default(self):
+        # B008 (function-call-in-default-argument) — Odoo uses Date.today() in defaults
+        code = "import datetime\ndef f(x=datetime.date.today()):\n    return x\n"
+        filepath = self._write_fixture("field_b008.py", code)
+        assert "B008" not in self._ruff_output(filepath)
+
+    def test_e501_suppressed_long_line_delegated_to_format(self):
+        # E501 (line-too-long) delegated to ruff-format — must not appear in ruff check
+        long_comment = "# " + "a" * 140
+        filepath = self._write_fixture("long_line.py", long_comment + "\n")
+        assert "E501" not in self._ruff_output(filepath)
+
+    # --- Group B: Modernization signals ---
+
+    def test_up032_fires_on_format_method_call(self):
+        # UP032 (f-string) — .format() with a name argument should become an f-string
+        # Uses a variable arg (not a string literal) so ruff can safely emit f"hello {name}"
+        code = 'name = "world"\nx = "hello {}".format(name)\n'
+        filepath = self._write_fixture("fmt_up032.py", code)
+        assert "UP032" in self._ruff_output(filepath)
+
+    def test_f841_fires_on_unused_local_variable(self):
+        # F841 (local-variable-is-assigned-to-but-never-used)
+        code = "def f():\n    unused = 1\n    return None\n"
+        filepath = self._write_fixture("unused_f841.py", code)
+        assert "F841" in self._ruff_output(filepath)
+
+    def test_c400_fires_on_list_generator(self):
+        # C400 (unnecessary-generator-list) — prefer list comprehension over list(gen)
+        filepath = self._write_fixture("gen_c400.py", "result = list(x for x in range(10))\n")
+        assert "C400" in self._ruff_output(filepath)
+
+    def test_b007_fires_on_unused_loop_variable(self):
+        # B007 (unused-loop-control-variable) — use _ when loop var is not referenced
+        filepath = self._write_fixture("loop_b007.py", "for i in range(10):\n    pass\n")
+        assert "B007" in self._ruff_output(filepath)
+
+    def test_i001_fires_on_unsorted_imports(self):
+        # I001 (import-block-is-un-sorted-or-un-formatted)
+        filepath = self._write_fixture("imports_i001.py", "import sys\nimport os\n")
+        assert "I001" in self._ruff_output(filepath)
