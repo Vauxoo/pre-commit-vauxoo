@@ -385,6 +385,9 @@ Tool order:
 🟢 5. pre-commit framework
 🟢 6. Pylint/pylint-odoo
 🟢 7. flake8
+🟢 8. Ruff (linter + formatter)
+    (0-10 → disabled; 20 → ruff check+format replaces flake8+black+isort+autoflake+pyupgrade in parallel;
+     30 → legacy tools removed from generated configs)
 
 ⚠️ Higher values or empty valuesmay introduce formatting changes, stricter linting,
 or non-backward-compatible fixes (especially for XML, Python, and JS files).""",

@@ -30,6 +30,7 @@ TOOLS_ORDER = (
     "pre_commit_matrix_value",
     "pylint_matrix_value",
     "flake8_matrix_value",
+    "ruff_matrix_value",
 )
 DEFAULT_MAX_COMPATIBILITY = 1000000
 
@@ -439,7 +440,7 @@ def print_summary(all_status):
             if test_result["status"]
             else logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
         )
-        summary_msg.append("| {:<28}{}".format(test_name, outcome))
+        summary_msg.append(f"| {test_name:<28}{outcome}")
     summary_msg.append("+" + "=" * 39)
     _logger.info("Tests summary\n%s", "\n".join(summary_msg))
 

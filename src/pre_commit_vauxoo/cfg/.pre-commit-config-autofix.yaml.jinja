@@ -60,6 +60,19 @@ repos:
           - --config=.oca_hooks-autofix.cfg
           - --fix
 {%- endif %}
+{%- if ruff_matrix_value >= 20 %}
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff
+        name: ruff (check + fix)
+        args: [--fix, --unsafe-fixes]
+{%- if ruff_matrix_value >= 30 %}
+      - id: ruff-format
+        name: ruff (format)
+{%- endif %}
+{%- endif %}
+{%- if ruff_matrix_value < 30 %}
   - repo: https://github.com/psf/black-pre-commit-mirror.git
 {%- if black_autoflake_matrix_value >= 20 %}
     rev: 25.12.0
@@ -83,6 +96,7 @@ repos:
           - --remove-all-unused-imports
           - --remove-duplicate-keys
           - --remove-unused-variables
+{%- endif %}
   - repo: local
     hooks:
       - id: prettier
@@ -123,6 +137,7 @@ repos:
 {%- if pre_commit_matrix_value >= 20 %}
       - id: requirements-txt-fixer
 {%- endif %}
+{%- if ruff_matrix_value < 30 %}
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
@@ -132,6 +147,7 @@ repos:
     rev: 7.0.0
     hooks:
       - id: isort
+{%- endif %}
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.6
     hooks:

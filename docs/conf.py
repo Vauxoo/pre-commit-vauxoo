@@ -17,7 +17,7 @@ master_doc = "index"
 project = "pre-commit-vauxoo"
 year = "2022"
 author = "Vauxoo"
-copyright = "{}, {}".format(year, author)
+copyright = f"{year}, {author}"
 version = release = "8.2.31"
 
 pygments_style = "trac"
