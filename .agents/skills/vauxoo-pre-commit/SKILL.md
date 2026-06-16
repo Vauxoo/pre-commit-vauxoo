@@ -3,7 +3,7 @@ name: "vauxoo-pre-commit"
 description: >-
   Use this skill when you need to set up, execute, or troubleshoot pre-commit in Vauxoo and OCA repositories, or when preparing to commit code that must pass strict linting standards.
   Triggers on: 'vauxoo/**' repos, 'oca/**' repos, 'lint', 'pre-commit', 'format code', 'new project'.
-last_validated: "2026-04-25"
+last_validated: "2026-06-15"
 ---
 
 # Skill: Vauxoo / OCA Pre-Commit Protocol
@@ -58,3 +58,13 @@ Because of this legacy trap on older repositories, **if you are unsure if the ho
 
 4. **Commit:**
    Only execute `git commit` when you are absolutely certain the code passes the linters or the hook has auto-formatted and you have staged those changes.
+
+## 4. The Prettier / OCA-Checks Staging Trap
+
+> [!WARNING]
+> **Prettier & OCA Checks will modify files you didn't expect.**
+> If `prettier` reformats an XML file (e.g. changing `utf-8` to `UTF-8`) or `oca-checks-odoo-module` automatically renames a file (e.g. `README.md` to `README.rst`), those files will be left in your working tree as modified/untracked.
+> If you only run `git add <specific_file>` and commit, you will accidentally bypass these formatting changes locally. 
+> When the CI pipeline runs, it checks **all** files in the MR. The CI will run Prettier/OCA checks, reformat the files, and **fail the pipeline** (Exit code 3) because your commit was improperly formatted.
+> 
+> **ACTION:** Always check `git status` after a pre-commit run. If any files were auto-formatted or renamed, you MUST `git add .` or stage them explicitly before completing your push.
