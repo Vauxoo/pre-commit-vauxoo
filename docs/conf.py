@@ -18,7 +18,7 @@ project = "pre-commit-vauxoo"
 year = "2022"
 author = "Vauxoo"
 copyright = "{}, {}".format(year, author)
-version = release = "8.2.33"
+version = release = "8.2.34"
 
 pygments_style = "trac"
 templates_path = ["."]
