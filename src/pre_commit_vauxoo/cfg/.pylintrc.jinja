@@ -369,7 +369,7 @@ good-names=_,cr,uid,id,ids,_logger,o,e,i,k,v,checks,fast_suite,maxDiff
 bad-names=
 
 [IMPORTS]
-deprecated-modules=regsub,TERMIOS,Bastion,rexec,pdb,pudb,ipdb,bs4
+deprecated-modules=regsub,TERMIOS,Bastion,rexec,pdb,pudb,ipdb,bs4{%- if odoo_version and odoo_version|float >= 20 %},pytz{%- endif %}
 
 [DESIGN]
 max-args=200

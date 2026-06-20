@@ -501,3 +501,34 @@ class TestPreCommitVauxoo:
         with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
         assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
+
+    @pytest.mark.parametrize(
+        ("odoo_version", "expected_deprecated_modules"),
+        [
+            ("13.0", "openerp.osv,pdb,pudb,ipdb,bs4"),
+            ("20.0", "openerp.osv,pdb,pudb,ipdb,bs4,pytz"),
+        ],
+    )
+    def test_deprecated_modules_config(self, odoo_version, expected_deprecated_modules):
+        result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", odoo_version])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+
+        expected_by_file = {
+            ".pylintrc": set(expected_deprecated_modules.split(",")) - {"openerp.osv"},
+        }
+        for pylintrc, expected_modules in expected_by_file.items():
+            config = ConfigParser(inline_comment_prefixes=("#", ";"))
+            config.read(os.path.join(self.tmp_dir, pylintrc))
+            deprecated_modules = {
+                item.strip()
+                for item in config.get("IMPORTS", "deprecated-modules").replace("\n", "").split(",")
+                if item.strip()
+            }
+            assert expected_modules.issubset(deprecated_modules)
+
+        config = ConfigParser(inline_comment_prefixes=("#", ";"))
+        config.read(os.path.join(self.tmp_dir, ".pylintrc"))
+        enabled = {
+            item.strip() for item in config["MESSAGES CONTROL"]["disable"].replace("\n", "").split(",") if item.strip()
+        }
+        assert "deprecated-module" not in enabled
