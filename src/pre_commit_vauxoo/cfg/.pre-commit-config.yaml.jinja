@@ -42,9 +42,9 @@ repos:
         name: flake8 mandatory checks
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.2
+    rev: v10.0.6
 {%- else %}
-    rev: v9.3.22
+    rev: v9.3.24
 {%- endif %}
     hooks:
       - id: pylint_odoo
