@@ -1,8 +1,6 @@
 {
     'name': 'module_warnings1',
-    'summary': '''
-        Short (1 phrase/line) summary of the module's purpose, used as
-        subtitle on modules listing or apps.openerp.com''',
+    'summary': '''Short summary''',
     'author': 'Vauxoo,Odoo Community Association (OCA)',
     'license': 'AGPL-3',
     'website': 'http://www.yourcompany.com',
