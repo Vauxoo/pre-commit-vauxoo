@@ -14,6 +14,7 @@ omit =
     *__init__.py
     */tests/*
     *__main__.py
+    */cfg/*
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
