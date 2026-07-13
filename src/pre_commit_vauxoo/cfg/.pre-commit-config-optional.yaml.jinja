@@ -17,15 +17,11 @@ exclude: |
     (\.travis\.yml|\.gitlab\-ci\.yml|\.pre\-commit\-config*\.yaml)|
     # It was ignored from original MQT since that there is not init file
     (/migrations/1[0-4])|
-    (/doc/|/docs/)|
     {% if exclude_lint_regex -%}
     {{ "# EXCLUDE_LINT" }}
     {{ exclude_lint_regex }}
     {%- endif %}
-    # Legacy modules absa: galaxy
-    (galaxy/)|
-    # External scripts
-    (scripts/)
+    (/doc/|/docs/)
   )
 default_language_version:
   python: python3

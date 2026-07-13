@@ -18,7 +18,6 @@ exclude: |
     # It was ignored from original MQT since that there is not init file
     (/migrations/1[0-4])|
     (/doc/|/docs/)|
-    (/tests/data/)|
     {% if exclude_autofix_regex -%}
     {{ "# EXCLUDE_AUTOFIX" }}
     {{ exclude_autofix_regex }}
@@ -27,10 +26,7 @@ exclude: |
     {{ "# EXCLUDE_LINT" }}
     {{ exclude_lint_regex }}
     {%- endif %}
-    # Legacy modules absa: galaxy
-    (galaxy/)|
-    # External scripts
-    (scripts/)
+    (/tests/data/)
   )
 default_language_version:
   python: python3
