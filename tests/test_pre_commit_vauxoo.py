@@ -15,7 +15,9 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from pylint.lint import Run
+from jinja2 import Environment, FileSystemLoader
+from pylint.config.config_initialization import _config_initialization
+from pylint.lint import PyLinter, Run
 from yaml import Loader, load
 
 from pre_commit_vauxoo.cli import main
@@ -28,6 +30,7 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
 )
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
 
 
 @pytest.fixture(
@@ -39,6 +42,12 @@ def env_mode(request, monkeypatch):
     else:
         monkeypatch.setenv("LINT_COMPATIBILITY_VERSION", request.param)
     return request.param
+
+
+def render_template(odoo_version: str, template_name: str) -> str:
+    env = Environment(loader=FileSystemLoader(str(TEMPLATE_PATH)))
+    template = env.get_template(template_name)
+    return template.render(odoo_version=odoo_version)
 
 
 @pytest.mark.usefixtures("env_mode")
@@ -532,3 +541,25 @@ class TestPreCommitVauxoo:
             item.strip() for item in config["MESSAGES CONTROL"]["disable"].replace("\n", "").split(",") if item.strip()
         }
         assert "deprecated-module" not in enabled
+
+    @pytest.mark.parametrize(
+        "version,manifest_deprecated_keys",
+        [
+            ("14.0", ["active", "description"]),
+            ("15.0", ["active", "description"]),
+            ("16.0", ["active", "description", "qweb"]),
+            ("17.0", ["active", "description", "qweb"]),
+        ],
+    )
+    def test_pylint_cfg(self, version, manifest_deprecated_keys, tmp_path):
+        cfg_content = render_template(version, ".pylintrc-optional.jinja")
+        cfg_file = tmp_path / ".pylintrc-optional"
+        cfg_file.write_text(cfg_content)
+
+        linter = PyLinter()
+        linter.load_default_plugins()
+        _config_initialization(linter, [], config_file=cfg_file)
+        assert linter.is_message_enabled("manifest-deprecated-key"), "'manifest-deprecated-key' check not enabled"
+        assert (
+            manifest_deprecated_keys == linter.config.manifest_deprecated_keys
+        ), f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"

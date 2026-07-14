@@ -17,7 +17,11 @@ license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
 manifest-required-authors=Vauxoo,
   Odoo Community Association (OCA),
   Jarsa,
-manifest-deprecated-keys=description,active
+manifest-deprecated-keys=active,
+  description,
+  {% if odoo_version and odoo_version|float >= 16.0 -%}
+  qweb,
+  {%- endif %}
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
