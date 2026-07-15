@@ -36,6 +36,8 @@ repos:
     hooks:
       - id: flake8
         name: flake8 mandatory checks
+        args:
+          - --config=.hypothesis/.flake8
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
     rev: v10.0.7
@@ -46,7 +48,7 @@ repos:
       - id: pylint_odoo
         name: pylint mandatory checks
         args:
-          - --rcfile=.pylintrc
+          - --rcfile=.hypothesis/.pylintrc
           - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
@@ -57,7 +59,7 @@ repos:
         name: javascript mandatory checks
         args:
           - --color
-          - --config=.eslintrc.config.mjs
+          - --config=.hypothesis/.eslintrc.config.mjs
   - repo: local
     hooks:
       - id: name-non-ascii

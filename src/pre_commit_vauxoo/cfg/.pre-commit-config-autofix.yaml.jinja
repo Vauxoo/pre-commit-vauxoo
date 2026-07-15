@@ -38,22 +38,22 @@ repos:
     hooks:
       - id: oca-checks-odoo-module
         args:
-          - --config=.oca_hooks-autofix.cfg
+          - --config=.hypothesis/.oca_hooks-autofix.cfg
           - --fix
       - id: oca-checks-odoo-module-fixit
         args:
-          - --config=.oca_hooks-autofix.cfg
+          - --config=.hypothesis/.oca_hooks-autofix.cfg
           - --fix
       - id: oca-checks-po
         args:
-          - --config=.oca_hooks-autofix.cfg
+          - --config=.hypothesis/.oca_hooks-autofix.cfg
           - --fix
 {%- else %}
     rev: v0.1.7
     hooks:
       - id: oca-checks-po
         args:
-          - --config=.oca_hooks-autofix.cfg
+          - --config=.hypothesis/.oca_hooks-autofix.cfg
           - --fix
 {%- endif %}
   - repo: https://github.com/psf/black-pre-commit-mirror.git
@@ -88,8 +88,7 @@ repos:
           - --write
           - --list-different
           - --ignore-unknown
-          # use this specific name because it is already listed in our .gitignore
-          - --config=.eslintrc_prettier.config.cjs
+          - --config=.hypothesis/.prettierrc.config.cjs
         types: [text]
         files: \.(js|xml)$
         language: node
@@ -140,5 +139,5 @@ repos:
         name: javascript lints autofix
         args:
           - --color
-          - --config=.eslintrc.config.mjs
+          - --config=.hypothesis/.eslintrc.config.mjs
           - --fix

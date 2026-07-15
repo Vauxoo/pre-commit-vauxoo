@@ -28,6 +28,7 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
+from pre_commit_vauxoo.pre_commit_vauxoo import CFG_SUBFOLDER
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
@@ -127,7 +128,7 @@ class TestPreCommitVauxoo:
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
             assert "skip-string-normalization=false" in f_pyproject.read(), "Skip string normalization not set"
 
     def test_chdir(self, caplog):
@@ -145,7 +146,7 @@ class TestPreCommitVauxoo:
         os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
             f_content = f_pyproject.read()
         assert "skip-string-normalization=false" in f_content, "Skip string normalization not set"
 
@@ -153,7 +154,7 @@ class TestPreCommitVauxoo:
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, ".pylintrc")) as f_pylintrc:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as f_pylintrc:
             f_content = f_pylintrc.read()
         assert "import-error," in f_content, "import-error was not disabled"
 
@@ -163,7 +164,7 @@ class TestPreCommitVauxoo:
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, "pyproject.toml")) as f_pyproject:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
             assert "skip-string-normalization=true" in f_pyproject.read(), "Skip string normalization not set"
 
     def test_fail_warning(self, caplog):
@@ -386,9 +387,13 @@ class TestPreCommitVauxoo:
 
     def test_commit_msg_hook_is_in_optional_config(self):
         self.runner.invoke(main, ["--only-cp-cfg"])
-        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml"), encoding="utf-8") as mandatory_cfg:
+        with open(
+            os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config.yaml"), encoding="utf-8"
+        ) as mandatory_cfg:
             mandatory_content = mandatory_cfg.read()
-        with open(os.path.join(self.tmp_dir, ".pre-commit-config-optional.yaml"), encoding="utf-8") as optional_cfg:
+        with open(
+            os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config-optional.yaml"), encoding="utf-8"
+        ) as optional_cfg:
             optional_content = optional_cfg.read()
 
         assert "vx-check-commit-msg" not in mandatory_content
@@ -425,7 +430,7 @@ class TestPreCommitVauxoo:
             manifest.write("{'installable': False}")
 
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml")) as config_fd:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config.yaml")) as config_fd:
             config = load(config_fd, Loader)
 
         pattern = re.compile(config["exclude"])
@@ -437,8 +442,8 @@ class TestPreCommitVauxoo:
         os.environ["OCA_HOOKS_DISABLE_CHECKS"] = ",".join(expected_disabled)
         self.runner.invoke(main, [])
         oca_hooks_cfg_paths = [
-            Path(self.tmp_dir) / ".oca_hooks.cfg",
-            Path(self.tmp_dir) / ".oca_hooks-autofix.cfg",
+            Path(self.tmp_dir) / CFG_SUBFOLDER / ".oca_hooks.cfg",
+            Path(self.tmp_dir) / CFG_SUBFOLDER / ".oca_hooks-autofix.cfg",
         ]
         for oca_hooks_cfg_path in oca_hooks_cfg_paths:
             config = ConfigParser(inline_comment_prefixes=("#", ";"))
@@ -453,7 +458,8 @@ class TestPreCommitVauxoo:
         self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()
         rc_files = [
-            os.path.abspath(os.path.join(self.tmp_dir, pylintrc)) for pylintrc in [".pylintrc", ".pylintrc-optional"]
+            os.path.abspath(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc))
+            for pylintrc in [".pylintrc", ".pylintrc-optional"]
         ]
         for rc_file in rc_files:
             config = ConfigParser(inline_comment_prefixes=("#", ";"))
@@ -495,19 +501,19 @@ class TestPreCommitVauxoo:
     def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
         assert "category-allowed-app" not in f_content, "app check disabled for a project for apps"
 
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
         assert "category-allowed-app" in f_content, "app check enabled for a project for non apps"
 
         os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, ".pylintrc")) as pylintrc:
+        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
             f_content = pylintrc.read()
         assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
 
@@ -527,7 +533,7 @@ class TestPreCommitVauxoo:
         }
         for pylintrc, expected_modules in expected_by_file.items():
             config = ConfigParser(inline_comment_prefixes=("#", ";"))
-            config.read(os.path.join(self.tmp_dir, pylintrc))
+            config.read(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc))
             deprecated_modules = {
                 item.strip()
                 for item in config.get("IMPORTS", "deprecated-modules").replace("\n", "").split(",")
@@ -536,7 +542,7 @@ class TestPreCommitVauxoo:
             assert expected_modules.issubset(deprecated_modules)
 
         config = ConfigParser(inline_comment_prefixes=("#", ";"))
-        config.read(os.path.join(self.tmp_dir, ".pylintrc"))
+        config.read(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc"))
         enabled = {
             item.strip() for item in config["MESSAGES CONTROL"]["disable"].replace("\n", "").split(",") if item.strip()
         }
