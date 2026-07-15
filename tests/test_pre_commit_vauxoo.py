@@ -554,7 +554,7 @@ class TestPreCommitVauxoo:
     def test_pylint_cfg(self, version, manifest_deprecated_keys, tmp_path):
         cfg_content = render_template(version, ".pylintrc-optional.jinja")
         cfg_file = tmp_path / ".pylintrc-optional"
-        cfg_file.write_text(cfg_content)
+        cfg_file.write_text(cfg_content, encoding="utf-8")
 
         linter = PyLinter()
         linter.load_default_plugins()
