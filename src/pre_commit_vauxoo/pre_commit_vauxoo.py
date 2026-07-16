@@ -33,6 +33,7 @@ TOOLS_ORDER = (
     "flake8_matrix_value",
 )
 DEFAULT_MAX_COMPATIBILITY = 1000000
+DEFAULT_MIN_COMPATIBILITY = 10
 
 
 def full_norm_path(path):
@@ -92,7 +93,7 @@ def get_uninstallable_modules(src_path) -> set:
     return results
 
 
-def parse_matrix_compatibility(matrix_compatibility_string):
+def parse_matrix_compatibility(matrix_compatibility_string, verbose=True):
     value = matrix_compatibility_string
     matrix = {}
 
@@ -101,10 +102,13 @@ def parse_matrix_compatibility(matrix_compatibility_string):
 
     for idx, tool in enumerate(TOOLS_ORDER):
         try:
-            value = values[idx] if values[idx] else DEFAULT_MAX_COMPATIBILITY
+            if not matrix_compatibility_string:
+                value = DEFAULT_MIN_COMPATIBILITY  # consistent with default from CLI
+            else:
+                value = values[idx] if values[idx] else DEFAULT_MAX_COMPATIBILITY
         except IndexError:
             value = DEFAULT_MAX_COMPATIBILITY
-        if value != DEFAULT_MAX_COMPATIBILITY:
+        if verbose and value != DEFAULT_MAX_COMPATIBILITY:
             _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx + 1)
         matrix[tool] = value
     return matrix
