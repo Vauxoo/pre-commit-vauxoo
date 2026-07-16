@@ -38,22 +38,22 @@ repos:
     hooks:
       - id: oca-checks-odoo-module
         args:
-          - --config=.hypothesis/.oca_hooks-autofix.cfg
+          - --config=.config/.oca_hooks-autofix.cfg
           - --fix
       - id: oca-checks-odoo-module-fixit
         args:
-          - --config=.hypothesis/.oca_hooks-autofix.cfg
+          - --config=.config/.oca_hooks-autofix.cfg
           - --fix
       - id: oca-checks-po
         args:
-          - --config=.hypothesis/.oca_hooks-autofix.cfg
+          - --config=.config/.oca_hooks-autofix.cfg
           - --fix
 {%- else %}
     rev: v0.1.7
     hooks:
       - id: oca-checks-po
         args:
-          - --config=.hypothesis/.oca_hooks-autofix.cfg
+          - --config=.config/.oca_hooks-autofix.cfg
           - --fix
 {%- endif %}
   - repo: https://github.com/psf/black-pre-commit-mirror.git
@@ -65,7 +65,7 @@ repos:
     hooks:
       - id: black
         args:
-          - --config=.hypothesis/pyproject.toml
+          - --config=.config/pyproject.toml
   - repo: https://github.com/myint/autoflake
 {%- if black_autoflake_matrix_value >= 20 %}
     rev: v2.3.1
@@ -90,7 +90,7 @@ repos:
           - --write
           - --list-different
           - --ignore-unknown
-          - --config=.hypothesis/.prettierrc.config.cjs
+          - --config=.config/.prettierrc.config.cjs
         types: [text]
         files: \.(js|xml)$
         language: node
@@ -141,5 +141,5 @@ repos:
         name: javascript lints autofix
         args:
           - --color
-          - --config=.hypothesis/.eslintrc.config.mjs
+          - --config=.config/.eslintrc.config.mjs
           - --fix

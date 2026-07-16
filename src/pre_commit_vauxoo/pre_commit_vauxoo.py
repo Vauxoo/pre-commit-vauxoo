@@ -22,7 +22,7 @@ re_export = re.compile(
     re.M,
 )
 
-CFG_SUBFOLDER = ".hypothesis"
+CFG_SUBFOLDER = ".config"
 TOOLS_ORDER = (
     "prettier_matrix_value",
     "oca_hooks_matrix_value",
@@ -321,7 +321,7 @@ def main(
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
     # Paths to the pre‑commit configuration files inside the hidden folder
-    cfg_dir = os.path.join(repo_dirname, ".hypothesis")
+    cfg_dir = os.path.join(repo_dirname, CFG_SUBFOLDER)
     pre_commit_cfg_mandatory = os.path.join(cfg_dir, ".pre-commit-config.yaml")
     pre_commit_cfg_optional = os.path.join(cfg_dir, ".pre-commit-config-optional.yaml")
     pre_commit_cfg_autofix = os.path.join(cfg_dir, ".pre-commit-config-autofix.yaml")
