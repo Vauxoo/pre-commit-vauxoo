@@ -22,6 +22,7 @@ re_export = re.compile(
     re.M,
 )
 
+CFG_SUBFOLDER = ".hypothesis"
 TOOLS_ORDER = (
     "prettier_matrix_value",
     "oca_hooks_matrix_value",
@@ -127,6 +128,17 @@ def copy_cfg_files(
     is_project_for_apps,
     compatibility_version,
 ):
+    """Copy configuration files from the package's cfg directory into a hidden
+    folder at the root of the repository.
+
+    This isolates the configuration files so they are not version-controlled in each
+    project repository, avoiding the need to update ``.gitignore`` for every new
+    tool.
+    """
+    # Destination directory inside the repository
+    cfg_dir = os.path.join(repo_dirname, CFG_SUBFOLDER)
+    os.makedirs(cfg_dir, exist_ok=True)
+
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
     if exclude_lint:
@@ -141,7 +153,7 @@ def copy_cfg_files(
                 if exclude_path and exclude_path.strip()
             ]
         )
-    _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, repo_dirname)
+    _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, cfg_dir)
     if no_overwrite:
         # Use the custom files defined in the repo
         _logger.warning("Using custom files")
@@ -159,13 +171,25 @@ def copy_cfg_files(
     }
     copier.run_copy(
         src_path=precommit_config_dir,
-        dst_path=repo_dirname,
+        dst_path=cfg_dir,
         data=data,
         unsafe=True,
         defaults=True,
         overwrite=not no_overwrite,
         quiet=True,
     )
+
+    # .editorconfig must live at the repo root because prettier (and most
+    # editors) always search for it there with no CLI flag to override the
+    # path.  Move it out of the hidden subfolder after copier places it.
+    if os.path.isfile(editorconfig_src := os.path.join(cfg_dir, ".editorconfig")):
+        shutil.move(editorconfig_src, os.path.join(repo_dirname, ".editorconfig"))
+
+    # .isort.cfg must live at the repo root because the parameter config
+    # change the order of third-party packages
+    if os.path.isfile(isort_src := os.path.join(cfg_dir, ".isort.cfg")):
+        shutil.move(isort_src, os.path.join(repo_dirname, ".isort.cfg"))
+
     if exclude_autofix:
         _logger.info("Applying EXCLUDE_AUTOFIX=%s", exclude_autofix)
     if exclude_lint:
@@ -292,9 +316,11 @@ def main(
         return
     _logger.info("Installing pre-commit hooks")
     cmd = ["pre-commit", "install-hooks", "--color=always"]
-    pre_commit_cfg_mandatory = os.path.join(repo_dirname, ".pre-commit-config.yaml")
-    pre_commit_cfg_optional = os.path.join(repo_dirname, ".pre-commit-config-optional.yaml")
-    pre_commit_cfg_autofix = os.path.join(repo_dirname, ".pre-commit-config-autofix.yaml")
+    # Paths to the pre‑commit configuration files inside the hidden folder
+    cfg_dir = os.path.join(repo_dirname, ".hypothesis")
+    pre_commit_cfg_mandatory = os.path.join(cfg_dir, ".pre-commit-config.yaml")
+    pre_commit_cfg_optional = os.path.join(cfg_dir, ".pre-commit-config-optional.yaml")
+    pre_commit_cfg_autofix = os.path.join(cfg_dir, ".pre-commit-config-autofix.yaml")
     if "mandatory" in precommit_hooks_type:
         subprocess_call(cmd + ["-c", pre_commit_cfg_mandatory])
     if "optional" in precommit_hooks_type:
@@ -406,7 +432,7 @@ def main(
         _logger.info("*" * 68)
         _logger.info("%s OPTIONAL CHECKS %s", "~" * 25, "~" * 25)
         _logger.info("Running optional checks (does not affect status build)")
-        status_optional = subprocess_call(cmd + ["-c", os.path.join(repo_dirname, pre_commit_cfg_optional)])
+        status_optional = subprocess_call(cmd + ["-c", pre_commit_cfg_optional])
         test_name = "Optional checks"
         all_status[test_name] = {"status": status_optional}
         if status_optional and fail_optional:

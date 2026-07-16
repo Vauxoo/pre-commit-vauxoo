@@ -37,7 +37,7 @@ repos:
       - id: pylint_odoo
         name: pylint optional checks
         args:
-          - --rcfile=.pylintrc-optional
+          - --rcfile=.hypothesis/.pylintrc-optional
           - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
           # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
           # - --jobs=0  # 0 will auto-detect the number of processors available to use
@@ -55,6 +55,8 @@ repos:
     hooks:
       - id: doc8
         name: RST lint
+        args:
+          - --config=.hypothesis/doc8.ini
   - repo: local
     hooks:
       - id: vx-check-commit-log
@@ -79,7 +81,7 @@ repos:
         additional_dependencies: ["flake8-bugbear==23.9.16"]
 {%- endif %}
         args:
-          - --config=.flake8-optional
+          - --config=.hypothesis/.flake8-optional
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.2
     hooks:
@@ -88,7 +90,7 @@ repos:
         verbose: True
         args:
           - --exit-zero
-          - --ini=.bandit
+          - --ini=.hypothesis/.bandit
         # reduce the INFO logger
         require_serial: true
   - repo: https://github.com/OCA/pylint-odoo
@@ -102,5 +104,5 @@ repos:
         name: pylint EXPERIMENTAL checks (Won't affect CI status)!
         verbose: True  # exit-zero needs verbose
         args:
-          - --rcfile=.pylintrc-experimental
+          - --rcfile=.hypothesis/.pylintrc-experimental
           - --exit-zero
