@@ -30,7 +30,7 @@ exclude: |
   )
 default_language_version:
   python: python3
-  node: "24.13.0"
+  node: "24.15.0"
 repos:
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
 {%- if oca_hooks_matrix_value >= 20 %}
@@ -143,3 +143,11 @@ repos:
           - --color
           - --config=.config/.eslintrc.config.mjs
           - --fix
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+    - id: markdownlint
+      verbose: True
+      args:
+        - --config=.config/.markdownlint.yaml
+        - --fix
