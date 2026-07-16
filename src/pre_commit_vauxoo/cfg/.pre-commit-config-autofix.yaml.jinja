@@ -64,6 +64,8 @@ repos:
 {%- endif %}
     hooks:
       - id: black
+        args:
+          - --config=.hypothesis/pyproject.toml
   - repo: https://github.com/myint/autoflake
 {%- if black_autoflake_matrix_value >= 20 %}
     rev: v2.3.1

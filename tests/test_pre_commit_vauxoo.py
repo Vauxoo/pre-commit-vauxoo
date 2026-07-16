@@ -28,10 +28,14 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
-from pre_commit_vauxoo.pre_commit_vauxoo import CFG_SUBFOLDER
+from pre_commit_vauxoo.pre_commit_vauxoo import (
+    CFG_SUBFOLDER,
+    parse_matrix_compatibility,
+)
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
+TEST_PATH = Path(__file__).resolve().parents[0]
 
 
 @pytest.fixture(
@@ -62,8 +66,8 @@ class TestPreCommitVauxoo:
         self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_pre_commit_vauxoo"))
         os.chdir(self.tmp_dir)
         self.runner = CliRunner()
-        src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
-        self.create_dummy_repo(src_path, self.tmp_dir)
+        self.src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
+        self.create_dummy_repo(self.src_path, self.tmp_dir)
         self.maxDiff = None
         os.environ["EXCLUDE_AUTOFIX"] = "module_autofix1/"
 
@@ -404,12 +408,28 @@ class TestPreCommitVauxoo:
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True
 
     def test_autofixes(self, caplog):
+        # Remove the 'index' from diff since that it changes for each test and strip spaces or tabs
+        index_re = re.compile(r"^index [0-9a-fA-F]+\.\.[0-9a-fA-F]+.*\n|[ \t]+$", flags=re.MULTILINE)
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = ""
         expected_logs = ["ERROR:pre-commit-vauxoo:Autofix checks reformatted"]
         with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
+        result = subprocess.run(["git", "diff", self.tmp_dir], capture_output=True, text=True, check=False)
+        diff_output = index_re.sub("", result.stdout)
+        first_compatibility_version = list(
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False).values()
+        )[0]
+        if first_compatibility_version <= 10:
+            # Few autofixes
+            diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected.diff"
+        else:
+            # More autofixes >=20
+            diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_20.diff"
+        diff_module_autofix_expected = index_re.sub("", diff_module_autofix_expected_path.read_text())
+        diff_module_autofix_expected_path.write_text(diff_output)  # Uncomment to update the diff files
+        assert diff_output == diff_module_autofix_expected, "Autofixes applied different to expected"
 
     def test_uninstallable(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
