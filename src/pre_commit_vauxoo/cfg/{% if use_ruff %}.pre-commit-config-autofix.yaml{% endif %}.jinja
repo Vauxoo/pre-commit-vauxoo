@@ -29,7 +29,7 @@ exclude: |
   )
 default_language_version:
   python: python3
-  node: "24.13.0"
+  node: "26.5.0"
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0
@@ -92,7 +92,7 @@ repos:
       - id: remove-tabs
         exclude: (Makefile|debian/rules|.gitmodules|\.po|\.pot)(\.in)?$
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.39.1
+    rev: v10.8.0
     hooks:
       - id: eslint
         name: javascript lints autofix
@@ -100,3 +100,11 @@ repos:
           - --color
           - --config=.config/.eslintrc.config.mjs
           - --fix
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+    - id: markdownlint
+      verbose: True
+      args:
+        - --config=.config/.markdownlint-autofix.yaml
+        - --fix
