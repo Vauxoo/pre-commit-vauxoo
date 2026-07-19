@@ -404,6 +404,61 @@ class TestPreCommitVauxoo:
         assert "vx-check-commit-msg" not in optional_content
         assert "vx-check-commit-log" in optional_content
 
+    def test_markdownlint_hook_is_in_optional_config(self):
+        # The Markdown probe must live ONLY in the optional config. It is a noise
+        # probe (see the hook comment) meant to size the pool cleanup, so if it ever
+        # leaked into the mandatory or autofix config it would start blocking merges
+        # or rewriting files -- exactly what this first phase must not do.
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml"), encoding="utf-8") as mandatory_cfg:
+            mandatory_content = mandatory_cfg.read()
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config-optional.yaml"), encoding="utf-8") as optional_cfg:
+            optional_content = optional_cfg.read()
+
+        # The report-only lint (id: markdownlint-cli2, no --fix) lives in the optional
+        # config. Its autofix twin (markdownlint-cli2-fix) is checked separately in the
+        # autofix config; neither belongs in the blocking mandatory config.
+        assert "id: markdownlint-cli2\n" in optional_content
+        assert "'--fix'" not in optional_content  # the optional hook only reports
+        assert "id: markdownlint-cli2\n" not in mandatory_content
+        assert "markdownlint-cli2-fix" not in mandatory_content
+        # Non-blocking by construction: the node shim swallows cli2's non-zero exit.
+        assert "execFileSync('markdownlint-cli2'" in optional_content
+        assert "markdownlint-cli2@0.14.0" in optional_content
+        # The rule config must ship next to the hook so cli2 auto-discovers it.
+        assert os.path.isfile(os.path.join(self.tmp_dir, ".markdownlint.yaml"))
+
+    def test_markdownlint_config_disables_noisy_rules(self):
+        # The shipped ruleset is a deliberate contract: silence the rules that fight
+        # how Odoo docs are written (line length, duplicate headings, inline HTML,
+        # first-line heading) while keeping the fenced-code-language check that
+        # motivated the hook. Pin it so a careless template edit is caught.
+        config = load(render_template("15.0", ".markdownlint.yaml.jinja"), Loader=Loader)
+
+        assert config["default"] is True
+        for disabled in ("MD013", "MD024", "MD033", "MD041"):
+            assert config[disabled] is False, f"{disabled} must stay disabled"
+        # MD040 must NOT be turned off (stays default-on): missing code-fence
+        # languages are exactly what this probe should surface.
+        assert "MD040" not in config
+
+    def test_markdownlint_autofix_hook_is_in_autofix_config(self):
+        # The autofix companion lives in the autofix config (it rewrites files, like
+        # black/prettier), never in mandatory. It must carry --fix and the
+        # exit-swallowing shim so the unfixable MD040 residue never keeps the autofix
+        # job red once everything fixable has been applied.
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config-autofix.yaml"), encoding="utf-8") as autofix_cfg:
+            autofix_content = autofix_cfg.read()
+        with open(os.path.join(self.tmp_dir, ".pre-commit-config.yaml"), encoding="utf-8") as mandatory_cfg:
+            mandatory_content = mandatory_cfg.read()
+
+        assert "markdownlint-cli2-fix" in autofix_content
+        assert "'--fix'" in autofix_content
+        assert "execFileSync('markdownlint-cli2'" in autofix_content
+        assert "markdownlint-cli2@0.14.0" in autofix_content
+        assert "markdownlint-cli2-fix" not in mandatory_content
+
     def test_check_commit_messages_since_version_passes_without_version(self):
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True
 

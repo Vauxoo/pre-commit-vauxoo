@@ -143,3 +143,24 @@ repos:
           - --color
           - --config=.config/.eslintrc.config.mjs
           - --fix
+  - repo: local
+    hooks:
+      - id: markdownlint-cli2-fix
+        name: markdownlint autofix
+        # Fixes the auto-fixable Markdown rules -- blank lines around headings,
+        # lists and fences, and collapsing multiple blanks -- reusing the same
+        # .markdownlint.yaml as the optional lint. Like black/prettier: when it
+        # rewrites a file, pre-commit's own file-change detection flags the autofix
+        # job so the developer commits the result.
+        #
+        # The node shim swallows markdownlint-cli2's exit code on purpose: MD040
+        # (fenced-code-language) has NO autofix, and without the shim its residue
+        # would keep the autofix job red forever even once everything fixable is
+        # applied. MD040 is surfaced instead by the experimental lint in the
+        # optional config, which reports without blocking. So this hook fails only
+        # when it actually reformats something -- never on the unfixable remainder.
+        entry: node -e "try{require('child_process').execFileSync('markdownlint-cli2',['--fix'].concat(process.argv.slice(1)),{stdio:'inherit'})}catch(e){}" --
+        language: node
+        types: [markdown]
+        additional_dependencies:
+          - "markdownlint-cli2@0.14.0"

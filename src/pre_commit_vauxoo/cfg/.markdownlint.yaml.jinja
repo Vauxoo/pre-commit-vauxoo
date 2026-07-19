@@ -1,0 +1,29 @@
+# Vauxoo Markdown lint defaults (markdownlint-cli2).
+#
+# Why this file exists: until now Markdown only ever got whitespace hygiene
+# (trailing-whitespace, end-of-file-fixer, mixed-line-ending). Nothing checked
+# heading/list spacing or demanded a language on code fences. These defaults draw
+# the line at "structurally sound and diff-friendly" WITHOUT fighting how people
+# actually write docs -- every rule turned off below is a deliberate call, not an
+# oversight, so the probe reports signal and not style noise.
+default: true
+
+# MD013 line-length OFF: prose and tables wrap where they read best; a hard column
+# limit only manufactures noise on files that were never written to one.
+MD013: false
+
+# MD024 duplicate-headings OFF: reference docs legitimately repeat section names
+# ("Before"/"After", "Example", "Trigger sentence").
+MD024: false
+
+# MD033 inline-HTML OFF: Odoo README/description pages embed HTML on purpose
+# (badges, <details>, App Store markup). Banning it would flag real content.
+MD033: false
+
+# MD041 first-line-heading OFF: fragments and partial docs do not always open with
+# an H1; enforcing it punishes valid includes and snippets.
+MD041: false
+
+# Everything else stays at markdownlint defaults. MD040 (fenced-code-language) in
+# particular stays ON: every code fence must name a language -- missing identifiers
+# were the single largest class of findings that motivated adding this hook.
