@@ -83,14 +83,24 @@ repos:
         args:
           - --config=.config/.flake8-optional
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.2
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        name: bandit optional
+        verbose: True
+        args:
+          - --ini=.config/.bandit-optional
+        # reduce the INFO logger
+        require_serial: true
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
     hooks:
       - id: bandit
         name: bandit EXPERIMENTAL (Won't affect CI status)!
         verbose: True
         args:
           - --exit-zero
-          - --ini=.config/.bandit
+          - --ini=.config/.bandit-experimental
         # reduce the INFO logger
         require_serial: true
   - repo: https://github.com/OCA/pylint-odoo
