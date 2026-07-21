@@ -143,3 +143,17 @@ repos:
           - --color
           - --config=.config/.eslintrc.config.mjs
           - --fix
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+  {%- if black_autoflake_matrix_value >= 20 %}
+    rev: v0.15.22
+  {%- else %}
+    rev: v0.4.10
+  {%- endif %}
+    hooks:
+      - id: ruff-check
+        args:
+          - --config=.config/.ruff.toml
+          - --fix
+      - id: ruff-format
+        args:
+          - --config=.config/.ruff.toml

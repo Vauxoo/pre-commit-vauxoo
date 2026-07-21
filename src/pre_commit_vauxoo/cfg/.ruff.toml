@@ -1,0 +1,27 @@
+line-length = 119
+
+[format]
+quote-style = "double"
+
+[lint]
+select = ["I"]
+
+[lint.isort]
+combine-as-imports = true
+default-section = "third-party"
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "odoo",
+    "odoo-addons",
+    "first-party",
+    "local-folder",
+]
+
+[lint.isort.sections]
+odoo = ["odoo"]
+odoo-addons = ["odoo.addons"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "I001"]
