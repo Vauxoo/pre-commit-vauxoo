@@ -1,0 +1,447 @@
+line-length = 119
+preview = true
+target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYTHON
+fix-only = true
+unsafe-fixes = true
+
+[format]
+quote-style = "double"
+skip-magic-trailing-comma = false
+indent-style = "space"
+line-ending = "lf"
+
+[lint]
+select = ["ALL"]
+
+ignore = [
+{% if ruff_disable_checks %}
+    # Disabled from RUFF_DISABLE_CHECKS option
+{% for check in ruff_disable_checks %}
+    "{{ check }}",
+{% endfor %}
+{% endif %}
+    # Disabled
+    "AIR",  # Odoo is not using 'Airflow' library yet
+    "any-eq-ne-annotation",  # We are not using typing entirely yet
+    "argument-default-in-stub",  # We are not using typing entirely yet
+    "assignment-default-in-stub",  # We are not using typing entirely yet
+    "ASYNC",  # Odoo is not using 'trio' library yet
+    "bad-exit-annotation",  # We are not using typing entirely yet
+    "blank-line-after-function",  # Big diff for only blank-line
+    "blank-lines-between-header-and-content",  # Big diff for only docstring
+    "collection-literal-concatenation",  # No regular way using list([], *[])
+    "D",  # (pydocstyle) Big diff for only docstring styles
+    "deprecated-import",  # We are not using typing entirely yet
+    "deprecated-mock-import",  # try-except import is a valid multi-compatibility import
+    "dot-format-in-exception",  # Only add an extra variable for the same string
+    "duplicate-class-field-definition",  # It is unsafe removing a field definition it could need a migration script and decide by the developer the correct one
+    "error-instead-of-exception",  # Sometimes we need only to log the error instead of raise it
+    "escape-sequence-in-docstring",  # Big diff for only docstring
+    "f-string-in-exception",  # Only add an extra variable for the same string
+    "FAST", # Odoo is not using 'fastapi' library yet
+    "first-word-uncapitalized",  # Big diff for only docstring
+    "future-annotations-in-stub",  # We are not using typing entirely yet
+    "future-required-type-annotation",  # We are not using typing entirely yet
+    "future-rewritable-type-annotation",  # We are not using typing entirely yet
+    "if-else-block-instead-of-if-exp",  # human readable if-else in multiple lines
+    "if-exp-instead-of-or-operator",  # lints prefer if-else instead of "or", or not?
+    "implicit-return-value",  # We prefer "return" than "return None"
+    "implicit-return",  # We have too many methods without return
+    "implicit-string-concatenation-in-collection-literal",  # Add parentheses (str\nstr) could be not needed
+    "incorrectly-parenthesized-tuple-in-subscript",  # Could be buggy
+    "invalid-rule-code",  # We could even use noqa with other tools
+    "lambda-assignment",  # We use a lot lambda in Odoo
+    "lazy-import-mismatch",  # We prefer to load the imports in order to check any error early
+    "legacy-form-pytest-raises",  # Odoo is not using 'pyttest' library yet
+    "literal-membership",  # We use a lot "in []"
+    "map-without-explicit-strict",  # "strict" should be decided by the developer explicitly
+    "mismatched-section-underline-length",  # Big diff for only docstring
+    "missing-blank-line-after-last-section",  # Big diff for only docstring
+    "missing-dashed-underline-after-section",  # Big diff for only docstring
+    "missing-f-string-syntax",  # Only add an extra variable for the same string
+    "missing-new-line-after-section-name",  # Big diff for only docstring
+    "missing-return-type-class-method",  # We are not using typing entirely yet
+    "missing-return-type-private-function",  # We are not using typing entirely yet
+    "missing-return-type-special-method",  # We are not using typing entirely yet
+    "missing-return-type-static-method",  # We are not using typing entirely yet
+    "missing-return-type-undocumented-public-function",  # We are not using typing entirely yet
+    "missing-section-name-colon",  # Big diff for only docstring
+    "missing-terminal-punctuation",  # Big diff for only docstring
+    "missing-trailing-comma",  # Big diff and not even needed for all cases
+    "missing-trailing-period",  # Big diff for only docstring
+    "module-import-not-at-top-of-file",  # TODO: Check if there are not errors
+    "multi-line-summary-first-line",  # Big diff for only docstring. WAIT: It was fixed from black???
+    "multi-line-summary-second-line",  # Big diff for only docstring. WAIT: It was fixed from black???
+    "multiple-with-statements",  # A few cases could raise errors since the second "with" depends on the first one
+    "never-union",  #  We are not using typing entirely yet
+    "new-line-after-last-paragraph",  # Big diff for only docstring
+    "no-blank-line-after-section",  # Big diff for only docstring
+    "no-blank-line-before-section",  # Big diff for only docstring
+    "no-explicit-stacklevel",  # TODO: R&D why it is needed (in Odoo warnings.warn)
+    "non-capitalized-section-name",  # Sometimes we want to capitalize TODO in the docstring
+    "non-pep585-annotation",  # We are not using typing entirely yet
+    "non-pep604-annotation-optional",  # We are not using typing entirely yet
+    "non-pep604-annotation-union",  # We are not using typing entirely yet
+    "non-self-return-type",  # We are not using typing entirely yet
+    "NPY",  # We prefer not using 'numpy' library
+    "outdated-version-block",  # valid multi-compatibility code
+    "parenthesize-chained-operators",  # We don't need parenthesize "and" operator
+    "printf-string-formatting",  # We are not fan to use str.format because of security issues
+    "PT",  # Odoo is not using 'pyttest' library yet
+    "PYI",  # We are not using typing entirely yet
+    "quadratic-list-summation",  # TODO: Check more cases
+    "quoted-annotation-in-stub",  # We are not using typing entirely yet
+    "quoted-annotation",  # We are not using typing entirely yet
+    "raw-string-in-exception",  # Only add an extra variable for the same string
+    "redundant-bool-literal",  #  We are not using typing entirely yet
+    "relative-imports",  # Odoo allows relative-imports and non-relative are imported different
+    "repeated-append",  # We could prefer list.append instead of list.extend
+    "rule-codes-in-selectors",  # The ruff cfg is managed from pre-commit-vauxoo
+    "subclass-builtin",  # TODO: R&D why it is better using class "x(collections.UserDict)" instead of "class x(dict)"
+    "subprocess-run-without-check",  # Forcing "check=False" could masking the original intention
+    "TC",  # (Type Checking) We are not using typing entirely yet
+    "true-false-comparison",  # "var != True" is different than "not var"
+    "type-alias-without-annotation",  # We are not using typing entirely yet
+    "uncapitalized-environment-variables",  # It could generate issues and we are not using WIN
+    "unnecessary-assign-before-yield",  # Better explicit named of variable even if it is only for yield
+    "unnecessary-assign",  # Explicit named of variable even if it is only to return it
+    "unnecessary-iterable-allocation-for-first-element",  # For list[0] could raise IndexError but using next() raise StopIteration and it don't autofix "try-except(IndexError)"
+    "unspecified-encoding",  # New py versions have using utf-8 by default
+    "unused-noqa",  # We could even use noqa with other tools
+    "zip-without-explicit-strict",  #  "strict" should be decided by the developer explicitly
+
+    # # Enabled but ignored temporarily to silent noisy repeated occurrences to test new ones
+    # "assert-false",
+    # "assert-with-print-message",
+    # "avoidable-escaped-quote",  # already autofixed from black before
+    # "bad-quotes-docstring",  # already autofixed from black before
+    # "bad-quotes-inline-string",
+    # "bad-quotes-multiline-string",  # already autofixed from black before
+    # "bit-count",
+    # "blank-line-after-decorator",
+    # "blank-line-before-class",  # already autofixed from black before
+    # "blank-line-before-function",  # already autofixed from black before
+    # "blank-line-between-methods",  # already autofixed from black before
+    # "blank-line-with-whitespace",  # already autofixed from black before
+    # "blank-lines-after-function-or-class",  # already autofixed from black before
+    # "blank-lines-before-nested-definition",  # already autofixed from black before
+    # "blank-lines-top-level",  # already autofixed from black before
+    # "blanket-noqa",
+    # "boolean-chained-comparison",
+    # "builtin-open",
+    # "check-and-remove-from-set",
+    # "class-with-mixed-type-vars",
+    # "collapsible-else-if",
+    # "collapsible-if",
+    # "compare-with-tuple",
+    # "decimal-from-float-literal",
+    # "default-factory-kwarg",
+    # "del-attr-with-constant",
+    # "delete-full-slice",
+    # "deprecated-c-element-tree",
+    # "deprecated-import",
+    # "deprecated-unittest-alias",
+    # "dict-get-with-none-default",
+    # "dict-iter-missing-items",
+    # "direct-logger-instantiation",
+    # "double-negation",
+    # "duplicate-bases",
+    # "duplicate-entry-in-dunder-all",
+    # "duplicate-handler-exception",
+    # "duplicate-isinstance-call",
+    # "duplicate-value",
+    # "empty-comment",
+    # "exc-info-outside-except-handler",
+    # "explicit-f-string-type-conversion",
+    # "explicit-string-concatenation",
+    # "expr-and-false",
+    # "expr-and-not-expr",
+    # "expr-or-not-expr",
+    # "expr-or-true",
+    # "extraneous-parentheses",
+    # "f-string-missing-placeholders",
+    # "f-string",
+    # "falsy-dict-get-fallback",
+    # "for-loop-set-mutations",
+    # "for-loop-writes",
+    # "format-literals",
+    # "FURB",  # (refurb) It is similar to pyupgrade
+    # "get-attr-with-constant",
+    # "hardcoded-string-charset",
+    # "if-else-block-instead-of-dict-get",  # It is using only var[] to check statically if it is a dict but it could not be it use "# noqa: SIM401"
+    # "if-expr-min-max",
+    # "if-expr-with-false-true",
+    # "if-expr-with-true-false",
+    # "if-expr-with-twisted-arms",
+    # "if-key-in-dict-del",
+    # "if-stmt-min-max",
+    # "if-with-same-arms",
+    # "implicit-optional",
+    # "in-dict-keys",
+    # "incorrect-blank-line-after-class",  # already autofixed from black before
+    # "incorrect-blank-line-before-class",  # already autofixed from black before
+    # "incorrect-dict-iterator",
+    # "invalid-character-backspace",  # TODO: It should be replaced by normal space
+    # "invalid-character-esc",  # TODO: It should be replaced by normal space
+    # "invalid-character-nul",  # TODO: It should be replaced by normal space
+    # "invalid-character-sub",  # TODO: It should be replaced by normal space
+    # "invalid-character-zero-width-space",  # TODO: It should be replaced by normal space
+    # "invalid-escape-sequence",
+    # "invalid-first-argument-name-for-class-method",
+    # "invalid-first-argument-name-for-method",
+    # "invalid-formatter-suppression-comment",
+    # "invalid-get-logger-argument",
+    # "invalid-pathlib-with-suffix",
+    # "invalid-suppression-comment",
+    # "invalid-todo-capitalization",
+    # "is-literal",
+    # "iteration-over-set",
+    # "lazy-import-immediately-resolved",
+    # "len-test",
+    # "list-reverse-copy",
+    # "log-exception-outside-except-handler",
+    # "logging-f-string",
+    # "logging-warn",
+    # "lru-cache-with-maxsize-none",
+    # "lru-cache-without-parameters",
+    # "manual-dict-comprehension",
+    # "manual-from-import",  # TODO: Check if there are errors with libs wrong imported
+    # "manual-list-comprehension",
+    # "math-constant",  # if it breaks round validations uses "# noqa: FURB152"
+    # "missing-blank-line-after-summary",
+    # "missing-maxsplit-arg",
+    # "missing-newline-at-end-of-file",  # already autofixed from black before
+    # "missing-whitespace-after-keyword",  # already autofixed from black before
+    # "missing-whitespace-around-arithmetic-operator",  # already autofixed from black before
+    # "missing-whitespace-around-bitwise-or-shift-operator",  # already autofixed from black before
+    # "missing-whitespace-around-modulo-operator",  # already autofixed from black before
+    # "missing-whitespace-around-operator",  # already autofixed from black before
+    # "missing-whitespace-around-parameter-equals",
+    # "missing-whitespace",  # already autofixed from black before
+    # "modified-iterating-set",
+    # "multi-value-repeated-key-literal",
+    # "multi-value-repeated-key-variable",
+    # "multiple-imports-on-one-line",
+    # "multiple-leading-hashes-for-block-comment",
+    # "multiple-spaces-after-comma",  # already autofixed from black before
+    # "multiple-spaces-after-keyword",  # already autofixed from black before
+    # "multiple-spaces-after-operator",  # already autofixed from black before
+    # "multiple-spaces-before-keyword",  # already autofixed from black before
+    # "multiple-spaces-before-operator",  # already autofixed from black before
+    # "multiple-starts-ends-with",
+    # "mutable-argument-default",
+    # "mutable-fromkeys-value",
+    # "native-literals",
+    # "needless-bool",
+    # "needless-else",
+    # "negate-equal-op",  # use != instead of not ==
+    # "negate-not-equal-op",
+    # "nested-min-max",
+    # "no-classmethod-decorator",
+    # "no-space-after-block-comment",
+    # "no-space-after-inline-comment",  # already autofixed from black before
+    # "no-staticmethod-decorator",
+    # "non-augmented-assignment",
+    # "non-octal-permissions",
+    # "none-comparison",
+    # "none-not-at-end-of-union",
+    # "noqa-comments",
+    # "not-in-test",
+    # "not-is-test",
+    # "open-alias",
+    # "os-chmod",
+    # "os-error-alias",
+    # "os-getcwd",
+    # "os-makedirs",
+    # "os-mkdir",
+    # "os-path-abspath",
+    # "os-path-basename",
+    # "os-path-commonprefix",
+    # "os-path-dirname",
+    # "os-path-exists",
+    # "os-path-expanduser",
+    # "os-path-getatime",
+    # "os-path-getctime",
+    # "os-path-getmtime",
+    # "os-path-getsize",
+    # "os-path-isabs",
+    # "os-path-isdir",
+    # "os-path-isfile",
+    # "os-path-islink",
+    # "os-path-join",
+    # "os-path-samefile",
+    # "os-path-splitext",
+    # "os-readlink",
+    # "os-remove",
+    # "os-rename",
+    # "os-replace",
+    # "os-rmdir",
+    # "os-sep-split",
+    # "os-stat",
+    # "os-symlink",
+    # "os-unlink",
+    # "over-indentation",  # TODO: Check more cases with string overidentation
+    # "overindented-section",
+    # "p-print",
+    # "pandas-use-of-inplace-argument",
+    # "path-constructor-current-directory",
+    # "percent-format-extra-named-arguments",
+    # "post-init-default",
+    # "print",
+    # "prohibited-trailing-comma",  # already autofixed from black before
+    # "raise-not-implemented",
+    # "read-whole-file",
+    # "redefined-while-unused",
+    # "redirected-noqa",
+    # "redundant-backslash",  # already autofixed from black before
+    # "redundant-open-modes",
+    # "redundant-tuple-in-exception-handler",
+    # "regex-flag-alias",
+    # "reimplemented-builtin",  # TODO: R&D about this check for IRC
+    # "reimplemented-container-builtin",
+    # "reimplemented-operator",
+    # "reimplemented-starmap",
+    # "repeated-equality-comparison",
+    # "repeated-global",
+    # "rule-codes-in-suppression-comments",
+    # "set-attr-with-constant",
+    # "shallow-copy-environ",
+    # "shebang-leading-whitespace",
+    # "single-item-membership-test",
+    # "single-line-implicit-string-concatenation",
+    # "singledispatch-method",
+    # "singledispatchmethod-function",
+    # "slice-copy",
+    # "slice-to-remove-prefix-or-suffix",
+    # "sorted-min-max",
+    # "split-static-string",
+    # "starmap-zip",
+    # "static-join-to-f-string",
+    # "string-dot-format-extra-named-arguments",
+    # "string-dot-format-extra-positional-arguments",
+    # "super-call-with-parameters",
+    # "super-without-brackets",
+    # "superfluous-else-break",
+    # "superfluous-else-continue",
+    # "superfluous-else-raise",
+    # "superfluous-else-return",
+    # "suppressible-exception",
+    # "surrounding-whitespace",  # docstring already autofixed from black before
+    # "swap-with-temporary-variable",
+    # "sys-exit-alias",
+    # "tab-after-comma",
+    # "tab-after-keyword",
+    # "tab-after-operator",
+    # "tab-before-keyword",
+    # "tab-before-operator",
+    # "timeout-error-alias",
+    # "too-few-spaces-before-inline-comment",  # already autofixed from black before
+    # "too-many-blank-lines",  # already autofixed from black before
+    # "too-many-newlines-at-end-of-file",  # already autofixed from black before
+    # "trailing-whitespace",  # already autofixed from black before
+    # "triple-single-quotes",  # docstring already autofixed from black before
+    # "typing-only-first-party-import",
+    # "typing-only-standard-library-import",
+    # "typing-only-third-party-import",
+    # "unconventional-import-alias",  # TODO: Check more cases if it is not noisy
+    # "under-indentation",   # already autofixed from black before
+    # "undocumented-warn",
+    # "unexpected-spaces-around-keyword-parameter-equals",  # already autofixed from black before
+    # "unicode-kind-prefix",
+    # "unnecessary-call-around-sorted",
+    # "unnecessary-cast-to-int",
+    # "unnecessary-class-parentheses",
+    # "unnecessary-collection-call",
+    # "unnecessary-comprehension-in-call",
+    # "unnecessary-comprehension",
+    # "unnecessary-dict-comprehension-for-iterable",
+    # "unnecessary-dict-index-lookup",
+    # "unnecessary-dict-kwargs",
+    # "unnecessary-double-cast-or-process",
+    # "unnecessary-dunder-call",
+    # "unnecessary-empty-iterable-within-deque-call",
+    # "unnecessary-encode-utf8",  # TOOD: check for windows and default locales
+    # "unnecessary-enumerate",
+    # "unnecessary-escaped-quote",
+    # "unnecessary-future-import",
+    # "unnecessary-generator-dict",
+    # "unnecessary-generator-list",
+    # "unnecessary-generator-set",
+    # "unnecessary-if",
+    # "unnecessary-key-check",
+    # "unnecessary-lambda",
+    # "unnecessary-list-call",
+    # "unnecessary-list-cast",
+    # "unnecessary-list-comprehension-dict",
+    # "unnecessary-list-comprehension-set",
+    # "unnecessary-list-index-lookup",
+    # "unnecessary-literal-dict",
+    # "unnecessary-literal-set",
+    # "unnecessary-literal-within-dict-call",
+    # "unnecessary-literal-within-list-call",
+    # "unnecessary-literal-within-tuple-call",
+    # "unnecessary-map",
+    # "unnecessary-multiline-docstring",  # already autofixed from black before
+    # "unnecessary-nested-literal",
+    # "unnecessary-paren-on-raise-exception",
+    # "unnecessary-placeholder",
+    # "unnecessary-range-start",
+    # "unnecessary-regular-expression",
+    # "unnecessary-return-none",
+    # "unnecessary-round",
+    # "unnecessary-spread",
+    # "unraw-re-pattern",
+    # "unreliable-callable-check",
+    # "unsorted-dunder-all",
+    # "unsorted-dunder-slots",
+    # "unsorted-imports",
+    # "unused-import",
+    # "unused-loop-control-variable",
+    # "unused-unpacked-variable",
+    # "unused-variable",  # already autofixed from black before
+    # "UP",  # (pyupgrade) We had already enabled all the pyupgrade checks before
+    # "used-dummy-variable",
+    # "useless-else-on-loop",
+    # "useless-exception-statement",
+    # "useless-finally",
+    # "useless-import-alias",
+    # "useless-object-inheritance",
+    # "useless-return",
+    # "useless-semicolon",
+    # "utf8-encoding-declaration",
+    # "verbose-raise",
+    # "whitespace-after-decorator",
+    # "whitespace-after-open-bracket",  # already autofixed from black before
+    # "whitespace-before-close-bracket",  # already autofixed from black before
+    # "whitespace-before-parameters",
+    # "whitespace-before-punctuation",  # already autofixed from black before
+    # "write-whole-file",
+    # "yield-in-for-loop",
+    # "yoda-conditions",
+    # "zip-dict-keys-and-values",
+    # "zip-instead-of-pairwise",  # TODO: Check if set py3.8 it is skipped for "zip(list_a, list_a[1:])"
+]
+
+[lint.isort]
+combine-as-imports = true
+default-section = "third-party"
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "odoo",
+    "odoo-addons",
+    "first-party",
+    "local-folder",
+]
+split-on-trailing-comma = false
+
+[lint.isort.sections]
+odoo = ["odoo"]
+odoo-addons = ["odoo.addons"]
+
+[lint.per-file-ignores]
+"__init__.py" = [
+    "unsorted-imports",
+    "unused-import",
+]

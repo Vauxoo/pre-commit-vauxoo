@@ -5,6 +5,7 @@
 
 import json
 import os
+import pathlib
 import platform
 import re
 import sys
@@ -25,8 +26,7 @@ VALID_VARIABLES_CODE = (
 
 def check_json_variables(fname_deactivate):
     env = Environment()
-    with open(fname_deactivate) as f_deactivate:
-        deactivate_content = f_deactivate.read()
+    deactivate_content = pathlib.Path(fname_deactivate).read_text()
     parsed_content = env.parse(deactivate_content)
     invalid_variables = meta.find_undeclared_variables(parsed_content) - VALID_VARIABLES
     if invalid_variables:
@@ -41,8 +41,7 @@ def check_json_variables(fname_deactivate):
 def json2sql(fname_deactivate, instance_types=None):
     if instance_types is None:
         instance_types = INSTANCE_TYPES
-    with open(fname_deactivate) as f_deactivate:
-        deactivate_content = f_deactivate.read()
+    deactivate_content = pathlib.Path(fname_deactivate).read_text()
     jinja_tmpl = Template(deactivate_content)
     res = True
     sql = ""
@@ -71,8 +70,7 @@ def check_deactivate(fname_deactivate, instance_types=None):
         sql, json_res = json2sql(fname_deactivate, instance_types)
         json_var_res = check_json_variables(fname_deactivate)
     elif ext == ".sql":
-        with open(fname_deactivate) as f_neutralize:
-            sql = f_neutralize.read()
+        sql = pathlib.Path(fname_deactivate).read_text()
     else:
         print(f"File extension {fname_deactivate} not supported")
         return False

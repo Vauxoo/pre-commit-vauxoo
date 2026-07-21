@@ -2,6 +2,7 @@ import ast
 import glob
 import logging
 import os
+import pathlib
 import posixpath
 import re
 import shutil
@@ -17,9 +18,9 @@ _logger = logging.getLogger("pre-commit-vauxoo")
 
 re_export = re.compile(
     r"^(?P<export>export|EXPORT)( )+"
-    + r"(?P<variable>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}"
-    + r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}",
-    re.M,
+    r"(?P<variable>[\w]*)[ ]*[\=][ ]*[\"\']{0,1}"
+    r"(?P<value>[\w\.\-\_/\$\{\}\:,\(\)\#\* ]*)[\"\']{0,1}",
+    re.MULTILINE,
 )
 
 CFG_SUBFOLDER = ".config"
@@ -37,7 +38,9 @@ DEFAULT_MIN_COMPATIBILITY = 10
 
 
 def full_norm_path(path):
-    return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
+    return os.path.normpath(
+        os.path.realpath(pathlib.Path(pathlib.Path(os.path.expandvars(path.strip())).expanduser()).resolve())
+    )
 
 
 def get_is_ci():
@@ -54,7 +57,7 @@ def get_is_ci():
 
 def get_repo():
     repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
-    repo_root = full_norm_path(repo_root)
+    repo_root = full_norm_path(repo_root.strip())
     return repo_root
 
 
@@ -83,10 +86,10 @@ def get_uninstallable_modules(src_path) -> set:
     """
     results = set()
     for path in glob.glob(os.path.join(src_path, "*/__manifest__.py")):
-        with open(path) as manifest:
+        with pathlib.Path(path).open() as manifest:
             try:
                 if not ast.literal_eval(manifest.read()).get("installable", True):
-                    results.add(posixpath.join(os.path.dirname(os.path.relpath(path, start=src_path)), ""))
+                    results.add(posixpath.join(pathlib.Path(os.path.relpath(path, start=src_path)).parent, ""))
             except (ValueError, TypeError, SyntaxError, AttributeError):
                 _logger.info("Unable to parse manifest at %s. Considering it installable", path)
 
@@ -125,6 +128,7 @@ def copy_cfg_files(
     exclude_lint,
     pylint_disable_checks,
     oca_hooks_disable_checks,
+    ruff_disable_checks,
     exclude_autofix,
     skip_string_normalization,
     odoo_version,
@@ -141,27 +145,26 @@ def copy_cfg_files(
     """
     # Destination directory inside the repository
     cfg_dir = os.path.join(repo_dirname, CFG_SUBFOLDER)
-    os.makedirs(cfg_dir, exist_ok=True)
+    pathlib.Path(cfg_dir).mkdir(exist_ok=True, parents=True)
 
     exclude_lint_regex = ""
     exclude_autofix_regex = ""
     if exclude_lint:
-        exclude_lint_regex = "(%s)|" % "|".join(
-            [re.escape(exclude_path.strip()) for exclude_path in exclude_lint if exclude_path and exclude_path.strip()]
-        )
+        exclude_lint_regex = "(%s)|" % "|".join([
+            re.escape(exclude_path.strip()) for exclude_path in exclude_lint if exclude_path and exclude_path.strip()
+        ])
     if exclude_autofix:
-        exclude_autofix_regex = "(%s)|" % "|".join(
-            [
-                re.escape(exclude_path.strip())
-                for exclude_path in exclude_autofix
-                if exclude_path and exclude_path.strip()
-            ]
-        )
+        exclude_autofix_regex = "(%s)|" % "|".join([
+            re.escape(exclude_path.strip())
+            for exclude_path in exclude_autofix
+            if exclude_path and exclude_path.strip()
+        ])
     _logger.info("Copying configuration files 'cp -rnT %s/ %s/", precommit_config_dir, cfg_dir)
     if no_overwrite:
         # Use the custom files defined in the repo
         _logger.warning("Using custom files")
         return
+    matrix_compatibility = parse_matrix_compatibility(compatibility_version)
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
@@ -170,9 +173,12 @@ def copy_cfg_files(
         "odoo_version": odoo_version,
         "py_version": py_version,
         "pylint_disable_checks": pylint_disable_checks,
+        "ruff_disable_checks": ruff_disable_checks,
         "skip_string_normalization": skip_string_normalization,
-        **parse_matrix_compatibility(compatibility_version),
+        **matrix_compatibility,
+        "use_ruff": (matrix_compatibility.get("black_autoflake_matrix_value") or 0) >= 30,
     }
+
     copier.run_copy(
         src_path=precommit_config_dir,
         dst_path=cfg_dir,
@@ -186,12 +192,12 @@ def copy_cfg_files(
     # .editorconfig must live at the repo root because prettier (and most
     # editors) always search for it there with no CLI flag to override the
     # path.  Move it out of the hidden subfolder after copier places it.
-    if os.path.isfile(editorconfig_src := os.path.join(cfg_dir, ".editorconfig")):
+    if pathlib.Path(editorconfig_src := os.path.join(cfg_dir, ".editorconfig")).is_file():
         shutil.move(editorconfig_src, os.path.join(repo_dirname, ".editorconfig"))
 
     # .isort.cfg must live at the repo root because the parameter config
     # change the order of third-party packages
-    if os.path.isfile(isort_src := os.path.join(cfg_dir, ".isort.cfg")):
+    if pathlib.Path(isort_src := os.path.join(cfg_dir, ".isort.cfg")).is_file():
         shutil.move(isort_src, os.path.join(repo_dirname, ".isort.cfg"))
 
     if exclude_autofix:
@@ -202,6 +208,8 @@ def copy_cfg_files(
         _logger.info("Disabling pylint checks (PYLINT_DISABLE_CHECKS): %s", pylint_disable_checks)
     if oca_hooks_disable_checks:
         _logger.info("Disabling oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s", oca_hooks_disable_checks)
+    if ruff_disable_checks:
+        _logger.info("Disabling ruff checks (RUFF_DISABLE_CHECKS): %s", ruff_disable_checks)
     if skip_string_normalization:
         _logger.info("Skip string normalization")
     if odoo_version:
@@ -218,10 +226,10 @@ def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_envir
     """
     envdict = {}
     source_file_path = os.path.join(repo_dirname, source_file)
-    if not os.path.isfile(source_file_path):
+    if not pathlib.Path(source_file_path).is_file():
         _logger.info("Skipping 'source %s' file because it was not found", source_file)
         return envdict
-    with open(source_file_path) as f_source_file:
+    with pathlib.Path(source_file_path).open() as f_source_file:
         _logger.info("Running 'source %s'", source_file)
         for line in f_source_file:
             line_match = re_export.match(line)
@@ -241,18 +249,16 @@ def subprocess_call(command, *args, **kwargs):
 
 
 def install_git_hook(src_path, dest_path, replacements):
-    with open(src_path, encoding="utf-8") as hook_src:
-        hook_content = hook_src.read()
+    hook_content = pathlib.Path(src_path).read_text(encoding="utf-8")
     for placeholder, value in replacements.items():
         hook_content = hook_content.replace(placeholder, value)
-    with open(dest_path, "w", encoding="utf-8") as hook_dest:
-        hook_dest.write(hook_content)
-    os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IXUSR)
+    pathlib.Path(dest_path).write_text(hook_content, encoding="utf-8")
+    pathlib.Path(dest_path).chmod(os.stat(dest_path).st_mode | stat.S_IXUSR)
 
 
 def resolve_console_script(script_name):
-    script_path = os.path.join(os.path.dirname(sys.executable), script_name)
-    if os.path.isfile(script_path):
+    script_path = os.path.join(pathlib.Path(sys.executable).parent, script_name)
+    if pathlib.Path(script_path).is_file():
         return script_path
     return shutil.which(script_name) or script_name
 
@@ -266,6 +272,7 @@ def main(
     exclude_lint,
     pylint_disable_checks,
     oca_hooks_disable_checks,
+    ruff_disable_checks,
     precommit_hooks_type,
     fail_optional,
     install,
@@ -281,7 +288,7 @@ def main(
     repo_dirname = get_repo()
     cwd = git_cwd()
 
-    root_dir = full_norm_path(os.path.dirname(__file__))
+    root_dir = full_norm_path(str(pathlib.Path(__file__).parent))
 
     if install:
         git_hook_pre_commit_src = os.path.join(root_dir, "git_hook_pre_commit")
@@ -308,6 +315,7 @@ def main(
         exclude_lint,
         pylint_disable_checks,
         oca_hooks_disable_checks,
+        ruff_disable_checks,
         exclude_autofix,
         skip_string_normalization,
         odoo_version,
@@ -341,7 +349,7 @@ def main(
                 ",".join(paths),
                 repo_dirname,
             )
-        _logger.warning("Running in current directory '%s'", os.path.basename(cwd))
+        _logger.warning("Running in current directory '%s'", pathlib.Path(cwd).name)
         files = get_files(os.path.join(repo_dirname, cwd))
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd)
@@ -371,7 +379,8 @@ def main(
                 # But using a custom message related to pre-commit-vauxoo instead of pre-commit
                 # and limit the output
                 diff = (
-                    subprocess.check_output(["git", "--no-pager", "diff", "--no-ext-diff", "--color=always"])
+                    subprocess
+                    .check_output(["git", "--no-pager", "diff", "--no-ext-diff", "--color=always"])
                     .decode(sys.stdout.encoding)
                     .strip()[:2000]
                 )
@@ -380,7 +389,7 @@ def main(
                     "py_version": "%s.%s" % (sys.version_info.major, sys.version_info.minor),
                     "package_version": __version__,
                     "odoo_version": odoo_version or "STABLE_BRANCH",
-                    "repo_name": os.path.basename(repo_dirname),
+                    "repo_name": pathlib.Path(repo_dirname).name,
                     "diff": diff,
                 }
                 _logger.error(
@@ -469,7 +478,7 @@ def print_summary(all_status):
             if test_result["status"]
             else logging_colored.colorized_msg(test_result["status_msg"], test_result["level"])
         )
-        summary_msg.append("| {:<28}{}".format(test_name, outcome))
+        summary_msg.append(f"| {test_name:<28}{outcome}")
     summary_msg.append("+" + "=" * 39)
     _logger.info("Tests summary\n%s", "\n".join(summary_msg))
 

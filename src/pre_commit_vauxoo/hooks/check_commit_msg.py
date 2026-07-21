@@ -4,6 +4,7 @@
 # pylint: disable=print-used
 
 import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -47,7 +48,7 @@ def get_repo_root_modules(repo_root):
     return {
         entry
         for entry in os.listdir(repo_root)
-        if os.path.isdir(os.path.join(repo_root, entry)) and not entry.startswith(".")
+        if pathlib.Path(os.path.join(repo_root, entry)).is_dir() and not entry.startswith(".")
     }
 
 
@@ -56,7 +57,7 @@ def target_exists(repo_root, target, repo_root_modules):
         return True
     if target in repo_root_modules:
         return True
-    return os.path.isfile(os.path.join(repo_root, target))
+    return pathlib.Path(os.path.join(repo_root, target)).is_file()
 
 
 def validate_commit_message_header(header, repo_root=None):
@@ -110,7 +111,7 @@ def validate_commit_message_header(header, repo_root=None):
 
 
 def check_commit_msg_file(commit_msg_file, repo_root=None):
-    with open(commit_msg_file, encoding="utf-8") as commit_msg_fd:
+    with pathlib.Path(commit_msg_file).open(encoding="utf-8") as commit_msg_fd:
         header = commit_msg_fd.readline()
 
     if repo_root is None:
@@ -133,7 +134,8 @@ def get_git_remotes_with_urls():
     remotes = {}
     for remote_name in remote_names:
         remote_url = (
-            subprocess.check_output(["git", "config", "--get", f"remote.{remote_name}.url"])
+            subprocess
+            .check_output(["git", "config", "--get", f"remote.{remote_name}.url"])
             .decode(sys.stdout.encoding)
             .strip()
         )
@@ -155,7 +157,7 @@ def resolve_commit_message_base_ref(version):
             remote_candidates.append((remote_name != "origin", remote_name, f"{remote_name}/{version}", remote_url))
 
     if remote_candidates:
-        _, _remote_name, base_ref, remote_url = sorted(remote_candidates)[0]
+        _, _remote_name, base_ref, remote_url = min(remote_candidates)
         print(f"Using stable remote ref {base_ref} from {remote_url}")
         return base_ref
 

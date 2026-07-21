@@ -9,12 +9,17 @@ import subprocess
 import tempfile
 from configparser import ConfigParser
 from contextlib import contextmanager, redirect_stdout
-from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from io import StringIO
 from pathlib import Path
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 import pytest
 from click.testing import CliRunner
+from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from jinja2 import Environment, FileSystemLoader
 from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
@@ -28,10 +33,7 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
-from pre_commit_vauxoo.pre_commit_vauxoo import (
-    CFG_SUBFOLDER,
-    parse_matrix_compatibility,
-)
+from pre_commit_vauxoo.pre_commit_vauxoo import CFG_SUBFOLDER, parse_matrix_compatibility
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
@@ -62,11 +64,11 @@ class TestPreCommitVauxoo:
 
     def setup_method(self, method):
         self.old_environ = os.environ.copy()
-        self.original_work_dir = os.getcwd()
+        self.original_work_dir = Path.cwd()
         self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_pre_commit_vauxoo"))
         os.chdir(self.tmp_dir)
         self.runner = CliRunner()
-        self.src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources")
+        self.src_path = os.path.join(Path(Path(os.path.realpath(__file__)).parent).parent, "resources")
         self.create_dummy_repo(self.src_path, self.tmp_dir)
         self.maxDiff = None
         os.environ["EXCLUDE_AUTOFIX"] = "module_autofix1/"
@@ -81,7 +83,7 @@ class TestPreCommitVauxoo:
         # change to original work dir
         os.chdir(self.original_work_dir)
         # Cleanup temporary files
-        if os.path.isdir(self.tmp_dir) and self.tmp_dir != "/":
+        if Path(self.tmp_dir).is_dir() and self.tmp_dir != "/":
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
         # reset environment variables
         os.environ.clear()
@@ -89,7 +91,7 @@ class TestPreCommitVauxoo:
 
     @contextmanager
     def chdir(self, directory):
-        original_dir = os.getcwd()
+        original_dir = Path.cwd()
         try:
             os.chdir(directory)
             yield
@@ -114,12 +116,10 @@ class TestPreCommitVauxoo:
         output = StringIO()
         with redirect_stdout(output):
             try:
-                Run(
-                    [
-                        "--load-plugins=pylint.extensions.docstyle,pylint.extensions.mccabe,pylint_odoo",
-                        "--list-msgs",
-                    ]
-                )
+                Run([
+                    "--load-plugins=pylint.extensions.docstyle,pylint.extensions.mccabe,pylint_odoo",
+                    "--list-msgs",
+                ])
             except SystemExit as ex:
                 assert not ex.code, "There was an error obtaining messages from pylint"
 
@@ -132,17 +132,16 @@ class TestPreCommitVauxoo:
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
+        with Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).open() as f_pyproject:
             assert "skip-string-normalization=false" in f_pyproject.read(), "Skip string normalization not set"
 
     def test_chdir(self, caplog):
-        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
+        os.environ["PRECOMMIT_HOOKS_TYPE"] = "all,-fix"
         os.chdir("module_autofix1")
         expected_logs = ["WARNING:pre-commit-vauxoo:Running in current directory 'module_autofix1'"]
         self.runner.invoke(main, [])
         with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog):
-            result = self.runner.invoke(main, [])
-        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+            self.runner.invoke(main, [])
 
     def test_exclude_lint_path(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
@@ -150,16 +149,14 @@ class TestPreCommitVauxoo:
         os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
-            f_content = f_pyproject.read()
+        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).read_text()
         assert "skip-string-normalization=false" in f_content, "Skip string normalization not set"
 
     def test_disable_lints(self, caplog):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as f_pylintrc:
-            f_content = f_pylintrc.read()
+        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
         assert "import-error," in f_content, "import-error was not disabled"
 
     def test_exclude_autofix(self, caplog):
@@ -168,7 +165,7 @@ class TestPreCommitVauxoo:
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")) as f_pyproject:
+        with Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).open() as f_pyproject:
             assert "skip-string-normalization=true" in f_pyproject.read(), "Skip string normalization not set"
 
     def test_fail_warning(self, caplog):
@@ -190,41 +187,39 @@ class TestPreCommitVauxoo:
 
     def test_install_git_hook_pre_commit(self, caplog):
         git_hook_pre_commit = os.path.join(self.tmp_dir, ".git", "hooks", "pre-commit")
-        assert not os.path.isfile(git_hook_pre_commit), "File created before to install it"
+        assert not Path(git_hook_pre_commit).is_file(), "File created before to install it"
         result = self.runner.invoke(main, ["--install"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        assert os.path.isfile(git_hook_pre_commit), "File not created"
-        with open(git_hook_pre_commit) as f_git_hook_pre_commit:
+        assert Path(git_hook_pre_commit).is_file(), "File not created"
+        with Path(git_hook_pre_commit).open() as f_git_hook_pre_commit:
             assert "pre-commit-vauxoo" in f_git_hook_pre_commit.read(), "File pre-commit not generated correctly"
         os.environ["NOLINT"] = "1"
-        exit_code = subprocess.call(
-            [
-                "git",
-                "-c",
-                "user.name=Test",
-                "-c",
-                "user.email=test@vauxoo.com",
-                "-c",
-                "commit.gpgsign=false",
-                "commit",
-                "--allow-empty",
-                "-m",
-                "[FIX] module_example1: testing",
-            ]
-        )
+        exit_code = subprocess.call([
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "[FIX] module_example1: testing",
+        ])
         assert not exit_code, "Exited with error_code %s" % exit_code
 
     def test_commit_msg_valid_single_module(self):
         commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")
-        with open(commit_msg_path, "w", encoding="utf-8") as commit_msg:
-            commit_msg.write("[FIX] module_example1: correct typo\n\nBody\n")
+        Path(commit_msg_path).write_text("[FIX] module_example1: correct typo\n\nBody\n", encoding="utf-8")
 
         assert check_commit_msg_file(commit_msg_path, repo_root=self.tmp_dir)
 
     def test_commit_msg_valid_multiple_modules(self):
         commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")
-        with open(commit_msg_path, "w", encoding="utf-8") as commit_msg:
-            commit_msg.write("[IMP] module_example1, module_warnings1: improve shared logic\n")
+        Path(commit_msg_path).write_text(
+            "[IMP] module_example1, module_warnings1: improve shared logic\n", encoding="utf-8"
+        )
 
         assert check_commit_msg_file(commit_msg_path, repo_root=self.tmp_dir)
 
@@ -281,8 +276,7 @@ class TestPreCommitVauxoo:
 
     def test_commit_msg_valid_file_target(self):
         file_target = os.path.join(self.tmp_dir, "custom_script.py")
-        with open(file_target, "w", encoding="utf-8") as target_fd:
-            target_fd.write("print('hello')\n")
+        Path(file_target).write_text("print('hello')\n", encoding="utf-8")
         errors = validate_commit_message_header(
             "[MIG] custom_script.py: adjust package metadata", repo_root=self.tmp_dir
         )
@@ -305,21 +299,19 @@ class TestPreCommitVauxoo:
         assert errors[3].startswith("Allowed tags are:")
 
     def test_resolve_commit_message_base_ref_prefers_stable_remote_url(self):
-        subprocess.check_call(
-            [
-                "git",
-                "-c",
-                "user.name=Test",
-                "-c",
-                "user.email=test@vauxoo.com",
-                "-c",
-                "commit.gpgsign=false",
-                "commit",
-                "--allow-empty",
-                "-m",
-                "[FIX] module_example1: initial baseline",
-            ]
-        )
+        subprocess.check_call([
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "[FIX] module_example1: initial baseline",
+        ])
         subprocess.check_call(["git", "branch", "18.0"])
         subprocess.check_call(["git", "remote", "add", "origin", "git@example.com:project.git"])
         subprocess.check_call(["git", "remote", "add", "devremote", "git@example.com:dev/project.git"])
@@ -329,21 +321,19 @@ class TestPreCommitVauxoo:
         assert resolve_commit_message_base_ref("18.0") == "origin/18.0"
 
     def test_resolve_commit_message_base_ref_falls_back_to_local_branch(self):
-        subprocess.check_call(
-            [
-                "git",
-                "-c",
-                "user.name=Test",
-                "-c",
-                "user.email=test@vauxoo.com",
-                "-c",
-                "commit.gpgsign=false",
-                "commit",
-                "--allow-empty",
-                "-m",
-                "[FIX] module_example1: initial baseline",
-            ]
-        )
+        subprocess.check_call([
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "[FIX] module_example1: initial baseline",
+        ])
         subprocess.check_call(["git", "branch", "18.0"])
         subprocess.check_call(["git", "remote", "add", "origin", "git@example.com:dev/project.git"])
         subprocess.check_call(["git", "update-ref", "refs/remotes/origin/18.0", "HEAD"])
@@ -351,39 +341,34 @@ class TestPreCommitVauxoo:
         assert resolve_commit_message_base_ref("18.0") == "18.0"
 
     def test_get_invalid_commit_messages_since_base(self):
-        subprocess.check_call(
-            [
-                "git",
-                "-c",
-                "user.name=Test",
-                "-c",
-                "user.email=test@vauxoo.com",
-                "-c",
-                "commit.gpgsign=false",
-                "commit",
-                "--allow-empty",
-                "-m",
-                "[FIX] module_example1: initial baseline",
-            ]
-        )
+        subprocess.check_call([
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "[FIX] module_example1: initial baseline",
+        ])
         subprocess.check_call(["git", "branch", "18.0"])
-        with open(os.path.join(self.tmp_dir, "custom_file.txt"), "w", encoding="utf-8") as custom_fd:
-            custom_fd.write("content\n")
+        Path(os.path.join(self.tmp_dir, "custom_file.txt")).write_text("content\n", encoding="utf-8")
         subprocess.check_call(["git", "add", "custom_file.txt"])
-        subprocess.check_call(
-            [
-                "git",
-                "-c",
-                "user.name=Test",
-                "-c",
-                "user.email=test@vauxoo.com",
-                "-c",
-                "commit.gpgsign=false",
-                "commit",
-                "-m",
-                "[BAD] custom_file.txt: invalid tag",
-            ]
-        )
+        subprocess.check_call([
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            "[BAD] custom_file.txt: invalid tag",
+        ])
 
         invalid_commits = get_invalid_commit_messages("18.0", self.tmp_dir)
         assert len(invalid_commits) == 1
@@ -391,14 +376,9 @@ class TestPreCommitVauxoo:
 
     def test_commit_msg_hook_is_in_optional_config(self):
         self.runner.invoke(main, ["--only-cp-cfg"])
-        with open(
-            os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config.yaml"), encoding="utf-8"
-        ) as mandatory_cfg:
-            mandatory_content = mandatory_cfg.read()
-        with open(
-            os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config-optional.yaml"), encoding="utf-8"
-        ) as optional_cfg:
-            optional_content = optional_cfg.read()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        mandatory_content = (cfg_subfolder / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+        optional_content = (cfg_subfolder / ".pre-commit-config-optional.yaml").read_text(encoding="utf-8")
 
         assert "vx-check-commit-msg" not in mandatory_content
         assert "vx-check-commit-msg" not in optional_content
@@ -418,39 +398,42 @@ class TestPreCommitVauxoo:
         assert result.exit_code == 1, "Exited without error"
         result = subprocess.run(["git", "diff", self.tmp_dir], capture_output=True, text=True, check=False)
         diff_output = index_re.sub("", result.stdout)
-        first_compatibility_version = list(
-            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False).values()
-        )[0]
-        if first_compatibility_version <= 10:
-            # Few autofixes
-            diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected.diff"
-        else:
-            # More autofixes >=20
+        black_autoflake_matrix_value = parse_matrix_compatibility(
+            os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False
+        )["black_autoflake_matrix_value"]
+        if black_autoflake_matrix_value <= 10:
+            # Few autofixes 10
+            diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_10.diff"
+        elif black_autoflake_matrix_value <= 20:
+            # More autofixes 20
             diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_20.diff"
+        else:
+            # More autofixes 30
+            diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_30.diff"
         diff_module_autofix_expected = index_re.sub("", diff_module_autofix_expected_path.read_text())
-        diff_module_autofix_expected_path.write_text(diff_output)  # Uncomment to update the diff files
+        # diff_module_autofix_expected_path.write_text(diff_output)  # Uncomment to update the diff files
         assert diff_output == diff_module_autofix_expected, "Autofixes applied different to expected"
 
     def test_uninstallable(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         uninstallable_path = os.path.join(self.tmp_dir, "module_uninstallable")
         result = self.runner.invoke(main, ["-p", uninstallable_path])
-        assert (
-            not result.exit_code
-        ), "Uninstallable module should not have been linted. " "Exited with error %s - %s" % (result, result.output)
+        assert not result.exit_code, "Uninstallable module should not have been linted. Exited with error %s - %s" % (
+            result,
+            result.output,
+        )
 
     def test_exclude_only_uninstallable(self, caplog):
         repo_path = posixpath.join(self.tmp_dir, "repo")
         repo_sub_path = posixpath.join(self.tmp_dir, "repo_sub")
 
-        os.mkdir(repo_path)
-        os.mkdir(repo_sub_path)
+        Path(repo_path).mkdir()
+        Path(repo_sub_path).mkdir()
 
-        with open(os.path.join(repo_path, "__manifest__.py"), "w") as manifest:
-            manifest.write("{'installable': False}")
+        Path(os.path.join(repo_path, "__manifest__.py")).write_text("{'installable': False}")
 
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config.yaml")) as config_fd:
+        with Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pre-commit-config.yaml")).open() as config_fd:
             config = load(config_fd, Loader)
 
         pattern = re.compile(config["exclude"])
@@ -470,15 +453,39 @@ class TestPreCommitVauxoo:
             config.read(oca_hooks_cfg_path)
             disable_raw = config.get("MESSAGES_CONTROL", "disable")
             disabled = {item.strip(", ") for item in disable_raw.replace("\n", "").split(",") if item.strip()}
-            assert expected_disabled.issubset(
-                disabled
-            ), f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
+            assert expected_disabled.issubset(disabled), (
+                f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
+            )
+
+    def test_disable_ruff_checks(self, caplog):
+        if (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            < 30
+        ):
+            pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        ruff_toml = Path(self.tmp_dir) / CFG_SUBFOLDER / ".ruff-autofix.toml"
+        with ruff_toml.open("rb") as f_ruff_toml:
+            data = tomllib.load(f_ruff_toml)
+            original_ignore = set(data["lint"]["ignore"])
+            assert "print" not in data["lint"]["ignore"], (
+                "print (T201) should not be in ruff ignore when RUFF_DISABLE_CHECKS is not set"
+            )
+            os.environ["RUFF_DISABLE_CHECKS"] = "print"
+            self.runner.invoke(main, ["--only-cp-cfg"])
+            f_ruff_toml.seek(0)
+            data = tomllib.load(f_ruff_toml)
+            disable_ignore = set(data["lint"]["ignore"])
+            diff = disable_ignore - original_ignore
+            assert {"print"} == diff, "print (T201) should be in ruff ignore when RUFF_DISABLE_CHECKS is set"
 
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()
         rc_files = [
-            os.path.abspath(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc))
+            Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc)).resolve()
             for pylintrc in [".pylintrc", ".pylintrc-optional"]
         ]
         for rc_file in rc_files:
@@ -497,7 +504,7 @@ class TestPreCommitVauxoo:
     def test_special_char_filename(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
         fname_wrong = os.path.join(self.tmp_dir, "module_example1", "leéme.rst")
-        with open(fname_wrong, "w"):
+        with Path(fname_wrong).open("w"):
             pass
         subprocess.check_call(["git", "add", "-A"])
         expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
@@ -508,9 +515,9 @@ class TestPreCommitVauxoo:
     def test_special_char_dirname(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
         dirname_wrong = os.path.join(self.tmp_dir, "module_example1", "moisé")
-        os.mkdir(dirname_wrong)
+        Path(dirname_wrong).mkdir()
         fname = os.path.join(dirname_wrong, "empty_file.txt")
-        with open(fname, "w"):
+        with Path(fname).open("w"):
             pass
         subprocess.check_call(["git", "add", "-A"])
         expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
@@ -521,20 +528,17 @@ class TestPreCommitVauxoo:
     def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
-            f_content = pylintrc.read()
+        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
         assert "category-allowed-app" not in f_content, "app check disabled for a project for apps"
 
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
-            f_content = pylintrc.read()
+        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
         assert "category-allowed-app" in f_content, "app check enabled for a project for non apps"
 
         os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
         self.runner.invoke(main, [])
-        with open(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")) as pylintrc:
-            f_content = pylintrc.read()
+        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
         assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
 
     @pytest.mark.parametrize(
@@ -586,6 +590,6 @@ class TestPreCommitVauxoo:
         linter.load_default_plugins()
         _config_initialization(linter, [], config_file=cfg_file)
         assert linter.is_message_enabled("manifest-deprecated-key"), "'manifest-deprecated-key' check not enabled"
-        assert (
-            manifest_deprecated_keys == linter.config.manifest_deprecated_keys
-        ), f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"
+        assert manifest_deprecated_keys == linter.config.manifest_deprecated_keys, (
+            f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"
+        )

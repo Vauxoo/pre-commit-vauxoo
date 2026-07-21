@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
+import pathlib
 import re
 from glob import glob
-from os.path import basename, dirname, join, splitext
+from os.path import join, splitext
 
 from setuptools import find_packages, setup
 
@@ -16,8 +17,7 @@ def generate_changelog():
     fname = "ChangeLog"
     if not git:
         changelog_str = '# ChangeLog was not generated. You need to install "pbr"'
-        with open(fname, "w") as fchg:
-            fchg.write(changelog_str)
+        pathlib.Path(fname).write_text(changelog_str)
         return changelog_str
     changelog = git._iter_log_oneline()
     changelog = git._iter_changelog(changelog)
@@ -31,7 +31,7 @@ def generate_dependencies():
 
 
 def read(*names, **kwargs):
-    with open(join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")) as fh:
+    with pathlib.Path(join(pathlib.Path(__file__).parent, *names)).open(encoding=kwargs.get("encoding", "utf8")) as fh:
         return fh.read()
 
 
@@ -42,15 +42,15 @@ setup(
     description="pre-commit script to run automatically the configuration and variables custom from Vauxoo",
     long_description_content_type="text/x-rst",
     long_description="{}\n{}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub("", read("README.rst")),
-        re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", generate_changelog()),
+        re.compile(r"^.. start-badges.*^.. end-badges", re.MULTILINE | re.DOTALL).sub("", read("README.rst")),
+        re.sub(r":[a-z]+:`~?(.*?)`", r"``\1``", generate_changelog()),
     ),
     author="Vauxoo",
     author_email="info@vauxoo.com",
     url="https://github.com/Vauxoo/pre-commit-vauxoo",
     packages=find_packages("src"),
     package_dir={"": "src"},
-    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
+    py_modules=[splitext(pathlib.Path(path).name)[0] for path in glob("src/*.py")],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
