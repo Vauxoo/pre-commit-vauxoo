@@ -1,0 +1,53 @@
+line-length = 119
+preview = true
+
+[format]
+quote-style = "double"
+skip-magic-trailing-comma = false
+indent-style = "space"
+
+[lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # Bandit (Flake8-bandit)
+    "S",
+]
+
+# ignore = [
+#     "function-uses-loop-variable",  # Odoo uses lambda function immediately
+#     "raise-without-from-inside-except",  # Sometimes we want to mask the exception in Odoo
+#     "hardcoded-password-string",  # It is hard to know if it is a real password
+# ]
+
+[lint.isort]
+combine-as-imports = true
+default-section = "third-party"
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "odoo",
+    "odoo-addons",
+    "first-party",
+    "local-folder",
+]
+split-on-trailing-comma = false
+
+[lint.isort.sections]
+odoo = ["odoo"]
+odoo-addons = ["odoo.addons"]
+
+# [lint.per-file-ignores]
+# "__init__.py" = ["F401", "I001"]
+# "__manifest__.py" = ["useless-expression"]
