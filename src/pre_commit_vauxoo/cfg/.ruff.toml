@@ -3,28 +3,27 @@ preview = true
 
 [format]
 quote-style = "double"
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
 indent-style = "space"
 
 [lint]
-select = ["FIXABLE"]
-# select = [
-#     # pycodestyle
-#     "E",
-#     # Pyflakes
-#     "F",
-#     # pyupgrade
-#     "UP",
-#     # flake8-bugbear
-#     "B",
-#     # flake8-simplify
-#     "SIM",
-#     # isort
-#     "I",
-#     # Bandit (Flake8-bandit)
-#     "S",
-# ]
-# fixable = ["ALL"]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # Bandit (Flake8-bandit)
+    "S",
+]
+
 # ignore = [
 #     "function-uses-loop-variable",  # Odoo uses lambda function immediately
 #     "raise-without-from-inside-except",  # Sometimes we want to mask the exception in Odoo
