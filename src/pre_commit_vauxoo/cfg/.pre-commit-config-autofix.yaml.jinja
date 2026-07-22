@@ -6,8 +6,6 @@ exclude: |
     ^setup/|/static/description/index\.html$|
     # We don't want to mess with tool-generated files
     .svg$|/tests/([^/]+/)?cassettes/|^.copier-answers.yml$|^.github/|
-    # Maybe reactivate this when all README files include prettier ignore tags?
-    ^README\.md$|
     # Library files can have extraneous formatting (even minimized)
     /static/(src/)?lib/|
     # Repos using Sphinx to generate docs don't need prettying
@@ -32,6 +30,20 @@ default_language_version:
   python: python3
   node: "24.13.0"
 repos:
+{%- if black_autoflake_matrix_value >= 20 %}
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.22
+    hooks:
+      - id: ruff-check
+        args:
+          - --config=.config/.ruff.toml
+          - --unsafe-fixes
+          - --fix
+      - id: ruff-format
+        types_or: [python, markdown]
+        args:
+          - --config=.config/.ruff.toml
+{%- endif %}
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
 {%- if oca_hooks_matrix_value >= 20 %}
     rev: v0.2.24
@@ -56,22 +68,15 @@ repos:
           - --config=.config/.oca_hooks-autofix.cfg
           - --fix
 {%- endif %}
+{%- if black_autoflake_matrix_value < 20 %}
   - repo: https://github.com/psf/black-pre-commit-mirror.git
-{%- if black_autoflake_matrix_value >= 20 %}
-    rev: 25.12.0
-{%- else %}
     rev: 23.12.1
-{%- endif %}
     hooks:
       - id: black
         args:
           - --config=.config/pyproject.toml
   - repo: https://github.com/myint/autoflake
-{%- if black_autoflake_matrix_value >= 20 %}
-    rev: v2.3.1
-{%- else %}
     rev: v2.2.1
-{%- endif %}
     hooks:
       - id: autoflake
         args:
@@ -81,6 +86,7 @@ repos:
           - --remove-all-unused-imports
           - --remove-duplicate-keys
           - --remove-unused-variables
+{%- endif %}
   - repo: local
     hooks:
       - id: prettier
@@ -120,6 +126,7 @@ repos:
 {%- if pre_commit_matrix_value >= 20 %}
       - id: requirements-txt-fixer
 {%- endif %}
+{%- if black_autoflake_matrix_value < 20 %}
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
@@ -129,6 +136,7 @@ repos:
     rev: 7.0.0
     hooks:
       - id: isort
+{%- endif %}
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.6
     hooks:
@@ -143,17 +151,3 @@ repos:
           - --color
           - --config=.config/.eslintrc.config.mjs
           - --fix
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-  {%- if black_autoflake_matrix_value >= 20 %}
-    rev: v0.15.22
-  {%- else %}
-    rev: v0.4.10
-  {%- endif %}
-    hooks:
-      - id: ruff-check
-        args:
-          - --config=.config/.ruff.toml
-          - --fix
-      - id: ruff-format
-        args:
-          - --config=.config/.ruff.toml
