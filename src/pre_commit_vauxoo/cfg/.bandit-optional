@@ -1,0 +1,8 @@
+[bandit]
+exclude = tests
+
+# B704:markupsafe_markup_xss more info https://github.com/OCA/pylint-odoo/pull/578
+tests = B704
+format = custom
+msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})
+quiet=True
