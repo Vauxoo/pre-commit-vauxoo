@@ -171,7 +171,7 @@ def precommit_hooks_type_callback(ctx, param, value):
     """
     values = merge_tuples(ctx, param, value)
     values = set(values)
-    all_values = {i for i in param.type.choices if not i.startswith("-") and not i == "all"}
+    all_values = {i for i in param.type.choices if not i.startswith("-") and i != "all"}
     if "all" in values:
         values -= {"all"}
         values |= all_values
@@ -271,6 +271,14 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     callback=merge_tuples,
     envvar="OCA_HOOKS_DISABLE_CHECKS",
     help="OCA Hooks checks to disable, separated by commas.",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--ruff-disable-checks",
+    type=CSVStringParamType(),
+    callback=merge_tuples,
+    envvar="RUFF_DISABLE_CHECKS",
+    help="Ruff checks to disable, separated by commas.",
     **new_extra_kwargs,
 )
 @click.option(

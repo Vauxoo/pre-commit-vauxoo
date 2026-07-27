@@ -49,13 +49,13 @@ jobs:
 
       - name: Run pre-commit-vauxoo (unset LINT_COMPATIBILITY_VERSION)
         if: ${{ matrix.lint_compatibility_version == '__UNSET__' }}
-        run: pre-commit-vauxoo
+        run: pre-commit-vauxoo || true;pre-commit-vauxoo  # First exit with error because of autofixes, second time without error
 
       - name: Run pre-commit-vauxoo (with LINT_COMPATIBILITY_VERSION)
         if: ${{ matrix.lint_compatibility_version != '__UNSET__' }}
         env:
           LINT_COMPATIBILITY_VERSION: ${{ matrix.lint_compatibility_version }}
-        run: pre-commit-vauxoo
+        run: pre-commit-vauxoo || true;pre-commit-vauxoo  # First exit with error because of autofixes, second time without error
   test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
