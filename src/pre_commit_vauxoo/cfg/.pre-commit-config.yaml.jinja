@@ -28,7 +28,7 @@ default_language_version:
   node: "24.13.0"
 repos:
   - repo: https://github.com/PyCQA/flake8
-{%- if flake8_matrix_value >= 20 %}
+{%- if lint_compat.flake8 >= 20 %}
     rev: 7.3.0
 {%- else %}
     rev: 6.1.0
@@ -39,7 +39,7 @@ repos:
         args:
           - --config=.config/.flake8
   - repo: https://github.com/OCA/pylint-odoo
-{%- if pylint_matrix_value >= 20 %}
+{%- if lint_compat.pylint >= 20 %}
     rev: v10.0.8
 {%- else %}
     rev: v9.3.24
@@ -77,7 +77,7 @@ repos:
         types: [text]
         files: (^deactivate\.jinja$|/data/neutralize\.sql$)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-{%- if pre_commit_matrix_value >= 20 %}
+{%- if lint_compat.pre_commit >= 20 %}
     rev: v6.0.0
 {%- else %}
     rev: v4.5.0

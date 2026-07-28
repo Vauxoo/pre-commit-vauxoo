@@ -1,6 +1,6 @@
 [MESSAGES_CONTROL]
 enable=po-pretty-format,
-{%- if oca_hooks_matrix_value >= 20 %}
+{%- if lint_compat.oca_hooks >= 20 %}
     field-string-redundant,
     manifest-superfluous-key,
     prefer-env-translation,

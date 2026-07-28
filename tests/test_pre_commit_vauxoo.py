@@ -33,22 +33,40 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
-from pre_commit_vauxoo.pre_commit_vauxoo import CFG_SUBFOLDER, parse_matrix_compatibility
+from pre_commit_vauxoo.pre_commit_vauxoo import (
+    CFG_SUBFOLDER,
+    LINT_COMPAT_DEFAULT,
+    LINT_COMPAT_LATEST,
+    LINT_COMPAT_TOOLS,
+    parse_compatibility_overrides,
+    parse_compatibility_version,
+)
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
 TEST_PATH = Path(__file__).resolve().parents[0]
 
 
-@pytest.fixture(
-    params=[None, "0.0.0.0.0.0.0.0", "10.10.10.10.10.10.10.10", "20.20.20.20.20.20.20.20", "30.30.30.30.30.30.30.30"]
-)
+@pytest.fixture(params=[None, "0", "10", "20", "30"])
 def env_mode(request, monkeypatch):
     if request.param is None:
         monkeypatch.delenv("LINT_COMPATIBILITY_VERSION", raising=False)
     else:
         monkeypatch.setenv("LINT_COMPATIBILITY_VERSION", request.param)
     return request.param
+
+
+def lint_compat():
+    """Resolve the compatibility generations the way the CLI does, from the environment.
+
+    The tests assert on the output of tools whose version depends on the generation, so they
+    have to read it from the very same place the templates get it from.
+    """
+    return parse_compatibility_version(
+        os.environ.get("LINT_COMPATIBILITY_VERSION"),
+        os.environ.get("LINT_COMPATIBILITY_OVERRIDE", ""),
+        verbose=False,
+    )
 
 
 def render_template(odoo_version: str, template_name: str) -> str:
@@ -398,13 +416,11 @@ class TestPreCommitVauxoo:
         assert result.exit_code == 1, "Exited without error"
         result = subprocess.run(["git", "diff", self.tmp_dir], capture_output=True, text=True, check=False)
         diff_output = index_re.sub("", result.stdout)
-        black_autoflake_matrix_value = parse_matrix_compatibility(
-            os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False
-        )["black_autoflake_matrix_value"]
-        if black_autoflake_matrix_value <= 10:
+        black_autoflake_compat = lint_compat()["black_autoflake"]
+        if black_autoflake_compat <= 10:
             # Few autofixes 10
             diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_10.diff"
-        elif black_autoflake_matrix_value <= 20:
+        elif black_autoflake_compat <= 20:
             # More autofixes 20
             diff_module_autofix_expected_path = TEST_PATH / "diffs" / "module_autofix1_expected_20.diff"
         else:
@@ -458,13 +474,8 @@ class TestPreCommitVauxoo:
             )
 
     def test_disable_ruff_checks(self, caplog):
-        if (
-            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
-                "black_autoflake_matrix_value"
-            ]
-            < 30
-        ):
-            pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
+        if lint_compat()["black_autoflake"] < 30:
+            pytest.skip("Requires the 'black_autoflake' compatibility generation >= 30")
         self.runner.invoke(main, ["--only-cp-cfg"])
         ruff_toml = Path(self.tmp_dir) / CFG_SUBFOLDER / ".ruff-autofix.toml"
         with ruff_toml.open("rb") as f_ruff_toml:
@@ -593,3 +604,79 @@ class TestPreCommitVauxoo:
         assert manifest_deprecated_keys == linter.config.manifest_deprecated_keys, (
             f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"
         )
+
+
+class TestCompatibilityVersion:
+    """Unit tests for the compatibility generation parsing.
+
+    They live outside 'TestPreCommitVauxoo' on purpose: this is pure parsing, so it must not
+    pay for the git repository and pre-commit setup that class builds for every parameter.
+    """
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (None, LINT_COMPAT_DEFAULT),
+            ("", LINT_COMPAT_DEFAULT),
+            ("10", 10),
+            ("20", 20),
+            ("30", 30),
+            ("latest", LINT_COMPAT_LATEST),
+            ("LATEST", LINT_COMPAT_LATEST),
+            # '0' is the historical spelling of 'latest' and must keep working
+            ("0", LINT_COMPAT_LATEST),
+        ],
+    )
+    def test_scalar(self, value, expected):
+        compat = parse_compatibility_version(value, verbose=False)
+        assert set(compat) == set(LINT_COMPAT_TOOLS)
+        assert set(compat.values()) == {expected}
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("20.20.20.20.20.20.20.20", 20),
+            ("0.0.0.0.0.0.0.0", LINT_COMPAT_LATEST),
+            # A vector mixing generations collapses to the most conservative one
+            ("10.20.30", 10),
+            # A vector shorter than the tool list used to leave the rest unpinned
+            ("20.20", 20),
+        ],
+    )
+    def test_legacy_dotted_vector(self, value, expected):
+        assert set(parse_compatibility_version(value, verbose=False).values()) == {expected}
+
+    def test_legacy_dotted_vector_warns(self, caplog):
+        with caplog.at_level(logging.WARNING, logger="pre-commit-vauxoo"):
+            parse_compatibility_version("20.20.20.20")
+        assert "deprecated dotted format" in caplog.text
+
+    def test_override(self):
+        compat = parse_compatibility_version("20", ("prettier=10", "pylint=latest"), verbose=False)
+        assert compat["prettier"] == 10
+        assert compat["pylint"] == LINT_COMPAT_LATEST
+        assert compat["flake8"] == 20
+
+    def test_override_accepts_raw_csv(self):
+        assert parse_compatibility_version("20", "prettier=10,pylint=30", verbose=False)["prettier"] == 10
+
+    @pytest.mark.parametrize(
+        "overrides,message",
+        [
+            (("prettier",), "Expected the format 'tool=generation'"),
+            (("eslint=10",), "Unknown tool"),
+            (("prettier=old",), "Invalid compatibility generation"),
+        ],
+    )
+    def test_override_invalid(self, overrides, message):
+        with pytest.raises(ValueError, match=message):
+            parse_compatibility_overrides(overrides)
+
+    def test_invalid_version(self):
+        with pytest.raises(ValueError, match="Invalid compatibility generation"):
+            parse_compatibility_version("stable", verbose=False)
+
+    def test_cli_reports_invalid_value(self):
+        result = CliRunner().invoke(main, ["--compatibility-version", "stable"])
+        assert result.exit_code == 2, "An invalid compatibility version must fail as a click error"
+        assert "Invalid compatibility generation" in result.output

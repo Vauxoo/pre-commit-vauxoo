@@ -29,10 +29,12 @@ jobs:
       matrix:
         lint_compatibility_version:
           - "__UNSET__"
-          - "0.0.0.0.0.0.0.0"
-          - "10.10.10.10.10.10.10.10"
+          - "latest"
+          - "10"
+          - "20"
+          - "30"
+          # Deprecated dotted format, kept until every client repo migrates its variables.sh
           - "20.20.20.20.20.20.20.20"
-          - "30.30.30.30.30.30.30.30"
 
     env:
       PIP_CACHE_DIR: "/root/.cache/pip"

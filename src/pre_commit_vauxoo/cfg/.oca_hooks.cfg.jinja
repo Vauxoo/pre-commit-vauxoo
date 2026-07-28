@@ -14,7 +14,7 @@ disable=field-string-redundant,
     xml-id-position-first,
     xml-oe-structure-missing-id,
     xml-redundant-module-name,
-{%- if prettier_matrix_value < 30 -%}
+{%- if lint_compat.prettier < 30 -%}
     {# Needed only if prettier is configured as aggressive xmlWhitespaceSensitivity:preserve #}
     xml-template-prettier-incompatible,
 {%- endif %}

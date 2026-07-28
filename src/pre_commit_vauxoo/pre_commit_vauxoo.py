@@ -24,17 +24,22 @@ re_export = re.compile(
 )
 
 CFG_SUBFOLDER = ".config"
-TOOLS_ORDER = (
-    "prettier_matrix_value",
-    "oca_hooks_matrix_value",
-    "eslint_matrix_value",
-    "black_autoflake_matrix_value",
-    "pre_commit_matrix_value",
-    "pylint_matrix_value",
-    "flake8_matrix_value",
+
+# Compatibility "generations": higher means newer tool versions and more aggressive autofixes.
+# LINT_COMPAT_LATEST is the ceiling, meaning "whatever is newest, forever".
+LINT_COMPAT_LATEST = 1000000
+LINT_COMPAT_DEFAULT = 10
+# Tools whose generation can be pinned independently through --compatibility-override.
+# Only the names carry meaning here: unlike the positional vector this replaced, adding or
+# dropping a tool never shifts what the other ones mean, so this tuple is free to grow.
+LINT_COMPAT_TOOLS = (
+    "black_autoflake",
+    "flake8",
+    "oca_hooks",
+    "pre_commit",
+    "prettier",
+    "pylint",
 )
-DEFAULT_MAX_COMPATIBILITY = 1000000
-DEFAULT_MIN_COMPATIBILITY = 10
 
 
 def full_norm_path(path):
@@ -96,25 +101,89 @@ def get_uninstallable_modules(src_path) -> set:
     return results
 
 
-def parse_matrix_compatibility(matrix_compatibility_string, verbose=True):
-    value = matrix_compatibility_string
-    matrix = {}
+def parse_generation(value, hint):
+    """Convert a single user-supplied generation token into an int.
 
-    parts = value.split(".") if value else []
-    values = tuple(int(p) for p in parts)
+    Both '0' and 'latest' mean "do not pin anything". '0' is kept as an alias because it is
+    what the 'variables.sh' files already deployed across the client repos use, so upgrading
+    this package must not force them to edit anything.
+    """
+    value = (value or "").strip().lower()
+    if not value:
+        return None
+    if value == "latest":
+        return LINT_COMPAT_LATEST
+    if not value.isdigit():
+        raise ValueError(
+            "Invalid compatibility generation %r in %s. Expected a positive integer or 'latest' "
+            "(e.g. 10, 20, 30, latest)." % (value, hint)
+        )
+    # 0 is the historical spelling of "latest"; normalize it so callers only compare integers
+    return int(value) or LINT_COMPAT_LATEST
 
-    for idx, tool in enumerate(TOOLS_ORDER):
-        try:
-            if not matrix_compatibility_string:
-                value = DEFAULT_MIN_COMPATIBILITY  # consistent with default from CLI
-            else:
-                value = values[idx] if values[idx] else DEFAULT_MAX_COMPATIBILITY
-        except IndexError:
-            value = DEFAULT_MAX_COMPATIBILITY
-        if verbose and value != DEFAULT_MAX_COMPATIBILITY:
-            _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx + 1)
-        matrix[tool] = value
-    return matrix
+
+def parse_compatibility_overrides(overrides):
+    """Parse ('pylint=10', 'prettier=30') into {'pylint': 10, 'prettier': 30}.
+
+    Overrides are keyed by tool name on purpose: a typo fails loudly here instead of silently
+    pinning the wrong tool, which is exactly what the positional vector could not detect.
+    """
+    if isinstance(overrides, str):
+        overrides = overrides.split(",")
+    parsed = {}
+    for override in overrides or ():
+        override = override.strip()
+        if not override:
+            continue
+        tool, sep, generation = override.partition("=")
+        tool = tool.strip().lower()
+        if not sep:
+            raise ValueError("Invalid compatibility override %r. Expected the format 'tool=generation'." % override)
+        if tool not in LINT_COMPAT_TOOLS:
+            raise ValueError(
+                "Unknown tool %r in compatibility override. Valid tools: %s" % (tool, ", ".join(LINT_COMPAT_TOOLS))
+            )
+        parsed[tool] = parse_generation(generation, "compatibility override %r" % override)
+    return parsed
+
+
+def parse_compatibility_version(value, overrides=(), verbose=True):
+    """Resolve the compatibility generation to apply to each linter.
+
+    A single generation drives every tool because the thresholds spread over 'cfg/*.jinja' are
+    independent and monotonic ('>= 20' stays true at 30), so one number already expresses every
+    combination that gets used in practice. '--compatibility-override' stays available for the
+    rare case where a single tool must lag behind or run ahead of the rest.
+
+    The legacy dotted vector ('20.20.20.20') is still accepted so no repository breaks on
+    upgrade. A vector mixing generations collapses to its lowest one, which is the conservative
+    reading matching what the option was created for: the smallest possible diff.
+    """
+    value = (value or "").strip()
+    is_legacy_vector = "." in value
+    if is_legacy_vector:
+        generations = {parse_generation(part, "compatibility version %r" % value) for part in value.split(".")}
+        # A vector shorter than the tool list used to leave the trailing tools unpinned; collapsing
+        # to the minimum keeps those tools on the generation the author actually asked for.
+        generation = min(generations - {None}, default=None)
+    else:
+        generation = parse_generation(value, "compatibility version")
+    if generation is None:
+        generation = LINT_COMPAT_DEFAULT
+    if is_legacy_vector and verbose:
+        _logger.warning(
+            "LINT_COMPATIBILITY_VERSION=%s uses the deprecated dotted format. "
+            "Replace it with the single value %s (use --compatibility-override for per-tool pinning).",
+            value,
+            "latest" if generation == LINT_COMPAT_LATEST else generation,
+        )
+    compatibility = dict.fromkeys(LINT_COMPAT_TOOLS, generation)
+    compatibility.update(parse_compatibility_overrides(overrides))
+    if verbose:
+        for tool, tool_generation in sorted(compatibility.items()):
+            if tool_generation != LINT_COMPAT_LATEST:
+                _logger.info("Using compatibility generation %s for %s", tool_generation, tool)
+    return compatibility
 
 
 # copy_cfg_files has too many "for-if" sentences
@@ -135,6 +204,7 @@ def copy_cfg_files(
     py_version,
     is_project_for_apps,
     compatibility_version,
+    compatibility_override,
 ):
     """Copy configuration files from the package's cfg directory into a hidden
     folder at the root of the repository.
@@ -164,7 +234,7 @@ def copy_cfg_files(
         # Use the custom files defined in the repo
         _logger.warning("Using custom files")
         return
-    matrix_compatibility = parse_matrix_compatibility(compatibility_version)
+    lint_compat = parse_compatibility_version(compatibility_version, compatibility_override)
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
@@ -175,8 +245,11 @@ def copy_cfg_files(
         "pylint_disable_checks": pylint_disable_checks,
         "ruff_disable_checks": ruff_disable_checks,
         "skip_string_normalization": skip_string_normalization,
-        **matrix_compatibility,
-        "use_ruff": (matrix_compatibility.get("black_autoflake_matrix_value") or 0) >= 30,
+        "lint_compat": lint_compat,
+        # Exposed as its own flag because copier evaluates it inside the file names of the
+        # autofix templates, where an inline threshold would be unreadable and would duplicate
+        # the one condition that decides whether ruff replaces black/autoflake/isort.
+        "use_ruff": lint_compat["black_autoflake"] >= 30,
     }
 
     copier.run_copy(
@@ -282,6 +355,7 @@ def main(
     is_project_for_apps,
     only_cp_cfg,
     compatibility_version,
+    compatibility_override,
     do_exit=True,
 ):
     show_version()
@@ -322,6 +396,7 @@ def main(
         py_version,
         is_project_for_apps,
         compatibility_version,
+        compatibility_override,
     )
     if only_cp_cfg:
         _logger.info("Only copied configuration files. Exiting now.")

@@ -133,6 +133,8 @@ Full --help command result:
     --oca-hooks-disable-checks TEXT CSV
                                     OCA Hooks checks to disable, separated by
                                     commas.  [env var: OCA_HOOKS_DISABLE_CHECKS]
+    --ruff-disable-checks TEXT CSV  Ruff checks to disable, separated by commas.
+                                    [env var: RUFF_DISABLE_CHECKS]
     -S, --skip-string-normalization
                                     If '-t fix' is enabled, don't normalize
                                     string quotes or prefixes '' -> ""
@@ -180,51 +182,45 @@ Full --help command result:
     --only-cp-cfg                   Only copy configuration files without
                                     running the pre-commit script
     --compatibility-version COMPATIBILITY-VERSION
-                                    Defines the compatibility and behavior level
-                                    for each linter tooling.
+                                    Generation of linter behavior to apply to
+                                    the whole toolchain. Lower values freeze
+                                    older tool versions and keep diffs minimal,
+                                    higher values enable newer versions,
+                                    stricter rules and more aggressive
+                                    autofixes.
 
-                                    This parameter controls how aggressive or
-                                    modern the enabled linters, formatters, and
-                                    autofixes are. Each position in the version
-                                    represents a specific tool and its behavior
-                                    level.
+                                    *10: Freeze the behavior of year <=2025
+                                    (safe, backward-compatible).
 
-                                    Lower values prioritize backward
-                                    compatibility and minimal diffs. Higher
-                                    values enable newer versions, stricter
-                                    rules, and more aggressive autofixes.
+                                    *20: Newer tool versions plus the 2026
+                                    autofixes (OCA hooks autofixes, prettier 3,
+                                    requirements-txt-fixer).
 
-                                    Default: 10.10.10.10.10.10.10.10.10.10
+                                    *30: Replace black/autoflake/isort with ruff
+                                    and enable the aggressive prettier XML
+                                    whitespace fixes.
 
-                                    Example: * 0.0.0.0.0.0.0 → Using zero 0 or
-                                    not defined will use the latest behavior
-                                    ever * 10.10.10.10.10.10.10 → Freeze old
-                                    behavior <=2025 year (safe, backward-
-                                    compatible) * 20.20.20.20.20.20.20 → Enable
-                                    new 2026 behaviors and aggressive autofixes
-                                    * (future changes may add more values) *
-                                    Mixed values (e.g. 10.20.10.20.0.20) allow
-                                    fine-grained control per tool
+                                    *latest (or 0): Always use the newest
+                                    behavior available, whatever it becomes.
 
-                                    Tool order: 🟢 1. Prettier (20 → Enable XML
-                                    aggressive whitespace fixes) 🟢 2. OCA hooks
-                                    https://github.com/OCA/odoo-pre-commit-hooks
-                                    (20 → rm py headers, rm unused logger,
-                                    change xml id position first, change xml
-                                    bool/integer to eval,      add xml-header-
-                                    missing uppercase, mv README.md to
-                                    README.rst,      change py _('translation')
-                                    to self.env._('translation'), rm manifest
-                                    superfluous keys, rm field-string-redundant)
-                                    🟢 3. ESLint 🟢 4. Black / Autoflake 🟢 5. pre-
-                                    commit framework 🟢 6. Pylint/pylint-odoo 🟢
-                                    7. flake8
+                                    The legacy dotted format (e.g.
+                                    '20.20.20.20') is deprecated but still
+                                    accepted: it collapses to its lowest value.
+                                    Use '--compatibility-override' for per-tool
+                                    pinning.  [env var:
+                                    LINT_COMPATIBILITY_VERSION; default: 10]
+    --compatibility-override COMPATIBILITY-OVERRIDE CSV
+                                    Pin the compatibility generation of a single
+                                    tool, as 'tool=generation' separated by
+                                    commas.
 
-                                    ⚠️ Higher values or empty valuesmay
-                                    introduce formatting changes, stricter
-                                    linting, or non-backward-compatible fixes
-                                    (especially for XML, Python, and JS files).
-                                    [env var: LINT_COMPATIBILITY_VERSION]
+                                    Overrides '--compatibility-version' for that
+                                    tool only, e.g. '--compatibility-override
+                                    prettier=10,pylint=latest'.
+
+                                    Valid tools: black_autoflake, flake8,
+                                    oca_hooks, pre_commit, prettier, pylint
+                                    [env var: LINT_COMPATIBILITY_OVERRIDE]
     --help                          Show this message and exit.
 
 

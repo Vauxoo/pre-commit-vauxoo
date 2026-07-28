@@ -131,23 +131,32 @@ class CSVPath(click.Path):
 
 
 class CompatibilityVersionType(click.ParamType):
+    """Validate eagerly so a typo fails as a click error instead of a traceback deep in copier.
+
+    Parsing itself lives in 'pre_commit_vauxoo.parse_compatibility_version' to keep a single
+    source of truth: the tests and the templates must agree on what a generation means.
+    """
+
     name = "compatibility-version"
 
     def convert(self, value, param, ctx):
-        if not value:
-            return value
-
-        parts = value.split(".")
-
-        for part in parts:
-            if not part.isdigit():
-                self.fail(
-                    f"Invalid compatibility version '{value}'. "
-                    "Expected integers separated by dots (e.g. 10.20.10.20).",
-                    param,
-                    ctx,
-                )
+        try:
+            pre_commit_vauxoo.parse_compatibility_version(value, verbose=False)
+        except ValueError as exc:
+            self.fail(str(exc), param, ctx)
         return value
+
+
+class CompatibilityOverrideType(CSVStringParamType):
+    name = "compatibility-override"
+
+    def convert(self, value, param, ctx):
+        values = super().convert(value, param, ctx)
+        try:
+            pre_commit_vauxoo.parse_compatibility_overrides(values)
+        except ValueError as exc:
+            self.fail(str(exc), param, ctx)
+        return values
 
 
 def merge_tuples(ctx, param, value):
@@ -362,40 +371,33 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
 )
 @click.option(
     "--compatibility-version",
-    default="10.10.10.10.10.10.10.10.10.10",
+    default=str(pre_commit_vauxoo.LINT_COMPAT_DEFAULT),
     envvar="LINT_COMPATIBILITY_VERSION",
     type=CompatibilityVersionType(),
-    help="""Defines the compatibility and behavior level for each linter tooling.
-
-This parameter controls how aggressive or modern the enabled linters, formatters, and autofixes are.
-Each position in the version represents a specific tool and its behavior level.
-
-Lower values prioritize backward compatibility and minimal diffs.
-Higher values enable newer versions, stricter rules, and more aggressive autofixes.
-
-Default: 10.10.10.10.10.10.10.10.10.10
-
-Example:
-* 0.0.0.0.0.0.0 → Using zero 0 or not defined will use the latest behavior ever
-* 10.10.10.10.10.10.10 → Freeze old behavior <=2025 year (safe, backward-compatible)
-* 20.20.20.20.20.20.20 → Enable new 2026 behaviors and aggressive autofixes
-* (future changes may add more values)
-* Mixed values (e.g. 10.20.10.20.0.20) allow fine-grained control per tool
-
-Tool order:
-🟢 1. Prettier (20 → Enable XML aggressive whitespace fixes)
-🟢 2. OCA hooks https://github.com/OCA/odoo-pre-commit-hooks
-    (20 → rm py headers, rm unused logger, change xml id position first, change xml bool/integer to eval,
-     add xml-header-missing uppercase, mv README.md to README.rst,
-     change py _('translation') to self.env._('translation'), rm manifest superfluous keys, rm field-string-redundant)
-🟢 3. ESLint
-🟢 4. Black / Autoflake
-🟢 5. pre-commit framework
-🟢 6. Pylint/pylint-odoo
-🟢 7. flake8
-
-⚠️ Higher values or empty valuesmay introduce formatting changes, stricter linting,
-or non-backward-compatible fixes (especially for XML, Python, and JS files).""",
+    show_default=True,
+    help="Generation of linter behavior to apply to the whole toolchain. "
+    "Lower values freeze older tool versions and keep diffs minimal, "
+    "higher values enable newer versions, stricter rules and more aggressive autofixes."
+    "\f\n*10: Freeze the behavior of year <=2025 (safe, backward-compatible)."
+    "\f\n*20: Newer tool versions plus the 2026 autofixes (OCA hooks autofixes, prettier 3, "
+    "requirements-txt-fixer)."
+    "\f\n*30: Replace black/autoflake/isort with ruff and enable the aggressive prettier XML "
+    "whitespace fixes."
+    "\f\n*latest (or 0): Always use the newest behavior available, whatever it becomes."
+    "\f\nThe legacy dotted format (e.g. '20.20.20.20') is deprecated but still accepted: "
+    "it collapses to its lowest value. Use '--compatibility-override' for per-tool pinning.",
+    **new_extra_kwargs,
+)
+@click.option(
+    "--compatibility-override",
+    type=CompatibilityOverrideType(),
+    multiple=True,
+    callback=merge_tuples,
+    envvar="LINT_COMPATIBILITY_OVERRIDE",
+    help="Pin the compatibility generation of a single tool, as 'tool=generation' separated by commas. "
+    "\f\nOverrides '--compatibility-version' for that tool only, "
+    "e.g. '--compatibility-override prettier=10,pylint=latest'."
+    "\f\nValid tools: " + ", ".join(pre_commit_vauxoo.LINT_COMPAT_TOOLS),
     **new_extra_kwargs,
 )
 def main(*args, **kwargs):
