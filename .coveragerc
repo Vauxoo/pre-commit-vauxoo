@@ -5,6 +5,9 @@ source = src
 source = src
 parallel = true
 context = ${{COVERAGE_CONTEXT}}
+# "sysmon" is the default core since python3.14 but it does not support the dynamic
+# contexts set by "pytest --cov-context=test" raising a CoverageWarning for each test
+core = ctrace
 
 [report]
 show_missing = true
