@@ -89,7 +89,12 @@ repos:
         name: bandit optional
         verbose: True
         args:
-          - --ini=.config/.bandit-optional
+          # The YAML format is used instead of the INI one since it is the only
+          # one supporting per-plugin options, e.g. "markupsafe_xss"
+          - --configfile=.config/.bandit-optional.yml
+          - --format=custom
+          - "--msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})"
+          - --quiet
         # reduce the INFO logger
         require_serial: true
   - repo: https://github.com/PyCQA/bandit
@@ -100,7 +105,10 @@ repos:
         verbose: True
         args:
           - --exit-zero
-          - --ini=.config/.bandit-experimental
+          - --configfile=.config/.bandit-experimental.yml
+          - --format=custom
+          - "--msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})"
+          - --quiet
         # reduce the INFO logger
         require_serial: true
   - repo: https://github.com/OCA/pylint-odoo

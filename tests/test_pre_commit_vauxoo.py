@@ -168,7 +168,7 @@ class TestPreCommitVauxoo:
         with Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).open() as f_pyproject:
             assert "skip-string-normalization=true" in f_pyproject.read(), "Skip string normalization not set"
 
-    def test_fail_warning(self, caplog):
+    def test_fail_warning(self, caplog, capfd):
         os.environ["PRECOMMIT_FAIL_OPTIONAL"] = "1"
         # Only optional
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "optional"
@@ -176,6 +176,12 @@ class TestPreCommitVauxoo:
         with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
+        output = self.strip_ansi(capfd.readouterr().out)
+        # "resources/module_example1/models/markupsafe_sanitized.py" sanitizes the value
+        # so B704:markupsafe_markup_xss must not be raised for it, it is defined
+        # from the "allowed_calls" of the ".bandit-optional.yml" configuration file
+        bandit_passed = re.search(r"^bandit optional\.+Passed$", output, re.MULTILINE)
+        assert bandit_passed, "bandit optional did not pass\n%s" % output
 
     def test_rm_options(self, caplog):
         # Only mandatory

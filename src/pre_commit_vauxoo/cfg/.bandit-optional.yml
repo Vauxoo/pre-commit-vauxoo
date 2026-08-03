@@ -1,0 +1,15 @@
+exclude_dirs:
+  - tests
+
+# B704:markupsafe_markup_xss more info https://github.com/OCA/pylint-odoo/pull/578
+tests:
+  - B704
+
+# Markup() is required to post HTML in Odoo (mail_thread.message_post() runs
+# escape(body) and keeps it as is only for Markup objects), so the value can not
+# simply be escaped. Wrapping the value with html_sanitize() is the safe way to
+# build it, so it is whitelisted instead of forcing "# nosec" comments.
+markupsafe_xss:
+  allowed_calls:
+    - odoo.tools.html_sanitize
+    - odoo.tools.mail.html_sanitize
