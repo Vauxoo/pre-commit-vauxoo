@@ -1,6 +1,20 @@
 [flake8]
 max-line-length = 119
 jobs = 0
+{% if use_ruff -%}
+# The E,W,F and most of the bugbear (B) checks were migrated to ruff
+# (.config/.ruff.toml for the mandatory ones and .config/.ruff-optional.toml for the optional ones)
+# Only the bugbear checks without a ruff implementation keep running here: B906, B908,
+# B950 (line length with +10% tolerance) and any future bugbear check
+# B = bugbear
+# B9 = bugbear opinionated (incl line length +10% tolerance)
+select = B,B9
+# - B001 is covered by ruff E722 and B902 by ruff N804/N805 (both mandatory .config/.ruff.toml)
+# - B912: map(strict=True) only works in python >= 3.14 (same reason as B905)
+# - B023,B024,B036,B904,B905,B907 were already ignored before the ruff migration (see comments below)
+# - The remaining B0xx/B9xx checks are implemented in ruff (.config/.ruff-optional.toml)
+ignore = B001,B002,B003,B004,B005,B006,B007,B008,B009,B010,B011,B012,B013,B014,B015,B016,B017,B018,B019,B020,B021,B022,B023,B024,B025,B026,B027,B028,B029,B030,B031,B032,B033,B034,B035,B036,B039,B901,B902,B903,B904,B905,B907,B909,B911,B912
+{%- else -%}
 # B = bugbear
 # B9 = bugbear opinionated (incl line length +10% tolerance)
 select = C,E,F,W,B,B9
@@ -23,3 +37,4 @@ ignore = B024,B036,E203,E501,W503,W504,E241,B023,E226,B904,B905,B907,E123,E275
 per-file-ignores =
     __init__.py:F401
     __manifest__.py:B018
+{%- endif %}

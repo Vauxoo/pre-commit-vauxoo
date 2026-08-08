@@ -27,6 +27,15 @@ default_language_version:
   python: python3
   node: "24.13.0"
 repos:
+{%- if use_ruff %}
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff-check
+        name: ruff mandatory checks
+        args:
+          - --config=.config/.ruff.toml
+{%- endif %}
   - repo: https://github.com/PyCQA/flake8
 {%- if flake8_matrix_value >= 20 %}
     rev: 7.3.0

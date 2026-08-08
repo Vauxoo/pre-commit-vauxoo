@@ -37,10 +37,7 @@ enable=attribute-deprecated,
   deprecated-odoo-model-method,
   deprecated-pragma,
   docstring-first-line-empty,
-  eval-used,
-  except-pass,
   external-request-timeout,
-  implicit-str-concat,
   invalid-commit,
   license-allowed,
   manifest-author-string,
@@ -58,12 +55,9 @@ enable=attribute-deprecated,
   missing-return,
   odoo-addons-relative-import,
   odoo-exception-warning,
-  print-used,
-  redundant-u-string-prefix,
   renamed-field-parameter,
   resource-not-exist,
   sql-injection,
-  too-complex,
   translation-contains-variable,
   translation-field,
   translation-required,
@@ -75,12 +69,22 @@ enable=attribute-deprecated,
   translation-too-many-args,
   translation-unsupported-format,
   use-dict-literal,
-  use-implicit-booleaness-not-comparison-to-string,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
   use-vim-comment,
   useless-parent-delegation,
   website-manifest-key-not-valid-uri
+  {%- if not use_ruff %},
+  # The following checks are migrated to ruff when it is enabled
+  # (see .config/.ruff.toml for eval-used and .config/.ruff-optional.toml for the rest)
+  eval-used,  # ruff S307
+  except-pass,  # ruff S110
+  implicit-str-concat,  # ruff ISC001
+  print-used,  # ruff T201
+  redundant-u-string-prefix,  # ruff UP025
+  too-complex,  # ruff C901
+  use-implicit-booleaness-not-comparison-to-string  # ruff PLC1901
+  {%- endif %}
 
 [REPORTS]
 msg-template={path}:{line}:{column}: ({symbol}) {msg}

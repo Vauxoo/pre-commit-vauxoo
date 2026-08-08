@@ -1,0 +1,163 @@
+# Mandatory ruff checks
+# It replaces the flake8 and pylint mandatory checks already implemented in ruff:
+#  - flake8 only keeps the continuation-line rules (E12x/E13x/E704) not implemented in ruff (see .flake8)
+#  - pylint only keeps the checks without a ruff equivalent (see .pylintrc "migrated to ruff" section)
+line-length = 119
+preview = true  # Required by the pycodestyle rules (E1xx,E2xx,E3xx,W391) migrated from flake8
+target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYTHON
+
+[lint]
+select = [
+    # flake8 replacement (same checks previously running from .config/.flake8)
+    "E",  # pycodestyle errors (E12x continuation-line rules still running from flake8)
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes (it also replaces the pylint checks undefined-variable, unused-import, unused-variable,
+          # duplicate-key, assert-on-tuple, wildcard-import, misplaced-future, literal-comparison,
+          # notimplemented-raised, f-string-without-interpolation, not-in-loop,
+          # return-outside-function, yield-outside-function, too-many-star-expressions and undefined-all-variable)
+    # pylint mandatory checks with a ruff replacement (disabled now from .config/.pylintrc)
+    "A001",  # redefined-builtin (variables)
+    "A002",  # redefined-builtin (arguments)
+    "A004",  # redefined-builtin (imports)
+    "B002",  # nonexistent-operator
+    "B006",  # dangerous-default-value
+    "B012",  # lost-exception
+    "B025",  # duplicate-except
+    "C401",  # consider-using-set-comprehension for set(generator)
+    "C402",  # consider-using-dict-comprehension for dict(generator)
+    "C403",  # consider-using-set-comprehension for set([...])
+    "C404",  # consider-using-dict-comprehension for dict([...])
+    "C416",  # unnecessary-comprehension
+    "C419",  # use-a-generator
+    "N804",  # bad-classmethod-argument
+    "N805",  # no-self-argument
+    "PIE790",  # unnecessary-pass
+    "PLC0105",  # typevar-name-incorrect-variance
+    "PLC0131",  # typevar-double-variance
+    "PLC0132",  # typevar-name-mismatch
+    "PLC0205",  # single-string-used-for-slots
+    "PLC0207",  # use-maxsplit-arg
+    "PLC0208",  # use-sequence-for-iteration
+    "PLC0414",  # useless-import-alias
+    "PLC0415",  # import-outside-toplevel
+    "PLC1802",  # use-implicit-booleaness-not-len
+    "PLC2401",  # non-ascii-name
+    "PLC2403",  # non-ascii-module-import
+    "PLC3002",  # unnecessary-direct-lambda-call
+    "PLE0100",  # init-is-generator
+    "PLE0101",  # return-in-init
+    "PLE0115",  # nonlocal-and-global
+    "PLE0116",  # continue-in-finally
+    "PLE0117",  # nonlocal-without-binding
+    "PLE0118",  # used-prior-global-declaration
+    "PLE0237",  # assigning-non-slot
+    "PLE0241",  # duplicate-bases
+    "PLE0302",  # unexpected-special-method-signature
+    "PLE0303",  # invalid-length-returned
+    "PLE0304",  # invalid-bool-returned
+    "PLE0305",  # invalid-index-returned
+    "PLE0307",  # invalid-str-returned
+    "PLE0308",  # invalid-bytes-returned
+    "PLE0309",  # invalid-hash-returned
+    "PLE0604",  # invalid-all-object
+    "PLE0605",  # invalid-all-format
+    "PLE0643",  # potential-index-error
+    "PLE0704",  # misplaced-bare-raise
+    "PLE1132",  # repeated-keyword
+    "PLE1142",  # await-outside-async
+    "PLE1205",  # logging-too-many-args
+    "PLE1206",  # logging-too-few-args
+    "PLE1300",  # bad-format-character
+    "PLE1307",  # bad-string-format-type
+    "PLE1310",  # bad-str-strip-call
+    "PLE1507",  # invalid-envvar-value
+    "PLE1519",  # singledispatch-method
+    "PLE1520",  # singledispatchmethod-function
+    "PLE1700",  # yield-inside-async-function
+    "PLE2502",  # bidirectional-unicode
+    "PLE2510",  # invalid-character-backspace
+    "PLE2512",  # invalid-character-sub
+    "PLE2513",  # invalid-character-esc
+    "PLE2514",  # invalid-character-nul
+    "PLE2515",  # invalid-character-zero-width-space
+    "PLR0124",  # comparison-with-itself
+    "PLR0133",  # comparison-of-constants
+    "PLR0206",  # property-with-parameters
+    "PLR0402",  # consider-using-from-import
+    "PLR0911",  # too-many-return-statements
+    "PLR0913",  # too-many-arguments
+    "PLR1704",  # redefined-argument-from-local
+    "PLR1708",  # stop-iteration-return
+    "PLR1711",  # useless-return
+    "PLR1714",  # consider-using-in
+    "PLR1716",  # chained-comparison
+    "PLR1722",  # consider-using-sys-exit
+    "PLR1730",  # consider-using-min-builtin and consider-using-max-builtin
+    "PLR1733",  # unnecessary-dict-index-lookup
+    "PLR1736",  # unnecessary-list-index-lookup
+    "PLW0108",  # unnecessary-lambda
+    "PLW0120",  # useless-else-on-loop
+    "PLW0127",  # self-assigning-variable
+    "PLW0128",  # redeclared-assigned-name
+    "PLW0129",  # assert-on-string-literal
+    "PLW0131",  # named-expr-without-context
+    "PLW0133",  # pointless-exception-statement
+    "PLW0177",  # nan-comparison
+    "PLW0211",  # bad-staticmethod-argument
+    "PLW0245",  # super-without-brackets
+    "PLW0602",  # global-variable-not-assigned
+    "PLW0603",  # global-statement
+    "PLW0604",  # global-at-module-level
+    "PLW0711",  # binary-op-exception
+    "PLW1501",  # bad-open-mode
+    "PLW1507",  # shallow-copy-environ
+    "PLW1508",  # invalid-envvar-default
+    "PLW1509",  # subprocess-popen-preexec-fn
+    "PLW1510",  # subprocess-run-check
+    "PLW2101",  # useless-with-lock
+    "PLW3301",  # nested-min-max
+    "RET505",  # no-else-return
+    "RET506",  # no-else-raise
+    "RET507",  # no-else-continue
+    "RET508",  # no-else-break
+    "S102",  # exec-used
+    "S307",  # eval-used
+    "SIM103",  # simplifiable-if-statement
+    "SIM118",  # consider-iterating-dictionary
+    "SIM208",  # unnecessary-negation
+    "SIM210",  # simplifiable-if-expression (True if x else False)
+    "SIM211",  # simplifiable-if-expression (False if x else True)
+    "UP004",  # useless-object-inheritance
+    "UP008",  # super-with-arguments
+]
+
+ignore = [
+{% if ruff_disable_checks %}
+    # Disabled from RUFF_DISABLE_CHECKS option
+{% for check in ruff_disable_checks %}
+    "{{ check }}",
+{% endfor %}
+{% endif %}
+    # Same ignores previously configured in .config/.flake8
+    "E203",  # whitespace before ':' is handled by black and it doesn't consider black syntax
+    "E226",  # missing whitespace around arithmetic operator (better autofixing)
+    "E241",  # multiple spaces after ',' (better autofixing)
+    "E242",  # tab after ',' (enabled from the optional configuration)
+    "E501",  # line-too-long (handled by the autofix and bugbear B950 from optional)
+    "E741",  # do not use variables named 'l', 'O', or 'I' (enabled from the optional configuration)
+    "F811",  # redefinition is legal in odoo 8 when we implement 2 interfaces for a method
+]
+
+[lint.flake8-builtins]
+# Same as the pylint "good-names" option: "id" is commonly redefined in Odoo
+builtins-ignorelist = ["id"]
+
+[lint.pylint]
+# Same limits as the .pylintrc [DESIGN] section
+max-args = 200
+max-returns = 6
+
+[lint.per-file-ignores]
+"__init__.py" = [
+    "F401",  # imported but unused is legal in odoo __init__.py files
+]
