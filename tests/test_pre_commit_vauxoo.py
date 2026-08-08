@@ -487,6 +487,97 @@ class TestPreCommitVauxoo:
             diff = disable_ignore - original_ignore
             assert {"print"} == diff, "print (T201) should be in ruff ignore when RUFF_DISABLE_CHECKS is set"
 
+    # Use cases expected to be reported by the same check before the ruff migration
+    # (pylint "(symbol)" and flake8 " CODE " markers) and after it (ruff "rule-name:" marker)
+    RUFF_MANDATORY_USE_CASES_EXPECTED = [
+        (["F401", "(unused-import)"], "unused-import"),
+        (["(duplicate-value)"], "duplicate-value"),
+        (["(global-statement)"], "global-statement"),
+        (["F821", "(undefined-variable)"], "undefined-name"),
+        (["E711", "(singleton-comparison)"], "none-comparison"),
+        (["E722", "(bare-except)"], "bare-except"),
+        (["(dangerous-default-value)"], "mutable-argument-default"),
+        (["(eval-used)"], "suspicious-eval-usage"),
+        (["(no-else-return)"], "superfluous-else-return"),
+        (["E731", "(unnecessary-lambda-assignment)"], "lambda-assignment"),
+        (["(consider-iterating-dictionary)"], "in-dict-keys"),
+        (["(super-with-arguments)"], "super-call-with-parameters"),
+    ]
+    RUFF_OPTIONAL_USE_CASES_EXPECTED = [
+        (["(print-used)"], "print"),
+        (["(except-pass)"], "try-except-pass"),
+        (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
+        (["(redundant-u-string-prefix)"], "unicode-kind-prefix"),
+        (["(use-implicit-booleaness-not-comparison-to-string)"], "compare-to-empty-string"),
+        (["(too-complex)"], "complex-structure"),
+        (["E741"], "ambiguous-variable-name"),
+        (["E242"], "tab-after-comma"),
+        (["B008"], "function-call-in-default-argument"),
+        (["B011"], "assert-false"),
+    ]
+
+    def run_precommit_hooks(self, hook_ids, config_file, filename):
+        output = ""
+        for hook_id in hook_ids:
+            result = subprocess.run(
+                ["pre-commit", "run", hook_id, "-c", os.path.join(CFG_SUBFOLDER, config_file), "--files", filename],
+                capture_output=True,
+                text=True,
+                check=False,
+                cwd=self.tmp_dir,
+            )
+            output += result.stdout + result.stderr
+        return self.strip_ansi(output)
+
+    def test_ruff_use_cases(self, caplog):
+        """The use cases must be reported by the equivalent checks before the ruff
+        migration (pylint and flake8+bugbear) and after it (ruff)"""
+        result = self.runner.invoke(main, ["--only-cp-cfg"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        use_ruff = (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            >= 30
+        )
+        # The mandatory use cases can not live in "resources/" since the other tests
+        # expect the mandatory checks passing for the resources modules
+        mandatory_cases_fname = "ruff_mandatory_use_cases.py"
+        mandatory_cases_src = TEST_PATH / "data_ruff" / "ruff_mandatory_use_cases.txt"
+        shutil.copy(mandatory_cases_src, Path(self.tmp_dir) / mandatory_cases_fname)
+        subprocess.check_call(["git", "add", "-A"])
+        optional_cases_fname = posixpath.join("module_warnings1", "tests", "data", "ruff_optional_use_cases.py")
+        for expected_use_cases, config_file, old_hook_ids, fname in [
+            (
+                self.RUFF_MANDATORY_USE_CASES_EXPECTED,
+                ".pre-commit-config.yaml",
+                ["flake8", "pylint_odoo"],
+                mandatory_cases_fname,
+            ),
+            (
+                self.RUFF_OPTIONAL_USE_CASES_EXPECTED,
+                ".pre-commit-config-optional.yaml",
+                ["flake8", "pylint_odoo"],
+                optional_cases_fname,
+            ),
+        ]:
+            hook_ids = ["ruff-check"] if use_ruff else old_hook_ids
+            output = self.run_precommit_hooks(hook_ids, config_file, fname)
+            for old_markers, ruff_marker in expected_use_cases:
+                if use_ruff:
+                    assert "%s:" % ruff_marker in output, "'%s' was not reported by ruff for %s\n%s" % (
+                        ruff_marker,
+                        fname,
+                        output,
+                    )
+                else:
+                    for old_marker in old_markers:
+                        assert old_marker in output, "'%s' was not reported by pylint/flake8 for %s\n%s" % (
+                            old_marker,
+                            fname,
+                            output,
+                        )
+
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()

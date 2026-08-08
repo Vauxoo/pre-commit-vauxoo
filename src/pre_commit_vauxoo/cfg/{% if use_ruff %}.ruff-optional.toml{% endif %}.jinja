@@ -9,7 +9,7 @@ target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYT
 [lint]
 select = [
     # flake8-bugbear replacement (same checks previously running from .config/.flake8-optional)
-    #  - B002, B006, B012 and B025 are already enabled from the mandatory .ruff.toml
+    #  - B002, B006, B012, B025 and B033 are already enabled from the mandatory .ruff.toml
     #  - B001 is covered by ruff E722 and B902 by ruff N804/N805 (both mandatory .ruff.toml)
     #  - B023, B024, B036, B904, B905 and B907 keep being disabled (see .flake8-optional comments)
     #  - B906, B908 and B950 are not implemented in ruff so they keep running from flake8
@@ -38,7 +38,6 @@ select = [
     "B030",  # except-with-non-exception-classes
     "B031",  # reuse-of-groupby-generator
     "B032",  # unintentional-type-annotation
-    "B033",  # duplicate-value
     "B034",  # re-sub-positional-args
     "B035",  # static-key-dict-comprehension
     "B039",  # mutable-contextvar-default
@@ -67,6 +66,11 @@ ignore = [
 {% endfor %}
 {% endif %}
 ]
+
+[lint.flake8-bandit]
+# S110 (try-except-pass) must also report typed exceptions e.g. "except ValueError: pass"
+# to be equivalent to the pylint-odoo "except-pass" check it is replacing
+check-typed-exception = true
 
 [lint.mccabe]
 # Same as the .pylintrc-optional [DESIGN] max-complexity option

@@ -1,0 +1,86 @@
+"""Use cases of the mandatory checks migrated from pylint/flake8 to ruff.
+
+Each case must be reported:
+ - before the ruff migration: by "pylint mandatory checks" or "flake8 mandatory checks"
+ - after the ruff migration: by "ruff mandatory checks" (see .config/.ruff.toml)
+
+It is copied as a ".py" file into the temporary repository by test_ruff_use_cases.
+It is stored as ".txt" (instead of living in "resources/") to avoid breaking the
+tests expecting the mandatory checks passing for the resources modules and to
+avoid the linters of this own project reporting it.
+"""
+
+# F401 (flake8) - unused-import (pylint) -> unused-import (ruff F401)
+import os
+
+GLOBAL_VALUE = 1
+
+DUPLICATE_VALUE_SET = {
+    # duplicate-value (pylint) -> duplicate-value (ruff B033)
+    "first",
+    "second",
+    "first",
+}
+
+
+def global_statement_use_case():
+    # global-statement (pylint) -> global-statement (ruff PLW0603)
+    global GLOBAL_VALUE
+    GLOBAL_VALUE = 2
+
+
+def undefined_variable_use_case():
+    # F821 (flake8) - undefined-variable (pylint) -> undefined-name (ruff F821)
+    return undefined_name_variable
+
+
+def singleton_comparison_use_case(value):
+    # E711 (flake8) - singleton-comparison (pylint) -> none-comparison (ruff E711)
+    if value == None:
+        value = 0
+    return value
+
+
+def bare_except_use_case(value):
+    # E722 (flake8) - bare-except (pylint) -> bare-except (ruff E722)
+    try:
+        return int(value)
+    except:
+        return 0
+
+
+def dangerous_default_use_case(items=[]):
+    # dangerous-default-value (pylint) -> mutable-argument-default (ruff B006)
+    return items
+
+
+def eval_use_case(expression):
+    # eval-used (pylint) -> suspicious-eval-usage (ruff S307)
+    return eval(expression)
+
+
+def no_else_return_use_case(value):
+    # no-else-return (pylint) -> superfluous-else-return (ruff RET505)
+    if value:
+        return 1
+    else:
+        return 2
+
+
+def lambda_assignment_use_case():
+    # E731 (flake8) - unnecessary-lambda-assignment (pylint) -> lambda-assignment (ruff E731)
+    fnc = lambda: GLOBAL_VALUE
+    return fnc
+
+
+def in_dict_keys_use_case(key):
+    # consider-iterating-dictionary (pylint) -> in-dict-keys (ruff SIM118)
+    # a dict literal is used so pylint is able to infer the type
+    values = {"first": 1, "second": 2}
+    return key in values.keys()
+
+
+class SuperUseCase:
+    def __init__(self):
+        # super-with-arguments (pylint) -> super-call-with-parameters (ruff UP008)
+        super(SuperUseCase, self).__init__()
