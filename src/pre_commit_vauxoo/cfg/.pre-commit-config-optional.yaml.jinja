@@ -27,10 +27,12 @@ default_language_version:
   python: python3
   node: "24.13.0"
 repos:
-  - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.8
+  # TODO: Use the OCA repo and the release tag once https://github.com/OCA/pylint-odoo/pull/580 is merged
+  - repo: https://github.com/Vauxoo-dev/pylint-odoo
+    rev: dd73a4393d0a09ef29e6ce424755338070626c30  # main-jobs-moy
 {%- else %}
+  - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.24
 {%- endif %}
     hooks:
@@ -39,8 +41,10 @@ repos:
         args:
           - --rcfile=.config/.pylintrc-optional
           - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
-          # uncomment after fix https://github.com/OCA/pylint-odoo/pull/512
-          # - --jobs=0  # 0 will auto-detect the number of processors available to use
+{%- if pylint_matrix_value >= 20 %}
+          # It needs the fix https://github.com/OCA/pylint-odoo/pull/580 not available for old releases
+          - --jobs=0  # 0 will auto-detect the number of processors available to use
+{%- endif %}
   - repo: https://github.com/OCA/odoo-pre-commit-hooks
 {%- if oca_hooks_matrix_value >= 20 %}
     rev: v0.2.24
@@ -111,10 +115,12 @@ repos:
           - --quiet
         # reduce the INFO logger
         require_serial: true
-  - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.8
+  # TODO: Use the OCA repo and the release tag once https://github.com/OCA/pylint-odoo/pull/580 is merged
+  - repo: https://github.com/Vauxoo-dev/pylint-odoo
+    rev: dd73a4393d0a09ef29e6ce424755338070626c30  # main-jobs-moy
 {%- else %}
+  - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.24
 {%- endif %}
     hooks:
@@ -124,3 +130,7 @@ repos:
         args:
           - --rcfile=.config/.pylintrc-experimental
           - --exit-zero
+{%- if pylint_matrix_value >= 20 %}
+          # It needs the fix https://github.com/OCA/pylint-odoo/pull/580 not available for old releases
+          - --jobs=0  # 0 will auto-detect the number of processors available to use
+{%- endif %}
