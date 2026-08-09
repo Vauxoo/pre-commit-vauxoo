@@ -265,7 +265,7 @@ def resolve_console_script(script_name):
 
 # There are a lot of if validations in this method. It is expected for now.
 # pylint: disable=too-complex
-def main(
+def main(  # noqa: C901
     paths,
     no_overwrite,
     exclude_autofix,

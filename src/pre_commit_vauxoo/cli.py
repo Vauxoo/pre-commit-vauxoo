@@ -187,7 +187,7 @@ try:
         # It is only compatible for click >= 7.0 but it is not a big deal if it is not enabled
         # For record, dockerv image is using click 6.6 version
         new_extra_kwargs["show_envvar"] = True
-except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
+except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass  # noqa: S110
     pass
 
 monkey_patch_make_context()
