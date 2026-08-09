@@ -21,6 +21,16 @@ UNICODE_PREFIX = u"unicode prefix"
 TAB_AFTER_COMMA = ("first",	"second")
 
 
+def bad_docstring_quotes_use_case(value):
+    'bad-docstring-quotes (pylint) -> triple-single-quotes (ruff D300)'
+    return value
+
+
+def dict_literal_use_case():
+    # use-dict-literal (pylint) -> unnecessary-collection-call (ruff C408)
+    return dict(one=1)
+
+
 def print_use_case(value):
     # print-used (pylint) -> print (ruff T201)
     print(value)

@@ -148,6 +148,7 @@ disable=abstract-method,
    await-outside-async,  # ruff PLE1142
    bad-classmethod-argument,  # ruff N804
    bad-format-character,  # ruff PLE1300
+   bad-format-string,  # ruff F521
    bad-indentation,  # ruff E111
    bad-open-mode,  # ruff PLW1501
    bad-staticmethod-argument,  # ruff PLW0211
@@ -159,7 +160,10 @@ disable=abstract-method,
    chained-comparison,  # ruff PLR1716
    comparison-of-constants,  # ruff PLR0133
    comparison-with-itself,  # ruff PLR0124
+   condition-evals-to-constant,  # ruff SIM220,SIM221,SIM222,SIM223
    consider-iterating-dictionary,  # ruff SIM118
+   consider-merging-isinstance,  # ruff SIM101
+   consider-swap-variables,  # ruff PLR1712
    consider-using-dict-comprehension,  # ruff C402,C404
    consider-using-from-import,  # ruff PLR0402
    consider-using-get,  # ruff SIM401
@@ -170,13 +174,19 @@ disable=abstract-method,
    consider-using-sys-exit,  # ruff PLR1722
    continue-in-finally,  # ruff PLE0116
    dangerous-default-value,  # ruff B006
+   dict-iter-missing-items,  # ruff PLE1141
+   duplicate-argument-name,  # always-on ruff syntax error
    duplicate-bases,  # ruff PLE0241
    duplicate-except,  # ruff B025
    duplicate-key,  # ruff F601,F602
    duplicate-value,  # ruff B033
+   empty-docstring,  # ruff D419
    eval-used,  # ruff S307
    exec-used,  # ruff S102
    f-string-without-interpolation,  # ruff F541
+   forgotten-debug-statement,  # ruff T100
+   format-combined-specification,  # ruff F525
+   format-needs-mapping,  # ruff F502
    global-at-module-level,  # ruff PLW0604
    global-statement,  # ruff PLW0603
    global-variable-not-assigned,  # ruff PLW0602
@@ -198,22 +208,32 @@ disable=abstract-method,
    invalid-length-returned,  # ruff PLE0303
    invalid-str-returned,  # ruff PLE0307
    literal-comparison,  # ruff F632
+   logging-format-interpolation,  # ruff G001
+   logging-fstring-interpolation,  # ruff G004
+   logging-not-lazy,  # ruff G002,G003
    logging-too-few-args,  # ruff PLE1206
    logging-too-many-args,  # ruff PLE1205
    lost-exception,  # ruff B012
+   method-cache-max-size-none,  # ruff B019
    misplaced-bare-raise,  # ruff PLE0704
    misplaced-future,  # ruff F404
    missing-final-newline,  # ruff W292
+   missing-format-argument-key,  # ruff F524
+   missing-format-string-key,  # ruff F505
+   mixed-format-string,  # ruff F506
+   modified-iterating-set,  # ruff PLE4703
    multiple-imports,  # ruff E401
    multiple-statements,  # ruff E701,E702 (and flake8 E704)
    named-expr-without-context,  # ruff PLW0131
    nan-comparison,  # ruff PLW0177
    nested-min-max,  # ruff PLW3301
+   no-classmethod-decorator,  # ruff PLR0202
    no-else-break,  # ruff RET508
    no-else-continue,  # ruff RET507
    no-else-raise,  # ruff RET506
    no-else-return,  # ruff RET505
    no-self-argument,  # ruff N805
+   no-staticmethod-decorator,  # ruff PLR0203
    non-ascii-module-import,  # ruff PLC2403
    non-ascii-name,  # ruff PLC2401
    nonexistent-operator,  # ruff B002
@@ -243,11 +263,17 @@ disable=abstract-method,
    subprocess-run-check,  # ruff PLW1510
    super-with-arguments,  # ruff UP008
    super-without-brackets,  # ruff PLW0245
+   too-few-format-args,  # ruff F507
    too-many-arguments,  # ruff PLR0913
+   too-many-format-args,  # ruff F507,F523
+   too-many-locals,  # ruff PLR0914
+   too-many-nested-blocks,  # ruff PLR1702
+   too-many-public-methods,  # ruff PLR0904
    too-many-return-statements,  # ruff PLR0911
    too-many-star-expressions,  # ruff F622
    trailing-newlines,  # ruff W391
    trailing-whitespace,  # ruff W291
+   truncated-format-string,  # ruff F501
    typevar-double-variance,  # ruff PLC0131
    typevar-name-incorrect-variance,  # ruff PLC0105
    typevar-name-mismatch,  # ruff PLC0132
@@ -258,16 +284,20 @@ disable=abstract-method,
    unnecessary-comprehension,  # ruff C416
    unnecessary-dict-index-lookup,  # ruff PLR1733
    unnecessary-direct-lambda-call,  # ruff PLC3002
+   unnecessary-dunder-call,  # ruff PLC2801
    unnecessary-lambda,  # ruff PLW0108
    unnecessary-lambda-assignment,  # ruff E731
    unnecessary-list-index-lookup,  # ruff PLR1736
    unnecessary-negation,  # ruff SIM208
    unnecessary-pass,  # ruff PIE790
    unnecessary-semicolon,  # ruff E702,E703
+   unused-format-string-argument,  # ruff F522
+   unused-format-string-key,  # ruff F504
    unused-import,  # ruff F401
    unused-variable,  # ruff F841
    use-a-generator,  # ruff C419
    use-implicit-booleaness-not-len,  # ruff PLC1802
+   use-list-literal,  # ruff C408 (moved to the optional level with use-dict-literal)
    use-maxsplit-arg,  # ruff PLC0207
    use-sequence-for-iteration,  # ruff PLC0208
    used-prior-global-declaration,  # ruff PLE0118

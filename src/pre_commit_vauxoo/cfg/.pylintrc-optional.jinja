@@ -29,14 +29,11 @@ disable=all,unknown-option-value
 enable=attribute-deprecated,
   attribute-string-redundant,
   bad-builtin-groupby,
-  bad-docstring-quotes,
   consider-merging-classes-inherited,
-  consider-using-generator,
   context-overridden,
   deprecated-method,
   deprecated-odoo-model-method,
   deprecated-pragma,
-  docstring-first-line-empty,
   external-request-timeout,
   invalid-commit,
   license-allowed,
@@ -68,7 +65,6 @@ enable=attribute-deprecated,
   translation-too-few-args,
   translation-too-many-args,
   translation-unsupported-format,
-  use-dict-literal,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
   use-vim-comment,
@@ -77,12 +73,16 @@ enable=attribute-deprecated,
   {%- if not use_ruff %},
   # The following checks are migrated to ruff when it is enabled
   # (see .config/.ruff.toml for eval-used and .config/.ruff-optional.toml for the rest)
+  bad-docstring-quotes,  # ruff D300
+  consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
+  docstring-first-line-empty,  # ruff D212
   eval-used,  # ruff S307
   except-pass,  # ruff S110
   implicit-str-concat,  # ruff ISC001
   print-used,  # ruff T201
   redundant-u-string-prefix,  # ruff UP025
   too-complex,  # ruff C901
+  use-dict-literal,  # ruff C408
   use-implicit-booleaness-not-comparison-to-string  # ruff PLC1901
   {%- endif %}
 

@@ -13,6 +13,10 @@ select = [
     "W",  # pycodestyle warnings
     "F",  # pyflakes (it also replaces the pylint checks undefined-variable, unused-import, unused-variable,
           # duplicate-key, assert-on-tuple, wildcard-import, misplaced-future, literal-comparison,
+          # the %-format and str.format checks (truncated-format-string, mixed-format-string,
+          # format-needs-mapping, missing-format-string-key, too-many/few-format-args, bad-format-string,
+          # unused-format-string-key/argument, missing-format-argument-key, format-combined-specification),
+          # duplicate-argument-name (reported as an always-on ruff syntax error),
           # notimplemented-raised, f-string-without-interpolation, not-in-loop,
           # return-outside-function, yield-outside-function, too-many-star-expressions and undefined-all-variable)
     # pylint mandatory checks with a ruff replacement (disabled now from .config/.pylintrc)
@@ -22,6 +26,7 @@ select = [
     "B002",  # nonexistent-operator
     "B006",  # dangerous-default-value
     "B012",  # lost-exception
+    "B019",  # method-cache-max-size-none
     "B025",  # duplicate-except
     "B033",  # duplicate-value
     "C401",  # consider-using-set-comprehension for set(generator)
@@ -29,7 +34,12 @@ select = [
     "C403",  # consider-using-set-comprehension for set([...])
     "C404",  # consider-using-dict-comprehension for dict([...])
     "C416",  # unnecessary-comprehension
-    "C419",  # use-a-generator
+    "C419",  # use-a-generator (with preview it also covers consider-using-generator)
+    "D419",  # empty-docstring
+    "G001",  # logging-format-interpolation
+    "G002",  # logging-not-lazy (%)
+    "G003",  # logging-not-lazy (+ concatenation)
+    "G004",  # logging-fstring-interpolation
     "N804",  # bad-classmethod-argument
     "N805",  # no-self-argument
     "PIE790",  # unnecessary-pass
@@ -44,6 +54,7 @@ select = [
     "PLC1802",  # use-implicit-booleaness-not-len
     "PLC2401",  # non-ascii-name
     "PLC2403",  # non-ascii-module-import
+    "PLC2801",  # unnecessary-dunder-call
     "PLC3002",  # unnecessary-direct-lambda-call
     "PLE0100",  # init-is-generator
     "PLE0101",  # return-in-init
@@ -65,6 +76,7 @@ select = [
     "PLE0643",  # potential-index-error
     "PLE0704",  # misplaced-bare-raise
     "PLE1132",  # repeated-keyword
+    "PLE1141",  # dict-iter-missing-items
     "PLE1142",  # await-outside-async
     "PLE1205",  # logging-too-many-args
     "PLE1206",  # logging-too-few-args
@@ -81,15 +93,22 @@ select = [
     "PLE2513",  # invalid-character-esc
     "PLE2514",  # invalid-character-nul
     "PLE2515",  # invalid-character-zero-width-space
+    "PLE4703",  # modified-iterating-set
     "PLR0124",  # comparison-with-itself
     "PLR0133",  # comparison-of-constants
+    "PLR0202",  # no-classmethod-decorator
+    "PLR0203",  # no-staticmethod-decorator
     "PLR0206",  # property-with-parameters
     "PLR0402",  # consider-using-from-import
+    "PLR0904",  # too-many-public-methods
     "PLR0911",  # too-many-return-statements
     "PLR0913",  # too-many-arguments
+    "PLR0914",  # too-many-locals
+    "PLR1702",  # too-many-nested-blocks
     "PLR1704",  # redefined-argument-from-local
     "PLR1708",  # stop-iteration-return
     "PLR1711",  # useless-return
+    "PLR1712",  # consider-swap-variables
     "PLR1714",  # consider-using-in
     "PLR1716",  # chained-comparison
     "PLR1722",  # consider-using-sys-exit
@@ -123,11 +142,17 @@ select = [
     "RET508",  # no-else-break
     "S102",  # exec-used
     "S307",  # eval-used
+    "SIM101",  # consider-merging-isinstance
     "SIM103",  # simplifiable-if-statement
     "SIM118",  # consider-iterating-dictionary
     "SIM208",  # unnecessary-negation
     "SIM210",  # simplifiable-if-expression (True if x else False)
     "SIM211",  # simplifiable-if-expression (False if x else True)
+    "SIM220",  # condition-evals-to-constant (x and not x)
+    "SIM221",  # condition-evals-to-constant (x or not x)
+    "SIM222",  # condition-evals-to-constant (x or True)
+    "SIM223",  # condition-evals-to-constant (x and False)
+    "T100",  # forgotten-debug-statement
     "UP004",  # useless-object-inheritance
     "UP008",  # super-with-arguments
 ]
@@ -156,6 +181,9 @@ builtins-ignorelist = ["id"]
 [lint.pylint]
 # Same limits as the .pylintrc [DESIGN] section
 max-args = 200
+max-locals = 200
+max-nested-blocks = 5
+max-public-methods = 200
 max-returns = 6
 
 [lint.per-file-ignores]

@@ -502,6 +502,9 @@ class TestPreCommitVauxoo:
         (["E731", "(unnecessary-lambda-assignment)"], "lambda-assignment"),
         (["(consider-iterating-dictionary)"], "in-dict-keys"),
         (["(super-with-arguments)"], "super-call-with-parameters"),
+        (["(logging-not-lazy)"], "logging-percent-format"),
+        (["(consider-merging-isinstance)"], "duplicate-isinstance-call"),
+        (["(too-many-format-args)"], "percent-format-positional-count-mismatch"),
     ]
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
@@ -514,6 +517,8 @@ class TestPreCommitVauxoo:
         (["E242"], "tab-after-comma"),
         (["B008"], "function-call-in-default-argument"),
         (["B011"], "assert-false"),
+        (["(bad-docstring-quotes)"], "triple-single-quotes"),
+        (["(use-dict-literal)"], "unnecessary-collection-call"),
     ]
 
     def run_precommit_hooks(self, hook_ids, config_file, filename):

@@ -9,7 +9,7 @@ target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYT
 [lint]
 select = [
     # flake8-bugbear replacement (same checks previously running from .config/.flake8-optional)
-    #  - B002, B006, B012, B025 and B033 are already enabled from the mandatory .ruff.toml
+    #  - B002, B006, B012, B019, B025 and B033 are already enabled from the mandatory .ruff.toml
     #  - B001 is covered by ruff E722 and B902 by ruff N804/N805 (both mandatory .ruff.toml)
     #  - B023, B024, B036, B904, B905 and B907 keep being disabled (see .flake8-optional comments)
     #  - B906, B908 and B950 are not implemented in ruff so they keep running from flake8
@@ -27,7 +27,6 @@ select = [
     "B016",  # raise-literal
     "B017",  # assert-raises-exception
     "B018",  # useless-expression
-    "B019",  # cached-instance-method
     "B020",  # loop-variable-overrides-iterator
     "B021",  # f-string-docstring
     "B022",  # useless-contextlib-suppress
@@ -50,7 +49,11 @@ select = [
     "E741",  # ambiguous variable name 'l', 'O', or 'I'
     "F811",  # redefined-while-unused
     # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
+    "C408",  # use-dict-literal and use-list-literal (the latter was mandatory from pylint but
+              # ruff C408 handles dict()/list()/tuple() with a single check so it runs as optional now)
     "C901",  # too-complex (mccabe)
+    "D212",  # docstring-first-line-empty
+    "D300",  # bad-docstring-quotes
     "ISC001",  # implicit-str-concat
     "PLC1901",  # use-implicit-booleaness-not-comparison-to-string
     "S110",  # except-pass

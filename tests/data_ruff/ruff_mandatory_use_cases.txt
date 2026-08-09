@@ -13,6 +13,10 @@ avoid the linters of this own project reporting it.
 # F401 (flake8) - unused-import (pylint) -> unused-import (ruff F401)
 import os
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 GLOBAL_VALUE = 1
 
 DUPLICATE_VALUE_SET = {
@@ -84,3 +88,18 @@ class SuperUseCase:
     def __init__(self):
         # super-with-arguments (pylint) -> super-call-with-parameters (ruff UP008)
         super(SuperUseCase, self).__init__()
+
+
+def logging_not_lazy_use_case(value):
+    # logging-not-lazy (pylint) -> logging-percent-format (ruff G002)
+    _logger.info("value %s" % value)
+
+
+def merge_isinstance_use_case(value):
+    # consider-merging-isinstance (pylint) -> duplicate-isinstance-call (ruff SIM101)
+    return isinstance(value, int) or isinstance(value, float)
+
+
+def too_many_format_args_use_case():
+    # too-many-format-args (pylint) -> percent-format-positional-count-mismatch (ruff F507)
+    return "%s" % (1, 2)
