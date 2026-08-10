@@ -216,9 +216,13 @@ Full --help command result:
                                     README.rst,      change py _('translation')
                                     to self.env._('translation'), rm manifest
                                     superfluous keys, rm field-string-redundant)
-                                    🟢 3. ESLint 🟢 4. Black / Autoflake 🟢 5. pre-
-                                    commit framework 🟢 6. Pylint/pylint-odoo 🟢
-                                    7. flake8
+                                    🟢 3. ESLint 🟢 4. Black / Autoflake (30 →
+                                    Use ruff instead. It also migrates to ruff
+                                    the mandatory and optional pylint/flake8
+                                    checks already implemented in ruff,
+                                    disabling them from the original tool) 🟢 5.
+                                    pre-commit framework 🟢 6. Pylint/pylint-
+                                    odoo 🟢 7. flake8
 
                                     ⚠️ Higher values or empty valuesmay
                                     introduce formatting changes, stricter

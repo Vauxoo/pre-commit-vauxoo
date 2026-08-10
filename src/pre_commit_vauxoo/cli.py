@@ -187,7 +187,7 @@ try:
         # It is only compatible for click >= 7.0 but it is not a big deal if it is not enabled
         # For record, dockerv image is using click 6.6 version
         new_extra_kwargs["show_envvar"] = True
-except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass
+except (TypeError, ValueError, AttributeError):  # pylint: disable=except-pass  # noqa: S110
     pass
 
 monkey_patch_make_context()
@@ -389,7 +389,8 @@ Tool order:
      add xml-header-missing uppercase, mv README.md to README.rst,
      change py _('translation') to self.env._('translation'), rm manifest superfluous keys, rm field-string-redundant)
 🟢 3. ESLint
-🟢 4. Black / Autoflake
+🟢 4. Black / Autoflake (30 → Use ruff instead. It also migrates to ruff the mandatory and optional
+    pylint/flake8 checks already implemented in ruff, disabling them from the original tool)
 🟢 5. pre-commit framework
 🟢 6. Pylint/pylint-odoo
 🟢 7. flake8

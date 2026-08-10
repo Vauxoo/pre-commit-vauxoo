@@ -1,4 +1,12 @@
 [flake8]
+{% if use_ruff -%}
+# The pyflakes (F) and most of the pycodestyle (E,W) checks were migrated to ruff (.config/.ruff.toml)
+# Only the continuation-line indentation rules (E12x/E13x) and E704 keep running here
+# since ruff does not implement them https://github.com/astral-sh/ruff/issues/2402
+select = E12,E13,E704
+# E123,E133 keep being ignored (same as before the ruff migration)
+ignore = E123,E133
+{%- else -%}
 # B024: Odoo is not common to use ABC Classes not big deal to ignore it.
 # B036: Don't except `BaseException` unless you plan to re-raise it. (covered by pylint)
 # E123,E133,E226,E241,E242 are ignored by default by pep8 and flake8
@@ -10,7 +18,8 @@
 # E741 do not use variables named ‘l’, ‘O’, or ‘I’
 # chunk = records[index : index + chunk_size]
 ignore = B024,B036,E123,E133,E203,E226,E241,E242,E501,E741,F811,F601,W503,W504
-max-line-length = 119
 per-file-ignores=
     __init__.py:F401
+{%- endif %}
+max-line-length = 119
 jobs = 0
