@@ -38,12 +38,10 @@ repos:
         name: flake8 mandatory checks
         args:
           - --config=.config/.flake8
-{%- if pylint_matrix_value >= 20 %}
-  # TODO: Use the OCA repo and the release tag once https://github.com/OCA/pylint-odoo/pull/580 is merged
-  - repo: https://github.com/Vauxoo-dev/pylint-odoo
-    rev: e52263821bba2b1496594740e00e027654ee497b  # main-jobs-moy
-{%- else %}
   - repo: https://github.com/OCA/pylint-odoo
+{%- if pylint_matrix_value >= 20 %}
+    rev: v10.0.9
+{%- else %}
     rev: v9.3.24
 {%- endif %}
     hooks:
@@ -53,8 +51,7 @@ repos:
           - --rcfile=.config/.pylintrc
           - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
 {%- if pylint_matrix_value >= 20 %}
-          # It needs the fix https://github.com/OCA/pylint-odoo/pull/580 not available for old releases
-          - --jobs=0  # 0 will auto-detect the number of processors available to use
+          - --jobs=3
 {%- endif %}
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v9.39.1
