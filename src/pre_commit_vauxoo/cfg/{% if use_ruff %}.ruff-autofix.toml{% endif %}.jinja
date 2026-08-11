@@ -5,6 +5,10 @@ fix-only = true
 unsafe-fixes = true
 
 [format]
+# Keep the stable (black-compatible) formatting style. The top-level "preview = true"
+# is only intended for lint preview rules; in the formatter it enables styles like
+# hug_parens_with_braces_and_square_brackets that diverge from black's output.
+preview = false
 quote-style = "double"
 skip-magic-trailing-comma = false
 indent-style = "space"
