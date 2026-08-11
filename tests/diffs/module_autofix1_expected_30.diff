@@ -1,7 +1,7 @@
 diff --git a/module_autofix1/__manifest__.py b/module_autofix1/__manifest__.py
 --- a/module_autofix1/__manifest__.py
 +++ b/module_autofix1/__manifest__.py
-@@ -1,24 +1,24 @@
+@@ -1,24 +1,23 @@
  {
 -    'name': 'module_warnings1',
 -    'summary': '''Short summary''',
@@ -37,7 +37,6 @@ diff --git a/module_autofix1/__manifest__.py b/module_autofix1/__manifest__.py
 +        "demo/demo.xml",
      ],
 -    'installable': True,
-+
  }
 diff --git a/module_autofix1/models/models.py b/module_autofix1/models/models.py
 --- a/module_autofix1/models/models.py

@@ -505,10 +505,12 @@ class TestPreCommitVauxoo:
         (["(logging-not-lazy)"], "logging-percent-format"),
         (["(consider-merging-isinstance)"], "duplicate-isinstance-call"),
         (["(too-many-format-args)"], "percent-format-positional-count-mismatch"),
+        # except-pass was optional in pylint-odoo but the ruff-odoo ODOO004 check
+        # runs as mandatory so there are no old mandatory markers to expect
+        ([], "except-pass"),
     ]
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
-        (["(except-pass)"], "try-except-pass"),
         (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
         (["(redundant-u-string-prefix)"], "unicode-kind-prefix"),
         (["(use-implicit-booleaness-not-comparison-to-string)"], "compare-to-empty-string"),

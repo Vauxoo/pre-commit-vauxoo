@@ -11,6 +11,11 @@ indent-style = "space"
 line-ending = "lf"
 
 [lint]
+# "ALL" also selects the autofixable Odoo checks from ruff-odoo:
+#   ODOO002 (manifest-deprecated-key), ODOO003 (vim-comment), ODOO006 (unused-logger),
+#   ODOO007 (field-string-redundant), ODOO024 (direct-translation-call),
+#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments) and ODOO035 (deprecated-self-cr)
+# The non-autofixable ODOO checks run as mandatory instead (see .ruff.toml)
 select = ["ALL"]
 
 ignore = [

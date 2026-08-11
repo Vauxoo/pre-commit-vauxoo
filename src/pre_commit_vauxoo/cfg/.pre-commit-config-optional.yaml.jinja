@@ -68,8 +68,8 @@ repos:
         pass_filenames: false
         always_run: true
 {%- if use_ruff %}
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+  - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
+    rev: 0.16.2.2
     hooks:
       - id: ruff-check
         name: ruff optional checks
