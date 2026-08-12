@@ -506,8 +506,7 @@ class TestPreCommitVauxoo:
             with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
                 ruff_ignore = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
             assert not expected_ruff_codes & ruff_ignore, (
-                f"The ruff codes should not be in {ruff_toml_filename} ignore "
-                "when PYLINT_DISABLE_CHECKS is not set"
+                f"The ruff codes should not be in {ruff_toml_filename} ignore when PYLINT_DISABLE_CHECKS is not set"
             )
         os.environ["PYLINT_DISABLE_CHECKS"] = (
             "manifest-required-author,invalid-commit,dangerous-default-value,print-used,translation-required"

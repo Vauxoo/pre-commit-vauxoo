@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# Hooks are using print directly
 # pylint: disable=print-used
 
 import json

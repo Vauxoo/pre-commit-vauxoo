@@ -132,13 +132,16 @@ def parse_matrix_compatibility(matrix_compatibility_string, verbose=True):
     return matrix
 
 
-def get_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, ruff_disable_checks):
-    """Translate PYLINT_DISABLE_CHECKS names to their equivalent ruff codes
+def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff):
+    """Extend ruff_disable_checks with the ruff equivalent of the PYLINT_DISABLE_CHECKS names
 
     The .pylintrc*.jinja templates document each pylint check migrated to ruff using a
     "check-name,  # ruff CODE1,CODE2" comment so reuse those annotations to keep disabling
     the same checks from ruff without needing to configure RUFF_DISABLE_CHECKS
     """
+    ruff_disable_checks = tuple(ruff_disable_checks or ())
+    if not use_ruff or not pylint_disable_checks:
+        return ruff_disable_checks
     pylint2ruff = dict(PYLINT_TO_RUFF_EXTRA_CHECKS)
     for pylintrc_filename in (".pylintrc.jinja", ".pylintrc-optional.jinja"):
         pylintrc_path = pathlib.Path(precommit_config_dir) / pylintrc_filename
@@ -156,7 +159,12 @@ def get_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, ruf
             for code in pylint2ruff.get(pylint_check, ())
             if code not in ruff_disable_checks and code not in ruff_checks
         )
-    return ruff_checks
+    if ruff_checks:
+        _logger.info(
+            "Disabling the ruff equivalent of the pylint checks (PYLINT_DISABLE_CHECKS): %s",
+            ",".join(ruff_checks),
+        )
+    return ruff_disable_checks + ruff_checks
 
 
 # copy_cfg_files has too many "for-if" sentences
@@ -208,16 +216,9 @@ def copy_cfg_files(
         return
     matrix_compatibility = parse_matrix_compatibility(compatibility_version)
     use_ruff = (matrix_compatibility.get("black_autoflake_matrix_value") or 0) >= 30
-    if use_ruff and pylint_disable_checks:
-        ruff_checks_from_pylint = get_ruff_checks_from_pylint(
-            precommit_config_dir, pylint_disable_checks, ruff_disable_checks or ()
-        )
-        if ruff_checks_from_pylint:
-            _logger.info(
-                "Disabling the ruff equivalent of the pylint checks (PYLINT_DISABLE_CHECKS): %s",
-                ",".join(ruff_checks_from_pylint),
-            )
-            ruff_disable_checks = tuple(ruff_disable_checks or ()) + ruff_checks_from_pylint
+    ruff_disable_checks = extend_ruff_checks_from_pylint(
+        precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff
+    )
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
