@@ -1,4 +1,6 @@
 # Mandatory ruff checks
+# It runs ruff-odoo (https://github.com/Vauxoo/ruff-odoo), the Vauxoo fork of ruff
+# with the Odoo-specific ODOO* rules ported from pylint-odoo and odoo-pre-commit-hooks
 # It replaces the flake8 and pylint mandatory checks already implemented in ruff:
 #  - flake8 only keeps the continuation-line rules (E12x/E13x/E704) not implemented in ruff (see .flake8)
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc "migrated to ruff" section)
@@ -155,6 +157,48 @@ select = [
     "T100",  # forgotten-debug-statement
     "UP004",  # useless-object-inheritance
     "UP008",  # super-with-arguments
+    # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
+    #  - The autofixable ones (ODOO002, ODOO003, ODOO006, ODOO007, ODOO024, ODOO025, ODOO026
+    #    and ODOO035) run from the autofix configuration instead (see .ruff-autofix.toml)
+    #  - ODOO008 (manifest-required-author) and ODOO010 (license-allowed) keep running from
+    #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
+    #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
+    "ODOO001",  # manifest-required-key
+    "ODOO004",  # except-pass
+    "ODOO005",  # method-required-super
+    "ODOO009",  # manifest-author-string
+    "ODOO011",  # manifest-maintainers-list
+    "ODOO012",  # manifest-summary-multiline
+    "ODOO013",  # development-status-allowed
+    "ODOO014",  # website-manifest-key-not-valid-uri
+    "ODOO015",  # invalid-email
+    "ODOO016",  # missing-readme
+    "ODOO017",  # invalid-commit
+    "ODOO018",  # context-overridden
+    "ODOO019",  # bad-builtin-groupby
+    "ODOO020",  # odoo-exception-warning
+    "ODOO021",  # attribute-deprecated
+    "ODOO022",  # missing-return
+    "ODOO023",  # odoo-addons-relative-import
+    "ODOO027",  # method-compute
+    "ODOO028",  # method-search
+    "ODOO029",  # method-inverse
+    "ODOO030",  # renamed-field-parameter
+    "ODOO031",  # translation-field
+    "ODOO032",  # inheritable-method-string
+    "ODOO033",  # inheritable-method-lambda
+    "ODOO034",  # deprecated-name-get
+    "ODOO036",  # super-method-mismatch
+    "ODOO037",  # deprecated-odoo-model-method
+    "ODOO038",  # no-search-all
+    "ODOO039",  # no-raise-unlink
+    "ODOO040",  # no-write-in-compute
+    "ODOO041",  # translation-contains-variable
+    "ODOO042",  # translation-positional
+    "ODOO043",  # translation-injection
+    "ODOO044",  # deprecated-inselect-operator
+    "ODOO045",  # test-folder-imported
+    "ODOO046",  # manifest-external-assets
 ]
 
 ignore = [

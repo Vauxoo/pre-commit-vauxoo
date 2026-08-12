@@ -56,7 +56,7 @@ select = [
     "D300",  # bad-docstring-quotes
     "ISC001",  # implicit-str-concat
     "PLC1901",  # use-implicit-booleaness-not-comparison-to-string
-    "S110",  # except-pass
+    # S110 (except-pass) was removed since ruff-odoo ODOO004 runs it as mandatory (see .ruff.toml)
     "T201",  # print-used
     "UP025",  # redundant-u-string-prefix
 ]
@@ -69,11 +69,6 @@ ignore = [
 {% endfor %}
 {% endif %}
 ]
-
-[lint.flake8-bandit]
-# S110 (try-except-pass) must also report typed exceptions e.g. "except ValueError: pass"
-# to be equivalent to the pylint-odoo "except-pass" check it is replacing
-check-typed-exception = true
 
 [lint.mccabe]
 # Same as the .pylintrc-optional [DESIGN] max-complexity option

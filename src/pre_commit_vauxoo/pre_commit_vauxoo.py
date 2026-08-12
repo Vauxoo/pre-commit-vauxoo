@@ -23,6 +23,21 @@ re_export = re.compile(
     re.MULTILINE,
 )
 
+# Matches the "check-name,  # ruff CODE1,CODE2" annotations used in the .pylintrc*.jinja
+# templates to document the pylint checks migrated to ruff
+re_pylint_check_ruff_codes = re.compile(
+    r"^\s*(?P<check>[a-z][\w-]*),?\s+#\s*ruff\s+(?P<codes>[A-Z]+\d+(?:,[A-Z]+\d+)*)",
+    re.MULTILINE,
+)
+
+# pylint-odoo checks that keep running from pylint (see the [ODOOLINT] section in
+# .pylintrc-optional) but ruff-odoo also implements them, so the same
+# PYLINT_DISABLE_CHECKS name disables the check from both tools
+PYLINT_TO_RUFF_EXTRA_CHECKS = {
+    "license-allowed": ("ODOO010",),
+    "manifest-required-author": ("ODOO008",),
+}
+
 CFG_SUBFOLDER = ".config"
 TOOLS_ORDER = (
     "prettier_matrix_value",
@@ -117,6 +132,41 @@ def parse_matrix_compatibility(matrix_compatibility_string, verbose=True):
     return matrix
 
 
+def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff):
+    """Extend ruff_disable_checks with the ruff equivalent of the PYLINT_DISABLE_CHECKS names
+
+    The .pylintrc*.jinja templates document each pylint check migrated to ruff using a
+    "check-name,  # ruff CODE1,CODE2" comment so reuse those annotations to keep disabling
+    the same checks from ruff without needing to configure RUFF_DISABLE_CHECKS
+    """
+    ruff_disable_checks = tuple(ruff_disable_checks or ())
+    if not use_ruff or not pylint_disable_checks:
+        return ruff_disable_checks
+    pylint2ruff = dict(PYLINT_TO_RUFF_EXTRA_CHECKS)
+    for pylintrc_filename in (".pylintrc.jinja", ".pylintrc-optional.jinja"):
+        pylintrc_path = pathlib.Path(precommit_config_dir) / pylintrc_filename
+        if not pylintrc_path.is_file():
+            continue
+        for check_match in re_pylint_check_ruff_codes.finditer(pylintrc_path.read_text(encoding="utf-8")):
+            codes = pylint2ruff.get(check_match["check"], ())
+            pylint2ruff[check_match["check"]] = codes + tuple(
+                code for code in check_match["codes"].split(",") if code not in codes
+            )
+    ruff_checks = ()
+    for pylint_check in pylint_disable_checks:
+        ruff_checks += tuple(
+            code
+            for code in pylint2ruff.get(pylint_check, ())
+            if code not in ruff_disable_checks and code not in ruff_checks
+        )
+    if ruff_checks:
+        _logger.info(
+            "Disabling the ruff equivalent of the pylint checks (PYLINT_DISABLE_CHECKS): %s",
+            ",".join(ruff_checks),
+        )
+    return ruff_disable_checks + ruff_checks
+
+
 # copy_cfg_files has too many "for-if" sentences
 # because it is a switch-case dummy logic
 # TODO: Migrate this method to use configuration files with jinja template
@@ -165,6 +215,10 @@ def copy_cfg_files(
         _logger.warning("Using custom files")
         return
     matrix_compatibility = parse_matrix_compatibility(compatibility_version)
+    use_ruff = (matrix_compatibility.get("black_autoflake_matrix_value") or 0) >= 30
+    ruff_disable_checks = extend_ruff_checks_from_pylint(
+        precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff
+    )
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
@@ -176,7 +230,7 @@ def copy_cfg_files(
         "ruff_disable_checks": ruff_disable_checks,
         "skip_string_normalization": skip_string_normalization,
         **matrix_compatibility,
-        "use_ruff": (matrix_compatibility.get("black_autoflake_matrix_value") or 0) >= 30,
+        "use_ruff": use_ruff,
     }
 
     copier.run_copy(

@@ -174,6 +174,7 @@ disable=abstract-method,
    consider-using-sys-exit,  # ruff PLR1722
    continue-in-finally,  # ruff PLE0116
    dangerous-default-value,  # ruff B006
+   deprecated-name-get,  # ruff ODOO034
    dict-iter-missing-items,  # ruff PLE1141
    duplicate-argument-name,  # always-on ruff syntax error
    duplicate-bases,  # ruff PLE0241
@@ -201,6 +202,7 @@ disable=abstract-method,
    invalid-character-nul,  # ruff PLE2514
    invalid-character-sub,  # ruff PLE2512
    invalid-character-zero-width-space,  # ruff PLE2515
+   invalid-commit,  # ruff ODOO017
    invalid-envvar-default,  # ruff PLW1508
    invalid-envvar-value,  # ruff PLE1507
    invalid-hash-returned,  # ruff PLE0309
@@ -214,6 +216,8 @@ disable=abstract-method,
    logging-too-few-args,  # ruff PLE1206
    logging-too-many-args,  # ruff PLE1205
    lost-exception,  # ruff B012
+   manifest-external-assets,  # ruff ODOO046
+   manifest-required-key,  # ruff ODOO001
    method-cache-max-size-none,  # ruff B019
    misplaced-bare-raise,  # ruff PLE0704
    misplaced-future,  # ruff F404
@@ -232,8 +236,10 @@ disable=abstract-method,
    no-else-continue,  # ruff RET507
    no-else-raise,  # ruff RET506
    no-else-return,  # ruff RET505
+   no-raise-unlink,  # ruff ODOO039
    no-self-argument,  # ruff N805
    no-staticmethod-decorator,  # ruff PLR0203
+   no-write-in-compute,  # ruff ODOO040
    non-ascii-module-import,  # ruff PLC2403
    non-ascii-name,  # ruff PLC2401
    nonexistent-operator,  # ruff B002
@@ -263,6 +269,7 @@ disable=abstract-method,
    subprocess-run-check,  # ruff PLW1510
    super-with-arguments,  # ruff UP008
    super-without-brackets,  # ruff PLW0245
+   test-folder-imported,  # ruff ODOO045
    too-few-format-args,  # ruff F507
    too-many-arguments,  # ruff PLR0913
    too-many-format-args,  # ruff F507,F523

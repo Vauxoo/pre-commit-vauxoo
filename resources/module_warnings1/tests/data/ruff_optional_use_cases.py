@@ -36,15 +36,6 @@ def print_use_case(value):
     print(value)
 
 
-def except_pass_use_case(value):
-    # except-pass (pylint) -> try-except-pass (ruff S110)
-    try:
-        value = int(value)
-    except ValueError:
-        pass
-    return value
-
-
 def compare_empty_string_use_case(name):
     # use-implicit-booleaness-not-comparison-to-string (pylint) -> compare-to-empty-string (ruff PLC1901)
     if name == "":
