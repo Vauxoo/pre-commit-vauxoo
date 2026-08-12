@@ -129,10 +129,17 @@ Full --help command result:
                                     commas.  [env var: EXCLUDE_LINT]
     -d, --pylint-disable-checks TEXT CSV
                                     Pylint checks to disable, separated by
-                                    commas.  [env var: PYLINT_DISABLE_CHECKS]
+                                    commas.
+
+                                    The checks migrated to ruff are disabled
+                                    from the ruff configuration files too using
+                                    their equivalent ruff codes.  [env var:
+                                    PYLINT_DISABLE_CHECKS]
     --oca-hooks-disable-checks TEXT CSV
                                     OCA Hooks checks to disable, separated by
                                     commas.  [env var: OCA_HOOKS_DISABLE_CHECKS]
+    --ruff-disable-checks TEXT CSV  Ruff checks to disable, separated by commas.
+                                    [env var: RUFF_DISABLE_CHECKS]
     -S, --skip-string-normalization
                                     If '-t fix' is enabled, don't normalize
                                     string quotes or prefixes '' -> ""

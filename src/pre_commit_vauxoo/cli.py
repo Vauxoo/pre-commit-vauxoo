@@ -262,7 +262,9 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     type=CSVStringParamType(),
     callback=merge_tuples,
     envvar="PYLINT_DISABLE_CHECKS",
-    help="Pylint checks to disable, separated by commas.",
+    help="Pylint checks to disable, separated by commas."
+    "\f\nThe checks migrated to ruff are disabled from the ruff configuration files too "
+    "using their equivalent ruff codes.",
     **new_extra_kwargs,
 )
 @click.option(

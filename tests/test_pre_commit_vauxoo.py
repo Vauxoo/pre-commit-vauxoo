@@ -487,6 +487,40 @@ class TestPreCommitVauxoo:
             diff = disable_ignore - original_ignore
             assert {"print"} == diff, "print (T201) should be in ruff ignore when RUFF_DISABLE_CHECKS is set"
 
+    def test_disable_pylint_checks_migrated_to_ruff(self, caplog):
+        if (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            < 30
+        ):
+            pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
+        # manifest-required-author (ODOO008) and invalid-commit (ODOO017) come from pylint-odoo,
+        # dangerous-default-value (B006) comes from pylint and print-used (T201) runs as optional.
+        # translation-required has no ruff equivalent so it should not add any ruff code
+        expected_ruff_codes = {"B006", "ODOO008", "ODOO017", "T201"}
+        ruff_toml_filenames = [".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"]
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        for ruff_toml_filename in ruff_toml_filenames:
+            with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
+                ruff_ignore = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
+            assert not expected_ruff_codes & ruff_ignore, (
+                f"The ruff codes should not be in {ruff_toml_filename} ignore "
+                "when PYLINT_DISABLE_CHECKS is not set"
+            )
+        os.environ["PYLINT_DISABLE_CHECKS"] = (
+            "manifest-required-author,invalid-commit,dangerous-default-value,print-used,translation-required"
+        )
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        for ruff_toml_filename in ruff_toml_filenames:
+            with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
+                ruff_ignore = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
+            assert expected_ruff_codes.issubset(ruff_ignore), (
+                f"The ruff equivalent of the pylint checks should be in {ruff_toml_filename} ignore "
+                "when PYLINT_DISABLE_CHECKS is set"
+            )
+
     # Use cases expected to be reported by the same check before the ruff migration
     # (pylint "(symbol)" and flake8 " CODE " markers) and after it (ruff "rule-name:" marker)
     RUFF_MANDATORY_USE_CASES_EXPECTED = [
