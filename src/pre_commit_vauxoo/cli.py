@@ -342,14 +342,6 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     **new_extra_kwargs,
 )
 @click.option(
-    "--py-version",
-    envvar="TRAVIS_PYTHON_VERSION",
-    type=click.STRING,
-    help="Python version used for the repository."
-    "\f\nIt overwrites the ruff target-version mapped from the odoo version.",
-    **new_extra_kwargs,
-)
-@click.option(
     "--is-project-for-apps",
     type=click.BOOL,
     default=False,

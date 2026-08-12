@@ -91,7 +91,6 @@ def ruff_odoo_version_use_case(request):
         (["--odoo-version", "19.0"], "py312"),
         (["--odoo-version", "20.0"], "py314"),
         (["--odoo-version", "21.0"], "py314"),  # Newer than the mapping uses the latest python version
-        (["--odoo-version", "16.0", "--py-version", "3.13"], "py313"),  # python version wins
     ],
     ids=lambda use_case: "%s-%s" % (
         "-".join(arg for arg in use_case[0] if not arg.startswith("--")) or "default",
@@ -614,12 +613,11 @@ class TestPreCommitVauxoo:
         )
 
     def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
-        """The ruff target-version must be taken from the python version
-        (TRAVIS_PYTHON_VERSION or --py-version) or mapped from the odoo version"""
+        """The ruff target-version must be mapped from the odoo version
+        (VERSION or --odoo-version)"""
         self.skip_if_no_ruff()
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         os.environ.pop("VERSION", None)
-        os.environ.pop("TRAVIS_PYTHON_VERSION", None)
         argv, expected_py_target = ruff_py_target_use_case
         result = self.runner.invoke(main, ["--only-cp-cfg"] + argv)
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)

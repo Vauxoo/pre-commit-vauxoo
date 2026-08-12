@@ -6,7 +6,7 @@
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc "migrated to ruff" section)
 line-length = 119
 preview = true  # Required by the pycodestyle rules (E1xx,E2xx,E3xx,W391) migrated from flake8
-target-version = "{{ py_target_version }}"  # From TRAVIS_PYTHON_VERSION or mapped from the odoo VERSION
+target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 
 [lint]
 select = [

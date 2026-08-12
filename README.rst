@@ -184,11 +184,6 @@ Full --help command result:
                                     (e.g. the ruff ODOO* checks) and maps the
                                     ruff target-version python value.  [env var:
                                     VERSION]
-    --py-version TEXT               Python version used for the repository.
-
-                                    It overwrites the ruff target-version mapped
-                                    from the odoo version.  [env var:
-                                    TRAVIS_PYTHON_VERSION]
     --is-project-for-apps BOOLEAN   It is a project for apps (manifest with
                                     price) enabling special pylint checks  [env
                                     var: PRECOMMIT_IS_PROJECT_FOR_APPS]

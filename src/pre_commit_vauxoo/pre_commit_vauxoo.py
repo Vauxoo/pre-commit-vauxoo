@@ -59,7 +59,6 @@ DEFAULT_MIN_COMPATIBILITY = 10
 # Intermediate saas versions jump to the next odoo serie (saas-13.5 -> 14.0 -> py38)
 # Odoo versions newer than the mapping (or undefined) use the latest python version
 # since it is a new odoo serie without a python version defined yet
-# The python version (TRAVIS_PYTHON_VERSION or --py-version) takes precedence
 # (min_odoo_version, py_target_version) evaluated in descending order
 ODOO_VERSION_TO_PY_TARGET_VERSION = (
     (20.0, "py314"),
@@ -71,7 +70,6 @@ ODOO_VERSION_TO_PY_TARGET_VERSION = (
 DEFAULT_PY_TARGET_VERSION = ODOO_VERSION_TO_PY_TARGET_VERSION[0][1]
 
 re_odoo_version_number = re.compile(r"(?P<version>\d+(?:\.\d+)?)")
-re_py_version = re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)")
 
 
 def full_norm_path(path):
@@ -168,17 +166,14 @@ def parse_odoo_version_number(odoo_version):
     return float(version_match["version"])
 
 
-def get_py_target_version(odoo_version_number, py_version):
-    """Get the ruff "target-version" value from the python version (TRAVIS_PYTHON_VERSION
-    or --py-version) or mapped from the odoo version (VERSION or --odoo-version) as a fallback
+def get_py_target_version(odoo_version_number):
+    """Get the ruff "target-version" value mapped from the odoo version
+    (VERSION or --odoo-version)
 
     Intermediate saas versions use the python version of the next odoo serie
     (e.g. saas-13.5 -> 14.0 -> py38) and undefined or newer odoo versions than the
     known mapping use the latest python version of the list
     """
-    py_version_match = re_py_version.match(str(py_version or "").strip())
-    if py_version_match:
-        return "py%s%s" % (py_version_match["major"], py_version_match["minor"])
     if odoo_version_number:
         odoo_serie = math.ceil(odoo_version_number)
         for odoo_min_version, py_target_version in ODOO_VERSION_TO_PY_TARGET_VERSION:
@@ -237,7 +232,6 @@ def copy_cfg_files(
     exclude_autofix,
     skip_string_normalization,
     odoo_version,
-    py_version,
     is_project_for_apps,
     compatibility_version,
 ):
@@ -275,7 +269,9 @@ def copy_cfg_files(
         precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff
     )
     odoo_version_number = parse_odoo_version_number(odoo_version)
-    py_target_version = get_py_target_version(odoo_version_number, py_version)
+    py_target_version = get_py_target_version(odoo_version_number)
+    # python version for the .pylintrc* "py-version" option (e.g. "py310" -> "3.10")
+    py_version = "%s.%s" % (py_target_version[2], py_target_version[3:])
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
@@ -327,8 +323,7 @@ def copy_cfg_files(
         _logger.info("Skip string normalization")
     if odoo_version:
         _logger.info("Using odoo_version=%s", odoo_version)
-    if py_version:
-        _logger.info("Using py_version=%s", py_version)
+    _logger.info("Using py_version=%s mapped from the odoo version", py_version)
     if use_ruff:
         _logger.info("Using ruff target-version=%s", py_target_version)
     if is_project_for_apps:
@@ -393,7 +388,6 @@ def main(  # ruff: ignore[complex-structure]
     install,
     skip_string_normalization,
     odoo_version,
-    py_version,
     is_project_for_apps,
     only_cp_cfg,
     compatibility_version,
@@ -434,7 +428,6 @@ def main(  # ruff: ignore[complex-structure]
         exclude_autofix,
         skip_string_normalization,
         odoo_version,
-        py_version,
         is_project_for_apps,
         compatibility_version,
     )
