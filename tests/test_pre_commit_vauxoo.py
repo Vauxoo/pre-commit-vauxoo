@@ -463,6 +463,17 @@ class TestPreCommitVauxoo:
                 f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
             )
 
+    def test_oca_hooks_optional_config(self, caplog):
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        with (Path(self.tmp_dir) / CFG_SUBFOLDER / ".pre-commit-config-optional.yaml").open() as config_fd:
+            config = load(config_fd, Loader)
+        oca_hooks = [hook for repo in config["repos"] for hook in repo["hooks"] if hook["id"].startswith("oca-checks")]
+        assert oca_hooks, "Expected oca-checks hooks in the optional configuration"
+        for hook in oca_hooks:
+            assert f"--config={CFG_SUBFOLDER}/.oca_hooks.cfg" in hook.get("args", []), (
+                f"{hook['id']} should read the generated .oca_hooks.cfg to honor the disabled checks"
+            )
+
     def test_disable_ruff_checks(self, caplog):
         if (
             parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[

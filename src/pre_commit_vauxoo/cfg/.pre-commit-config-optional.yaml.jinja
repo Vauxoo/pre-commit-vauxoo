@@ -50,7 +50,11 @@ repos:
 {%- endif %}
     hooks:
       - id: oca-checks-odoo-module
+        args:
+          - --config=.config/.oca_hooks.cfg
       - id: oca-checks-po
+        args:
+          - --config=.config/.oca_hooks.cfg
   - repo: https://github.com/PyCQA/doc8
     rev: v2.0.0
     hooks:
