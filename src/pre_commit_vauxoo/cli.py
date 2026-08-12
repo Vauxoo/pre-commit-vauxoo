@@ -392,7 +392,9 @@ Tool order:
      change py _('translation') to self.env._('translation'), rm manifest superfluous keys, rm field-string-redundant)
 🟢 3. ESLint
 🟢 4. Black / Autoflake (30 → Use ruff instead. It also migrates to ruff the mandatory and optional
-    pylint/flake8 checks already implemented in ruff, disabling them from the original tool)
+    pylint/flake8 checks and the OCA hooks fixit autofixes (rm py headers, rm unused logger,
+    change py _('translation') to self.env._('translation'), rm manifest superfluous keys,
+    rm field-string-redundant) already implemented in ruff, disabling them from the original tool)
 🟢 5. pre-commit framework
 🟢 6. Pylint/pylint-odoo
 🟢 7. flake8
