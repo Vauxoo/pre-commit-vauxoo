@@ -1,6 +1,7 @@
 import ast
 import glob
 import logging
+import math
 import os
 import pathlib
 import posixpath
@@ -50,6 +51,27 @@ TOOLS_ORDER = (
 )
 DEFAULT_MAX_COMPATIBILITY = 1000000
 DEFAULT_MIN_COMPATIBILITY = 10
+
+# ruff "target-version" mapped from the odoo version (VERSION) using the python
+# version shipped for each odoo serie:
+#   20.0 -> 3.14, 19.0/18.0 -> 3.12, 17.0/16.0 -> 3.10, 15.0/14.0 -> 3.8,
+#   13.0/12.0 -> 3.6 (clamped to py37 since ruff doesn't support py36)
+# Intermediate saas versions jump to the next odoo serie (saas-13.5 -> 14.0 -> py38)
+# Odoo versions newer than the mapping (or undefined) use the latest python version
+# since it is a new odoo serie without a python version defined yet
+# The python version (TRAVIS_PYTHON_VERSION or --py-version) takes precedence
+# (min_odoo_version, py_target_version) evaluated in descending order
+ODOO_VERSION_TO_PY_TARGET_VERSION = (
+    (20.0, "py314"),
+    (18.0, "py312"),
+    (16.0, "py310"),
+    (14.0, "py38"),
+    (0.0, "py37"),  # odoo <= 13.0 uses python 3.6 but ruff doesn't support less than py37
+)
+DEFAULT_PY_TARGET_VERSION = ODOO_VERSION_TO_PY_TARGET_VERSION[0][1]
+
+re_odoo_version_number = re.compile(r"(?P<version>\d+(?:\.\d+)?)")
+re_py_version = re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)")
 
 
 def full_norm_path(path):
@@ -130,6 +152,39 @@ def parse_matrix_compatibility(matrix_compatibility_string, verbose=True):
             _logger.info("Using %s=%s from compatibility version position #%s", tool, value, idx + 1)
         matrix[tool] = value
     return matrix
+
+
+def parse_odoo_version_number(odoo_version):
+    """Parse the odoo version string (VERSION or --odoo-version) as a comparable number
+    e.g. "17.0" -> 17.0 and "saas-17.2" -> 17.2
+
+    Return None for empty or unparseable values (e.g. "master") so the templates keep
+    all the version-dependent checks enabled, the same behavior of pylint-odoo when the
+    valid-odoo-version option was not defined or was invalid
+    """
+    version_match = re_odoo_version_number.search(str(odoo_version or ""))
+    if not version_match:
+        return None
+    return float(version_match["version"])
+
+
+def get_py_target_version(odoo_version_number, py_version):
+    """Get the ruff "target-version" value from the python version (TRAVIS_PYTHON_VERSION
+    or --py-version) or mapped from the odoo version (VERSION or --odoo-version) as a fallback
+
+    Intermediate saas versions use the python version of the next odoo serie
+    (e.g. saas-13.5 -> 14.0 -> py38) and undefined or newer odoo versions than the
+    known mapping use the latest python version of the list
+    """
+    py_version_match = re_py_version.match(str(py_version or "").strip())
+    if py_version_match:
+        return "py%s%s" % (py_version_match["major"], py_version_match["minor"])
+    if odoo_version_number:
+        odoo_serie = math.ceil(odoo_version_number)
+        for odoo_min_version, py_target_version in ODOO_VERSION_TO_PY_TARGET_VERSION:
+            if odoo_serie >= odoo_min_version:
+                return py_target_version
+    return DEFAULT_PY_TARGET_VERSION
 
 
 def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff):
@@ -219,12 +274,16 @@ def copy_cfg_files(
     ruff_disable_checks = extend_ruff_checks_from_pylint(
         precommit_config_dir, pylint_disable_checks, ruff_disable_checks, use_ruff
     )
+    odoo_version_number = parse_odoo_version_number(odoo_version)
+    py_target_version = get_py_target_version(odoo_version_number, py_version)
     data = {
         "exclude_autofix_regex": exclude_autofix_regex,
         "exclude_lint_regex": exclude_lint_regex,
         "is_project_for_apps": is_project_for_apps,
         "oca_hooks_disable_checks": oca_hooks_disable_checks,
         "odoo_version": odoo_version,
+        "odoo_version_number": odoo_version_number,
+        "py_target_version": py_target_version,
         "py_version": py_version,
         "pylint_disable_checks": pylint_disable_checks,
         "ruff_disable_checks": ruff_disable_checks,
@@ -270,6 +329,8 @@ def copy_cfg_files(
         _logger.info("Using odoo_version=%s", odoo_version)
     if py_version:
         _logger.info("Using py_version=%s", py_version)
+    if use_ruff:
+        _logger.info("Using ruff target-version=%s", py_target_version)
     if is_project_for_apps:
         _logger.info("Enabling checks for Odoo Apps")
 

@@ -4,7 +4,7 @@
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc-optional)
 line-length = 119
 preview = true  # Required by PLC1901 and the bugbear B901/B903/B909 rules
-target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYTHON
+target-version = "{{ py_target_version }}"  # From TRAVIS_PYTHON_VERSION or mapped from the odoo VERSION
 
 [lint]
 select = [
