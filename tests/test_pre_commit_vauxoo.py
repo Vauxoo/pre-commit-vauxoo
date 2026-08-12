@@ -17,9 +17,10 @@ try:
 except ImportError:
     import tomli as tomllib
 
+from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
+
 import pytest
 from click.testing import CliRunner
-from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from jinja2 import Environment, FileSystemLoader
 from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
@@ -94,9 +95,12 @@ def fixture_ruff_odoo_version_use_case(request):
         (["--odoo-version", "20.0"], "py314"),
         (["--odoo-version", "21.0"], "py314"),  # Newer than the mapping uses the latest python version
     ],
-    ids=lambda use_case: "%s-%s" % (
-        "-".join(arg for arg in use_case[0] if not arg.startswith("--")) or "default",
-        use_case[1],
+    ids=lambda use_case: (
+        "%s-%s"
+        % (
+            "-".join(arg for arg in use_case[0] if not arg.startswith("--")) or "default",
+            use_case[1],
+        )
     ),
 )
 def fixture_ruff_py_target_use_case(request):
