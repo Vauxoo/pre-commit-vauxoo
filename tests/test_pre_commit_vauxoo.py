@@ -57,6 +57,7 @@ VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
 
 
 @pytest.fixture(
+    name="ruff_odoo_version_use_case",
     params=[
         # odoo_version, expected mandatory selected checks, expected autofix ignored checks
         (None, VERSIONED_MANDATORY_CHECKS, set()),  # No version enables all (pylint-odoo behavior)
@@ -71,11 +72,12 @@ VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
     ],
     ids=lambda use_case: "odoo-%s" % (use_case[0] or "none"),
 )
-def ruff_odoo_version_use_case(request):
+def fixture_ruff_odoo_version_use_case(request):
     return request.param
 
 
 @pytest.fixture(
+    name="ruff_py_target_use_case",
     params=[
         # CLI extra arguments, expected ruff target-version
         ([], "py314"),  # No version defined uses the latest python version of the mapping
@@ -97,7 +99,7 @@ def ruff_odoo_version_use_case(request):
         use_case[1],
     ),
 )
-def ruff_py_target_use_case(request):
+def fixture_ruff_py_target_use_case(request):
     return request.param
 
 
