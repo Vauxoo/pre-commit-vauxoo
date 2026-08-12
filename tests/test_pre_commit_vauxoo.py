@@ -17,9 +17,10 @@ try:
 except ImportError:
     import tomli as tomllib
 
+from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
+
 import pytest
 from click.testing import CliRunner
-from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 from jinja2 import Environment, FileSystemLoader
 from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
@@ -48,6 +49,61 @@ def env_mode(request, monkeypatch):
         monkeypatch.delenv("LINT_COMPATIBILITY_VERSION", raising=False)
     else:
         monkeypatch.setenv("LINT_COMPATIBILITY_VERSION", request.param)
+    return request.param
+
+
+# Version-dependent ODOO checks from ruff-odoo (see the .ruff*.toml.jinja templates)
+VERSIONED_MANDATORY_CHECKS = {"ODOO012", "ODOO034", "ODOO039", "ODOO041", "ODOO044"}
+VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
+
+
+@pytest.fixture(
+    name="ruff_odoo_version_use_case",
+    params=[
+        # odoo_version, expected mandatory selected checks, expected autofix ignored checks
+        (None, VERSIONED_MANDATORY_CHECKS, set()),  # No version enables all (pylint-odoo behavior)
+        ("master", VERSIONED_MANDATORY_CHECKS, set()),  # Invalid version enables all too
+        ("13.0", {"ODOO041"}, VERSIONED_AUTOFIX_CHECKS),
+        ("14.0", set(), VERSIONED_AUTOFIX_CHECKS),
+        ("15.0", {"ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
+        ("17.0", {"ODOO034", "ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
+        ("saas-18.2", {"ODOO034", "ODOO039", "ODOO044"}, {"ODOO035"}),
+        ("19.0", {"ODOO034", "ODOO039", "ODOO044"}, set()),
+        ("20.0", {"ODOO012", "ODOO034", "ODOO039", "ODOO044"}, set()),
+    ],
+    ids=lambda use_case: "odoo-%s" % (use_case[0] or "none"),
+)
+def fixture_ruff_odoo_version_use_case(request):
+    return request.param
+
+
+@pytest.fixture(
+    name="ruff_py_target_use_case",
+    params=[
+        # CLI extra arguments, expected ruff target-version
+        ([], "py314"),  # No version defined uses the latest python version of the mapping
+        (["--odoo-version", "12.0"], "py37"),  # odoo 12.0/13.0 use python 3.6 but ruff min is py37
+        (["--odoo-version", "13.0"], "py37"),
+        (["--odoo-version", "saas-13.5"], "py38"),  # saas jumps to the next odoo serie (14.0)
+        (["--odoo-version", "14.0"], "py38"),
+        (["--odoo-version", "15.0"], "py38"),
+        (["--odoo-version", "16.0"], "py310"),
+        (["--odoo-version", "17.0"], "py310"),
+        (["--odoo-version", "saas-17.4"], "py312"),  # saas jumps to the next odoo serie (18.0)
+        (["--odoo-version", "18.0"], "py312"),
+        (["--odoo-version", "19.0"], "py312"),
+        (["--odoo-version", "20.0"], "py314"),
+        (["--odoo-version", "21.0"], "py314"),  # Newer than the mapping uses the latest python version
+    ],
+    ids=lambda use_case: (
+        "%s-%s"
+        % (
+            "-".join(arg for arg in use_case[0] if not arg.startswith("--")) or "default",
+            use_case[1],
+        )
+    ),
+)
+def fixture_ruff_py_target_use_case(request):
     return request.param
 
 
@@ -530,6 +586,51 @@ class TestPreCommitVauxoo:
                 f"The ruff equivalent of the pylint checks should be in {ruff_toml_filename} ignore "
                 "when PYLINT_DISABLE_CHECKS is set"
             )
+
+    def skip_if_no_ruff(self):
+        if (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            < 30
+        ):
+            pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
+
+    def test_ruff_odoo_version_checks(self, ruff_odoo_version_use_case, caplog):
+        """The version-dependent ODOO checks must be enabled/disabled based on the odoo
+        version (VERSION or --odoo-version) mirroring the pylint-odoo and
+        odoo-pre-commit-hooks (fixit) behavior before the ruff migration"""
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        odoo_version, expected_selected, expected_ignored = ruff_odoo_version_use_case
+        argv = ["--only-cp-cfg"] + (["--odoo-version", odoo_version] if odoo_version else [])
+        result = self.runner.invoke(main, argv)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
+            selected = set(tomllib.load(f_ruff_toml)["lint"]["select"])
+        assert selected & VERSIONED_MANDATORY_CHECKS == expected_selected, (
+            f"Wrong version-dependent checks selected in .ruff.toml for odoo version {odoo_version}"
+        )
+        with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
+            ignored = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
+        assert ignored & VERSIONED_AUTOFIX_CHECKS == expected_ignored, (
+            f"Wrong version-dependent checks ignored in .ruff-autofix.toml for odoo version {odoo_version}"
+        )
+
+    def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
+        """The ruff target-version must be mapped from the odoo version
+        (VERSION or --odoo-version)"""
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        argv, expected_py_target = ruff_py_target_use_case
+        result = self.runner.invoke(main, ["--only-cp-cfg"] + argv)
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
+            with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
+                py_target = tomllib.load(f_ruff_toml)["target-version"]
+            assert py_target == expected_py_target, f"Wrong target-version in {ruff_toml_filename} for {argv}"
 
     # Use cases expected to be reported by the same check before the ruff migration
     # (pylint "(symbol)" and flake8 " CODE " markers) and after it (ruff "rule-name:" marker)

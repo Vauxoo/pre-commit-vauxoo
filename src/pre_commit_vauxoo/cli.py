@@ -336,14 +336,9 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     "--odoo-version",
     envvar="VERSION",
     type=click.STRING,
-    help="Odoo version used for the repository.",
-    **new_extra_kwargs,
-)
-@click.option(
-    "--py-version",
-    envvar="TRAVIS_PYTHON_VERSION",
-    type=click.STRING,
-    help="Python version used for the repository.",
+    help="Odoo version used for the repository."
+    "\f\nIt enables/disables the version-dependent checks in the generated configuration "
+    "files (e.g. the ruff ODOO* checks) and maps the ruff target-version python value.",
     **new_extra_kwargs,
 )
 @click.option(

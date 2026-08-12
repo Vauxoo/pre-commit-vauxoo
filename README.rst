@@ -177,10 +177,13 @@ Full --help command result:
                                     Now your command 'git commit' will run 'pre-
                                     commit-vauxoo' before to commit
     --version                       Show the version of this package
-    --odoo-version TEXT             Odoo version used for the repository.  [env
-                                    var: VERSION]
-    --py-version TEXT               Python version used for the repository.
-                                    [env var: TRAVIS_PYTHON_VERSION]
+    --odoo-version TEXT             Odoo version used for the repository.
+
+                                    It enables/disables the version-dependent
+                                    checks in the generated configuration files
+                                    (e.g. the ruff ODOO* checks) and maps the
+                                    ruff target-version python value.  [env var:
+                                    VERSION]
     --is-project-for-apps BOOLEAN   It is a project for apps (manifest with
                                     price) enabling special pylint checks  [env
                                     var: PRECOMMIT_IS_PROJECT_FOR_APPS]

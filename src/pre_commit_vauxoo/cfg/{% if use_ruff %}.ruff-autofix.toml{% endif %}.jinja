@@ -1,6 +1,6 @@
 line-length = 119
 preview = true
-target-version = "py312"  # TODO: Map py version with odoo version or TRAVIS_PYTHON
+target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 fix-only = true
 unsafe-fixes = true
 
@@ -16,6 +16,10 @@ line-ending = "lf"
 #   ODOO007 (field-string-redundant), ODOO024 (direct-translation-call),
 #   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments) and ODOO035 (deprecated-self-cr)
 # The non-autofixable ODOO checks run as mandatory instead (see .ruff.toml)
+# ODOO024 and ODOO035 are ignored for odoo versions where the new API doesn't exist yet,
+# based on the odoo version (VERSION or --odoo-version), the same min odoo versions
+# previously used by pylint-odoo (prefer-env-translation, deprecated-self-cr) and the
+# odoo-pre-commit-hooks fixit rules (FIXIT_ODOO_VERSION)
 select = ["ALL"]
 
 ignore = [
@@ -24,6 +28,13 @@ ignore = [
 {% for check in ruff_disable_checks %}
     "{{ check }}",
 {% endfor %}
+{% endif %}
+{% if odoo_version_number and odoo_version_number < 18.0 %}
+    # Version-dependent autofixes not applicable for odoo {{ odoo_version }}
+    "ODOO024",  # direct-translation-call (self.env._) only applies for odoo >= 18.0
+{% endif %}
+{% if odoo_version_number and odoo_version_number < 19.0 %}
+    "ODOO035",  # deprecated-self-cr only applies for odoo >= 19.0
 {% endif %}
     # Disabled
     "AIR",  # Odoo is not using 'Airflow' library yet
