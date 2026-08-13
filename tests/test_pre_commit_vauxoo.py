@@ -110,7 +110,9 @@ def fixture_ruff_py_target_use_case(request):
 def render_template(odoo_version: str, template_name: str) -> str:
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_PATH)))
     template = env.get_template(template_name)
-    return template.render(odoo_version=odoo_version)
+    # pylint_matrix_value < 20 renders the [ODOOLINT] options supported by the
+    # pylint-odoo version installed from PyPI (test-requirements.txt)
+    return template.render(odoo_version=odoo_version, pylint_matrix_value=10)
 
 
 @pytest.mark.usefixtures("env_mode")
