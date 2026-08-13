@@ -163,17 +163,14 @@ select = [
     #  - ODOO008 (manifest-required-author) and ODOO010 (license-allowed) keep running from
     #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
     #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
-    #  - The version-dependent checks are enabled based on the odoo version (VERSION or
-    #    --odoo-version) using the same min/max odoo versions previously used by pylint-odoo
-    #    If no odoo version is defined all of them are enabled (same as pylint-odoo)
+    #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
+    #    is passed to ruff; all version-scoped checks are always enabled here and ruff filters them
     "ODOO001",  # manifest-required-key
     "ODOO004",  # except-pass
     "ODOO005",  # method-required-super
     "ODOO009",  # manifest-author-string
     "ODOO011",  # manifest-maintainers-list
-{% if not odoo_version_number or odoo_version_number >= 20.0 %}
-    "ODOO012",  # manifest-summary-multiline (only for odoo >= 20.0)
-{% endif %}
+    "ODOO012",  # manifest-summary-multiline
     "ODOO013",  # development-status-allowed
     "ODOO014",  # website-manifest-key-not-valid-uri
     "ODOO015",  # invalid-email
@@ -192,24 +189,16 @@ select = [
     "ODOO031",  # translation-field
     "ODOO032",  # inheritable-method-string
     "ODOO033",  # inheritable-method-lambda
-{% if not odoo_version_number or odoo_version_number >= 17.0 %}
-    "ODOO034",  # deprecated-name-get (only for odoo >= 17.0)
-{% endif %}
+    "ODOO034",  # deprecated-name-get
     "ODOO036",  # super-method-mismatch
     "ODOO037",  # deprecated-odoo-model-method
     "ODOO038",  # no-search-all
-{% if not odoo_version_number or odoo_version_number >= 15.0 %}
-    "ODOO039",  # no-raise-unlink (only for odoo >= 15.0)
-{% endif %}
+    "ODOO039",  # no-raise-unlink
     "ODOO040",  # no-write-in-compute
-{% if not odoo_version_number or odoo_version_number <= 13.0 %}
-    "ODOO041",  # translation-contains-variable (only for odoo <= 13.0)
-{% endif %}
+    "ODOO041",  # translation-contains-variable
     "ODOO042",  # translation-positional
     "ODOO043",  # translation-injection
-{% if not odoo_version_number or odoo_version_number >= 18.0 %}
-    "ODOO044",  # deprecated-inselect-operator (only for odoo >= 18.0)
-{% endif %}
+    "ODOO044",  # deprecated-inselect-operator
     "ODOO045",  # test-folder-imported
     "ODOO046",  # manifest-external-assets
     "ODOO049",  # translation-required
@@ -219,15 +208,13 @@ select = [
     "ODOO053",  # resource-not-exist
     "ODOO054",  # manifest-behind-migrations
     "ODOO055",  # prohibited-method-override
-{% if not odoo_version_number or odoo_version_number >= 14.0 %}
-    "ODOO056",  # translation-format-interpolation (only for odoo >= 14.0)
-    "ODOO057",  # translation-format-truncated (only for odoo >= 14.0)
-    "ODOO058",  # translation-fstring-interpolation (only for odoo >= 14.0)
+    "ODOO056",  # translation-format-interpolation
+    "ODOO057",  # translation-format-truncated
+    "ODOO058",  # translation-fstring-interpolation
     # ODOO059 (translation-not-lazy) is autofixable so it runs from .ruff-autofix.toml
-    "ODOO060",  # translation-too-few-args (only for odoo >= 14.0)
-    "ODOO061",  # translation-too-many-args (only for odoo >= 14.0)
-    "ODOO062",  # translation-unsupported-format (only for odoo >= 14.0)
-{% endif %}
+    "ODOO060",  # translation-too-few-args
+    "ODOO061",  # translation-too-many-args
+    "ODOO062",  # translation-unsupported-format
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
@@ -263,6 +250,12 @@ ignore = [
 [lint.flake8-builtins]
 # Same as the pylint "good-names" option: "id" is commonly redefined in Odoo
 builtins-ignorelist = ["id"]
+
+[lint.odoo]
+# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+{%- if odoo_version %}
+odoo-version = "{{ odoo_version }}"
+{%- endif %}
 
 [lint.pylint]
 # Same limits as the .pylintrc [DESIGN] section

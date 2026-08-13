@@ -37,9 +37,6 @@ ignore = [
 {% if odoo_version_number and odoo_version_number < 19.0 %}
     "ODOO035",  # deprecated-self-cr only applies for odoo >= 19.0
 {% endif %}
-{% if odoo_version_number and odoo_version_number < 14.0 %}
-    "ODOO059",  # translation-not-lazy only applies for odoo >= 14.0
-{% endif %}
 {% if not is_project_for_apps %}
     # The ODOOAPP checks only apply for modules published in the Odoo Apps store
     # so they are explicitly disabled since "ALL" (and the whole ODOO group) would
@@ -447,6 +444,12 @@ ignore = [
     # "zip-dict-keys-and-values",
     # "zip-instead-of-pairwise",  # TODO: Check if set py3.8 it is skipped for "zip(list_a, list_a[1:])"
 ]
+
+[lint.odoo]
+# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+{%- if odoo_version %}
+odoo-version = "{{ odoo_version }}"
+{%- endif %}
 
 [lint.isort]
 combine-as-imports = true
