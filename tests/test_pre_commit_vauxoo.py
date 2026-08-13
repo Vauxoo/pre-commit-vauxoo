@@ -75,14 +75,15 @@ VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035", "ODOO059"}
     name="ruff_odoo_version_use_case",
     params=[
         # odoo_version, expected checks in .ruff.toml (should be all regardless of version),
-        # expected autofix ignored checks (ODOO035 before 19.0, ODOO059 handled by ruff)
+        # expected autofix ignored checks (none: ODOO024/ODOO035/ODOO059 gating is handled
+        # internally by ruff-odoo via --odoo-version, so they are never in the ignore list)
         (None, VERSIONED_MANDATORY_CHECKS, set()),
         ("master", VERSIONED_MANDATORY_CHECKS, set()),
-        ("13.0", VERSIONED_MANDATORY_CHECKS, VERSIONED_AUTOFIX_CHECKS),
-        ("14.0", VERSIONED_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
-        ("15.0", VERSIONED_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
-        ("17.0", VERSIONED_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
-        ("saas-18.2", VERSIONED_MANDATORY_CHECKS, {"ODOO035"}),
+        ("13.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("14.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("15.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("17.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("saas-18.2", VERSIONED_MANDATORY_CHECKS, set()),
         ("19.0", VERSIONED_MANDATORY_CHECKS, set()),
         ("20.0", VERSIONED_MANDATORY_CHECKS, set()),
     ],

@@ -27,7 +27,6 @@ manifest-deprecated-keys=active,
 [MESSAGES CONTROL]
 disable=all,unknown-option-value
 enable=attribute-string-redundant,
-  consider-merging-classes-inherited,
   deprecated-method,
   deprecated-pragma,
   license-allowed,
@@ -45,6 +44,7 @@ enable=attribute-string-redundant,
   attribute-deprecated,  # ruff ODOO021
   bad-builtin-groupby,  # ruff ODOO019
   bad-docstring-quotes,  # ruff D300
+  consider-merging-classes-inherited,  # ruff ODOO063 (mandatory .ruff.toml)
   consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
   context-overridden,  # ruff ODOO018
   deprecated-odoo-model-method,  # ruff ODOO037 (and ODOO034 for name_get)

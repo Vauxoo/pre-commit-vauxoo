@@ -98,7 +98,6 @@ disable=abstract-method,
    attribute-deprecated,
    attribute-string-redundant,
    bad-builtin-groupby,
-   consider-merging-classes-inherited,
    context-overridden,
    development-status-allowed,
    deprecated-odoo-model-method,
@@ -163,6 +162,7 @@ disable=abstract-method,
    comparison-with-itself,  # ruff PLR0124
    condition-evals-to-constant,  # ruff SIM220,SIM221,SIM222,SIM223
    consider-iterating-dictionary,  # ruff SIM118
+   consider-merging-classes-inherited,  # ruff ODOO063
    consider-merging-isinstance,  # ruff SIM101
    consider-swap-variables,  # ruff PLR1712
    consider-using-dict-comprehension,  # ruff C402,C404
@@ -326,7 +326,6 @@ disable=abstract-method,
 # odoolint disabled because this checks is available just in changed modules in PR conf.
 # import-error Because odoo use incompatible sys-modules https://bitbucket.org/logilab/pylint/issues/616/modules-renamed-with-sysmodules-are-unable
 # wrong-import-order: Disabled here but enabled in pr-conf
-# consider-merging-classes-inherited: Disabled here but enabled in pr-conf
 # unsubscriptable-object: TODO: Enabled after fix https://github.com/PyCQA/pylint/issues/811
 # access-member-before-definition: Disable because odoo use decorator to asign variables
 # too-complex: Disabled here but enabled in pr-conf
