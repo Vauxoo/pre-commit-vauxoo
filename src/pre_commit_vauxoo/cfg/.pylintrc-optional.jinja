@@ -30,15 +30,10 @@ enable=attribute-string-redundant,
   consider-merging-classes-inherited,
   deprecated-method,
   deprecated-pragma,
-  external-request-timeout,
   license-allowed,
-  manifest-data-duplicated,
   manifest-deprecated-key,
   manifest-required-author,
   manifest-version-format,
-  resource-not-exist,
-  sql-injection,
-  translation-required,
   translation-not-lazy,
   translation-format-interpolation,
   translation-format-truncated,
@@ -63,9 +58,11 @@ enable=attribute-string-redundant,
   docstring-first-line-empty,  # ruff D212
   eval-used,  # ruff S307
   except-pass,  # ruff ODOO004
+  external-request-timeout,  # ruff ODOO051
   implicit-str-concat,  # ruff ISC001
   invalid-commit,  # ruff ODOO017
   manifest-author-string,  # ruff ODOO009
+  manifest-data-duplicated,  # ruff ODOO048
   manifest-maintainers-list,  # ruff ODOO011
   manifest-required-key,  # ruff ODOO001
   method-compute,  # ruff ODOO027
@@ -79,9 +76,12 @@ enable=attribute-string-redundant,
   print-used,  # ruff T201
   redundant-u-string-prefix,  # ruff UP025
   renamed-field-parameter,  # ruff ODOO030
+  resource-not-exist,  # ruff ODOO053
+  sql-injection,  # ruff ODOO052
   too-complex,  # ruff C901
   translation-contains-variable,  # ruff ODOO041
   translation-field,  # ruff ODOO031
+  translation-required,  # ruff ODOO049
   use-dict-literal,  # ruff C408
   use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
   website-manifest-key-not-valid-uri  # ruff ODOO014

@@ -57,6 +57,8 @@ select = [
     "ISC001",  # implicit-str-concat
     "PLC1901",  # use-implicit-booleaness-not-comparison-to-string
     # S110 (except-pass) was removed since ruff-odoo ODOO004 runs it as mandatory (see .ruff.toml)
+    # S113 (request-without-timeout) is not selected since ruff-odoo ODOO051 covers it
+    # (requests + more libraries) as mandatory (see .ruff.toml)
     "T201",  # print-used
     "UP025",  # redundant-u-string-prefix
 ]

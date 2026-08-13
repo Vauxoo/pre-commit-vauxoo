@@ -158,8 +158,8 @@ select = [
     "UP004",  # useless-object-inheritance
     "UP008",  # super-with-arguments
     # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
-    #  - The autofixable ones (ODOO002, ODOO003, ODOO006, ODOO007, ODOO024, ODOO025, ODOO026
-    #    and ODOO035) run from the autofix configuration instead (see .ruff-autofix.toml)
+    #  - The autofixable ones (ODOO002, ODOO003, ODOO006, ODOO007, ODOO024, ODOO025, ODOO026,
+    #    ODOO035 and ODOO048) run from the autofix configuration instead (see .ruff-autofix.toml)
     #  - ODOO008 (manifest-required-author) and ODOO010 (license-allowed) keep running from
     #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
     #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
@@ -212,6 +212,11 @@ select = [
 {% endif %}
     "ODOO045",  # test-folder-imported
     "ODOO046",  # manifest-external-assets
+    "ODOO049",  # translation-required
+    "ODOO050",  # no-wizard-in-models
+    "ODOO051",  # external-request-timeout (S113 is a subset of it, don't enable both)
+    "ODOO052",  # sql-injection
+    "ODOO053",  # resource-not-exist
 ]
 
 ignore = [
