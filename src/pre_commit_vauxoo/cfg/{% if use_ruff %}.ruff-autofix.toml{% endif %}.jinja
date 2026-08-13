@@ -14,8 +14,8 @@ line-ending = "lf"
 # "ALL" also selects the autofixable Odoo checks from ruff-odoo:
 #   ODOO002 (manifest-deprecated-key), ODOO003 (vim-comment), ODOO006 (unused-logger),
 #   ODOO007 (field-string-redundant), ODOO024 (direct-translation-call),
-#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments), ODOO035 (deprecated-self-cr)
-#   and ODOO048 (manifest-data-duplicated)
+#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments), ODOO035 (deprecated-self-cr),
+#   ODOO048 (manifest-data-duplicated) and ODOO059 (translation-not-lazy)
 # The non-autofixable ODOO checks run as mandatory instead (see .ruff.toml)
 # ODOO024 and ODOO035 are ignored for odoo versions where the new API doesn't exist yet,
 # based on the odoo version (VERSION or --odoo-version), the same min odoo versions
@@ -36,6 +36,15 @@ ignore = [
 {% endif %}
 {% if odoo_version_number and odoo_version_number < 19.0 %}
     "ODOO035",  # deprecated-self-cr only applies for odoo >= 19.0
+{% endif %}
+{% if odoo_version_number and odoo_version_number < 14.0 %}
+    "ODOO059",  # translation-not-lazy only applies for odoo >= 14.0
+{% endif %}
+{% if not is_project_for_apps %}
+    # The ODOOAPP checks only apply for modules published in the Odoo Apps store
+    # so they are explicitly disabled since "ALL" (and the whole ODOO group) would
+    # enable them too (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
+    "ODOOAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
 {% endif %}
     # Disabled
     "AIR",  # Odoo is not using 'Airflow' library yet

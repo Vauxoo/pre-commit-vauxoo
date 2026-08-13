@@ -53,8 +53,10 @@ def env_mode(request, monkeypatch):
 
 
 # Version-dependent ODOO checks from ruff-odoo (see the .ruff*.toml.jinja templates)
-VERSIONED_MANDATORY_CHECKS = {"ODOO012", "ODOO034", "ODOO039", "ODOO041", "ODOO044"}
-VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
+# The translation checks are only enabled for odoo >= 14.0 (pylint-odoo custom_logging behavior)
+TRANSLATION_MANDATORY_CHECKS = {"ODOO056", "ODOO057", "ODOO058", "ODOO060", "ODOO061", "ODOO062"}
+VERSIONED_MANDATORY_CHECKS = {"ODOO012", "ODOO034", "ODOO039", "ODOO041", "ODOO044"} | TRANSLATION_MANDATORY_CHECKS
+VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035", "ODOO059"}
 
 
 @pytest.fixture(
@@ -64,12 +66,12 @@ VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
         (None, VERSIONED_MANDATORY_CHECKS, set()),  # No version enables all (pylint-odoo behavior)
         ("master", VERSIONED_MANDATORY_CHECKS, set()),  # Invalid version enables all too
         ("13.0", {"ODOO041"}, VERSIONED_AUTOFIX_CHECKS),
-        ("14.0", set(), VERSIONED_AUTOFIX_CHECKS),
-        ("15.0", {"ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
-        ("17.0", {"ODOO034", "ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
-        ("saas-18.2", {"ODOO034", "ODOO039", "ODOO044"}, {"ODOO035"}),
-        ("19.0", {"ODOO034", "ODOO039", "ODOO044"}, set()),
-        ("20.0", {"ODOO012", "ODOO034", "ODOO039", "ODOO044"}, set()),
+        ("14.0", TRANSLATION_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
+        ("15.0", {"ODOO039"} | TRANSLATION_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
+        ("17.0", {"ODOO034", "ODOO039"} | TRANSLATION_MANDATORY_CHECKS, {"ODOO024", "ODOO035"}),
+        ("saas-18.2", {"ODOO034", "ODOO039", "ODOO044"} | TRANSLATION_MANDATORY_CHECKS, {"ODOO035"}),
+        ("19.0", {"ODOO034", "ODOO039", "ODOO044"} | TRANSLATION_MANDATORY_CHECKS, set()),
+        ("20.0", {"ODOO012", "ODOO034", "ODOO039", "ODOO044"} | TRANSLATION_MANDATORY_CHECKS, set()),
     ],
     ids=lambda use_case: "odoo-%s" % (use_case[0] or "none"),
 )
@@ -774,21 +776,40 @@ class TestPreCommitVauxoo:
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
 
+    def assert_apps_checks_enabled(self, enabled, msg):
+        use_ruff = (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            >= 30
+        )
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        pylintrc_content = (cfg_subfolder / ".pylintrc").read_text()
+        if not use_ruff:
+            assert ("category-allowed-app" not in pylintrc_content) == enabled, msg
+            return
+        # With ruff the app checks are always disabled from pylint (migrated to ODOOAPP*)
+        assert "category-allowed-app" in pylintrc_content, msg
+        with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
+            ruff_lint = tomllib.load(f_ruff_toml)["lint"]
+        assert ({"ODOOAPP001", "ODOOAPP002", "ODOOAPP003"} <= set(ruff_lint["select"])) == enabled, msg
+        assert ("ODOOAPP" in ruff_lint["ignore"]) != enabled, msg
+        with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
+            autofix_ignore = tomllib.load(f_ruff_toml)["lint"]["ignore"]
+        assert ("ODOOAPP" in autofix_ignore) != enabled, msg
+
     def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" not in f_content, "app check disabled for a project for apps"
+        self.assert_apps_checks_enabled(True, "app checks disabled for a project for apps")
 
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps"
+        self.assert_apps_checks_enabled(False, "app checks enabled for a project for non apps")
 
         os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
+        self.assert_apps_checks_enabled(False, "app checks enabled for a project for non apps (default value)")
 
     @pytest.mark.parametrize(
         ("odoo_version", "expected_deprecated_modules"),

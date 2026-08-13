@@ -21,7 +21,7 @@ manifest-required-authors=Vauxoo,
 [MESSAGES CONTROL]
 enable=all
 disable=abstract-method,
-   {% if not is_project_for_apps -%}
+   {% if not is_project_for_apps and not use_ruff -%}
    category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps).
    {%- endif %}
    access-member-before-definition,
@@ -157,6 +157,7 @@ disable=abstract-method,
    bare-except,  # ruff E722
    bidirectional-unicode,  # ruff PLE2502
    binary-op-exception,  # ruff PLW0711
+   category-allowed-app,  # ruff ODOOAPP001
    chained-comparison,  # ruff PLR1716
    comparison-of-constants,  # ruff PLR0133
    comparison-with-itself,  # ruff PLR0124
@@ -216,14 +217,17 @@ disable=abstract-method,
    logging-too-few-args,  # ruff PLE1206
    logging-too-many-args,  # ruff PLE1205
    lost-exception,  # ruff B012
+   manifest-behind-migrations,  # ruff ODOO054
    manifest-external-assets,  # ruff ODOO046
    manifest-required-key,  # ruff ODOO001
+   manifest-required-key-app,  # ruff ODOOAPP003
    method-cache-max-size-none,  # ruff B019
    misplaced-bare-raise,  # ruff PLE0704
    misplaced-future,  # ruff F404
    missing-final-newline,  # ruff W292
    missing-format-argument-key,  # ruff F524
    missing-format-string-key,  # ruff F505
+   missing-odoo-file-app,  # ruff ODOOAPP002
    mixed-format-string,  # ruff F506
    modified-iterating-set,  # ruff PLE4703
    multiple-imports,  # ruff E401
@@ -249,6 +253,7 @@ disable=abstract-method,
    notimplemented-raised,  # ruff F901
    pointless-exception-statement,  # ruff PLW0133
    potential-index-error,  # ruff PLE0643
+   prohibited-method-override,  # ruff ODOO055
    property-with-parameters,  # ruff PLR0206
    redeclared-assigned-name,  # ruff PLW0128
    redefined-argument-from-local,  # ruff PLR1704
