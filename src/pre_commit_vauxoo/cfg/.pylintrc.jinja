@@ -13,9 +13,12 @@ py-version={{ py_version }}
 
 
 [ODOOLINT]
+{% if pylint_matrix_value < 20 -%}
+# Option removed from pylint-odoo >= 11.0 (the check was migrated to ruff-odoo ODOO008)
 manifest-required-authors=Vauxoo,
    Odoo Community Association (OCA),
    Jarsa,
+{%- endif %}
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]

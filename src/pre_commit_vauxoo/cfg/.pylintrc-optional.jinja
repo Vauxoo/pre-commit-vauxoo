@@ -10,6 +10,9 @@ py-version={{ py_version }}
 {%- endif %}
 
 [ODOOLINT]
+{% if pylint_matrix_value < 20 -%}
+# Options removed from pylint-odoo >= 11.0 (the checks were migrated to ruff-odoo
+# ODOO010, ODOO008 and ODOO002)
 license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     GPL-3,GPL-3 or any later version,LGPL-3,
     Other OSI approved licence,Other proprietary,
@@ -22,6 +25,7 @@ manifest-deprecated-keys=active,
   {% if odoo_version and odoo_version|float >= 16.0 -%}
   qweb,
   {%- endif %}
+{%- endif %}
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]

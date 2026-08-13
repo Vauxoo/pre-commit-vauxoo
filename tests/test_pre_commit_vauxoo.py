@@ -654,6 +654,9 @@ class TestPreCommitVauxoo:
         # runs as mandatory so there are no old mandatory markers to expect
         ([], "except-pass"),
     ]
+    # Markers of pylint-odoo checks removed since the >= 11.0 fork (migrated to
+    # ruff-odoo), so pylint no longer reports them when ruff is not enabled
+    PYLINT_RUFF_MIGRATED_MARKERS = {"(print-used)"}
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
         (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
@@ -686,12 +689,9 @@ class TestPreCommitVauxoo:
         migration (pylint and flake8+bugbear) and after it (ruff)"""
         result = self.runner.invoke(main, ["--only-cp-cfg"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        use_ruff = (
-            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
-                "black_autoflake_matrix_value"
-            ]
-            >= 30
-        )
+        matrix_compatibility = parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)
+        use_ruff = matrix_compatibility["black_autoflake_matrix_value"] >= 30
+        pylint_ruff_migrated = matrix_compatibility["pylint_matrix_value"] >= 20
         # The mandatory use cases can not live in "resources/" since the other tests
         # expect the mandatory checks passing for the resources modules
         mandatory_cases_fname = "ruff_mandatory_use_cases.py"
@@ -724,6 +724,10 @@ class TestPreCommitVauxoo:
                     )
                 else:
                     for old_marker in old_markers:
+                        if pylint_ruff_migrated and old_marker in self.PYLINT_RUFF_MIGRATED_MARKERS:
+                            # The check no longer exists in pylint-odoo >= 11.0 and ruff
+                            # is not enabled for this matrix, so no tool reports it
+                            continue
                         assert old_marker in output, "'%s' was not reported by pylint/flake8 for %s\n%s" % (
                             old_marker,
                             fname,
