@@ -80,6 +80,12 @@ ignore = [
 #     and permit modules with a complexity as high as 15
 max-complexity = 15
 
+[lint.odoo]
+# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+{%- if odoo_version %}
+odoo-version = "{{ odoo_version }}"
+{%- endif %}
+
 [lint.per-file-ignores]
 "__manifest__.py" = [
     "B018",  # Same as the old .flake8-optional per-file-ignores

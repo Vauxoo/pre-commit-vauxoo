@@ -21,7 +21,7 @@ manifest-required-authors=Vauxoo,
 [MESSAGES CONTROL]
 enable=all
 disable=abstract-method,
-   {% if not is_project_for_apps -%}
+   {% if not is_project_for_apps and not use_ruff -%}
    category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps).
    {%- endif %}
    access-member-before-definition,
@@ -98,7 +98,6 @@ disable=abstract-method,
    attribute-deprecated,
    attribute-string-redundant,
    bad-builtin-groupby,
-   consider-merging-classes-inherited,
    context-overridden,
    development-status-allowed,
    deprecated-odoo-model-method,
@@ -157,11 +156,13 @@ disable=abstract-method,
    bare-except,  # ruff E722
    bidirectional-unicode,  # ruff PLE2502
    binary-op-exception,  # ruff PLW0711
+   category-allowed-app,  # ruff OAPP001
    chained-comparison,  # ruff PLR1716
    comparison-of-constants,  # ruff PLR0133
    comparison-with-itself,  # ruff PLR0124
    condition-evals-to-constant,  # ruff SIM220,SIM221,SIM222,SIM223
    consider-iterating-dictionary,  # ruff SIM118
+   consider-merging-classes-inherited,  # ruff ODOO063
    consider-merging-isinstance,  # ruff SIM101
    consider-swap-variables,  # ruff PLR1712
    consider-using-dict-comprehension,  # ruff C402,C404
@@ -216,14 +217,17 @@ disable=abstract-method,
    logging-too-few-args,  # ruff PLE1206
    logging-too-many-args,  # ruff PLE1205
    lost-exception,  # ruff B012
+   manifest-behind-migrations,  # ruff ODOO054
    manifest-external-assets,  # ruff ODOO046
    manifest-required-key,  # ruff ODOO001
+   manifest-required-key-app,  # ruff OAPP003
    method-cache-max-size-none,  # ruff B019
    misplaced-bare-raise,  # ruff PLE0704
    misplaced-future,  # ruff F404
    missing-final-newline,  # ruff W292
    missing-format-argument-key,  # ruff F524
    missing-format-string-key,  # ruff F505
+   missing-odoo-file-app,  # ruff OAPP002
    mixed-format-string,  # ruff F506
    modified-iterating-set,  # ruff PLE4703
    multiple-imports,  # ruff E401
@@ -249,6 +253,7 @@ disable=abstract-method,
    notimplemented-raised,  # ruff F901
    pointless-exception-statement,  # ruff PLW0133
    potential-index-error,  # ruff PLE0643
+   prohibited-method-override,  # ruff ODOO055
    property-with-parameters,  # ruff PLR0206
    redeclared-assigned-name,  # ruff PLW0128
    redefined-argument-from-local,  # ruff PLR1704
@@ -321,7 +326,6 @@ disable=abstract-method,
 # odoolint disabled because this checks is available just in changed modules in PR conf.
 # import-error Because odoo use incompatible sys-modules https://bitbucket.org/logilab/pylint/issues/616/modules-renamed-with-sysmodules-are-unable
 # wrong-import-order: Disabled here but enabled in pr-conf
-# consider-merging-classes-inherited: Disabled here but enabled in pr-conf
 # unsubscriptable-object: TODO: Enabled after fix https://github.com/PyCQA/pylint/issues/811
 # access-member-before-definition: Disable because odoo use decorator to asign variables
 # too-complex: Disabled here but enabled in pr-conf

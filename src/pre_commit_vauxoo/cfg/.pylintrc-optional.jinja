@@ -27,20 +27,12 @@ manifest-deprecated-keys=active,
 [MESSAGES CONTROL]
 disable=all,unknown-option-value
 enable=attribute-string-redundant,
-  consider-merging-classes-inherited,
   deprecated-method,
   deprecated-pragma,
   license-allowed,
   manifest-deprecated-key,
   manifest-required-author,
   manifest-version-format,
-  translation-not-lazy,
-  translation-format-interpolation,
-  translation-format-truncated,
-  translation-fstring-interpolation,
-  translation-too-few-args,
-  translation-too-many-args,
-  translation-unsupported-format,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
   use-vim-comment,
@@ -52,6 +44,7 @@ enable=attribute-string-redundant,
   attribute-deprecated,  # ruff ODOO021
   bad-builtin-groupby,  # ruff ODOO019
   bad-docstring-quotes,  # ruff D300
+  consider-merging-classes-inherited,  # ruff ODOO063 (mandatory .ruff.toml)
   consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
   context-overridden,  # ruff ODOO018
   deprecated-odoo-model-method,  # ruff ODOO037 (and ODOO034 for name_get)
@@ -81,7 +74,14 @@ enable=attribute-string-redundant,
   too-complex,  # ruff C901
   translation-contains-variable,  # ruff ODOO041
   translation-field,  # ruff ODOO031
+  translation-format-interpolation,  # ruff ODOO056
+  translation-format-truncated,  # ruff ODOO057
+  translation-fstring-interpolation,  # ruff ODOO058
+  translation-not-lazy,  # ruff ODOO059
   translation-required,  # ruff ODOO049
+  translation-too-few-args,  # ruff ODOO060
+  translation-too-many-args,  # ruff ODOO061
+  translation-unsupported-format,  # ruff ODOO062
   use-dict-literal,  # ruff C408
   use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
   website-manifest-key-not-valid-uri  # ruff ODOO014

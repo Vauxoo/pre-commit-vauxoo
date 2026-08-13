@@ -14,13 +14,12 @@ line-ending = "lf"
 # "ALL" also selects the autofixable Odoo checks from ruff-odoo:
 #   ODOO002 (manifest-deprecated-key), ODOO003 (vim-comment), ODOO006 (unused-logger),
 #   ODOO007 (field-string-redundant), ODOO024 (direct-translation-call),
-#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments), ODOO035 (deprecated-self-cr)
-#   and ODOO048 (manifest-data-duplicated)
+#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments), ODOO035 (deprecated-self-cr),
+#   ODOO048 (manifest-data-duplicated) and ODOO059 (translation-not-lazy)
 # The non-autofixable ODOO checks run as mandatory instead (see .ruff.toml)
-# ODOO024 and ODOO035 are ignored for odoo versions where the new API doesn't exist yet,
-# based on the odoo version (VERSION or --odoo-version), the same min odoo versions
-# previously used by pylint-odoo (prefer-env-translation, deprecated-self-cr) and the
-# odoo-pre-commit-hooks fixit rules (FIXIT_ODOO_VERSION)
+# Version-dependent gating (ODOO024 only applies for odoo >= 18.0, ODOO035 for odoo >= 19.0
+# and ODOO059 for odoo >= 14.0) is handled by ruff-odoo's internal logic when --odoo-version
+# is passed to ruff; all version-scoped checks are always enabled here and ruff filters them
 select = ["ALL"]
 
 ignore = [
@@ -30,12 +29,10 @@ ignore = [
     "{{ check }}",
 {% endfor %}
 {% endif %}
-{% if odoo_version_number and odoo_version_number < 18.0 %}
-    # Version-dependent autofixes not applicable for odoo {{ odoo_version }}
-    "ODOO024",  # direct-translation-call (self.env._) only applies for odoo >= 18.0
-{% endif %}
-{% if odoo_version_number and odoo_version_number < 19.0 %}
-    "ODOO035",  # deprecated-self-cr only applies for odoo >= 19.0
+{% if not is_project_for_apps %}
+    # The OAPP checks only apply for modules published in the Odoo Apps store
+    # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
+    "OAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
 {% endif %}
     # Disabled
     "AIR",  # Odoo is not using 'Airflow' library yet
@@ -438,6 +435,12 @@ ignore = [
     # "zip-dict-keys-and-values",
     # "zip-instead-of-pairwise",  # TODO: Check if set py3.8 it is skipped for "zip(list_a, list_a[1:])"
 ]
+
+[lint.odoo]
+# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+{%- if odoo_version %}
+odoo-version = "{{ odoo_version }}"
+{%- endif %}
 
 [lint.isort]
 combine-as-imports = true

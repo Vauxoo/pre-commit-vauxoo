@@ -52,24 +52,40 @@ def env_mode(request, monkeypatch):
     return request.param
 
 
-# Version-dependent ODOO checks from ruff-odoo (see the .ruff*.toml.jinja templates)
-VERSIONED_MANDATORY_CHECKS = {"ODOO012", "ODOO034", "ODOO039", "ODOO041", "ODOO044"}
-VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035"}
+# ODOO checks from ruff-odoo (see the .ruff*.toml.jinja templates)
+# Version-dependent gating is now handled by ruff-odoo's internal logic via --odoo-version;
+# all version-scoped checks are always in select/ignore lists, ruff filters them at runtime
+VERSIONED_MANDATORY_CHECKS = {
+    "ODOO012",  # manifest-summary-multiline
+    "ODOO034",  # deprecated-name-get
+    "ODOO039",  # no-raise-unlink
+    "ODOO041",  # translation-contains-variable
+    "ODOO044",  # deprecated-inselect-operator
+    "ODOO056",  # translation-format-interpolation
+    "ODOO057",  # translation-format-truncated
+    "ODOO058",  # translation-fstring-interpolation
+    "ODOO060",  # translation-too-few-args
+    "ODOO061",  # translation-too-many-args
+    "ODOO062",  # translation-unsupported-format
+}
+VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035", "ODOO059"}
 
 
 @pytest.fixture(
     name="ruff_odoo_version_use_case",
     params=[
-        # odoo_version, expected mandatory selected checks, expected autofix ignored checks
-        (None, VERSIONED_MANDATORY_CHECKS, set()),  # No version enables all (pylint-odoo behavior)
-        ("master", VERSIONED_MANDATORY_CHECKS, set()),  # Invalid version enables all too
-        ("13.0", {"ODOO041"}, VERSIONED_AUTOFIX_CHECKS),
-        ("14.0", set(), VERSIONED_AUTOFIX_CHECKS),
-        ("15.0", {"ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
-        ("17.0", {"ODOO034", "ODOO039"}, VERSIONED_AUTOFIX_CHECKS),
-        ("saas-18.2", {"ODOO034", "ODOO039", "ODOO044"}, {"ODOO035"}),
-        ("19.0", {"ODOO034", "ODOO039", "ODOO044"}, set()),
-        ("20.0", {"ODOO012", "ODOO034", "ODOO039", "ODOO044"}, set()),
+        # odoo_version, expected checks in .ruff.toml (should be all regardless of version),
+        # expected autofix ignored checks (none: ODOO024/ODOO035/ODOO059 gating is handled
+        # internally by ruff-odoo via --odoo-version, so they are never in the ignore list)
+        (None, VERSIONED_MANDATORY_CHECKS, set()),
+        ("master", VERSIONED_MANDATORY_CHECKS, set()),
+        ("13.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("14.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("15.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("17.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("saas-18.2", VERSIONED_MANDATORY_CHECKS, set()),
+        ("19.0", VERSIONED_MANDATORY_CHECKS, set()),
+        ("20.0", VERSIONED_MANDATORY_CHECKS, set()),
     ],
     ids=lambda use_case: "odoo-%s" % (use_case[0] or "none"),
 )
@@ -597,9 +613,8 @@ class TestPreCommitVauxoo:
             pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
 
     def test_ruff_odoo_version_checks(self, ruff_odoo_version_use_case, caplog):
-        """The version-dependent ODOO checks must be enabled/disabled based on the odoo
-        version (VERSION or --odoo-version) mirroring the pylint-odoo and
-        odoo-pre-commit-hooks (fixit) behavior before the ruff migration"""
+        """All version-scoped ODOO checks are always in select/ignore lists in templates;
+        ruff-odoo's internal logic via --odoo-version handles version gating at runtime"""
         self.skip_if_no_ruff()
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         os.environ.pop("VERSION", None)
@@ -610,12 +625,12 @@ class TestPreCommitVauxoo:
         with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
             selected = set(tomllib.load(f_ruff_toml)["lint"]["select"])
         assert selected & VERSIONED_MANDATORY_CHECKS == expected_selected, (
-            f"Wrong version-dependent checks selected in .ruff.toml for odoo version {odoo_version}"
+            f"Wrong version-scoped checks selected in .ruff.toml for odoo version {odoo_version}"
         )
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             ignored = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
         assert ignored & VERSIONED_AUTOFIX_CHECKS == expected_ignored, (
-            f"Wrong version-dependent checks ignored in .ruff-autofix.toml for odoo version {odoo_version}"
+            f"Wrong version-dependent ignores in .ruff-autofix.toml for odoo version {odoo_version}"
         )
 
     def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
@@ -774,21 +789,40 @@ class TestPreCommitVauxoo:
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
 
+    def assert_apps_checks_enabled(self, enabled, msg):
+        use_ruff = (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            >= 30
+        )
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        pylintrc_content = (cfg_subfolder / ".pylintrc").read_text()
+        if not use_ruff:
+            assert ("category-allowed-app" not in pylintrc_content) == enabled, msg
+            return
+        # With ruff the app checks are always disabled from pylint (migrated to OAPP*)
+        assert "category-allowed-app" in pylintrc_content, msg
+        with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
+            ruff_lint = tomllib.load(f_ruff_toml)["lint"]
+        assert ({"OAPP001", "OAPP002", "OAPP003"} <= set(ruff_lint["select"])) == enabled, msg
+        assert ("OAPP" in ruff_lint["ignore"]) != enabled, msg
+        with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
+            autofix_ignore = tomllib.load(f_ruff_toml)["lint"]["ignore"]
+        assert ("OAPP" in autofix_ignore) != enabled, msg
+
     def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" not in f_content, "app check disabled for a project for apps"
+        self.assert_apps_checks_enabled(True, "app checks disabled for a project for apps")
 
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "False"
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps"
+        self.assert_apps_checks_enabled(False, "app checks enabled for a project for non apps")
 
         os.environ.pop("PRECOMMIT_IS_PROJECT_FOR_APPS")
         self.runner.invoke(main, [])
-        f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
-        assert "category-allowed-app" in f_content, "app check enabled for a project for non apps (default value)"
+        self.assert_apps_checks_enabled(False, "app checks enabled for a project for non apps (default value)")
 
     @pytest.mark.parametrize(
         ("odoo_version", "expected_deprecated_modules"),
