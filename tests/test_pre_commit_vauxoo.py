@@ -800,15 +800,15 @@ class TestPreCommitVauxoo:
         if not use_ruff:
             assert ("category-allowed-app" not in pylintrc_content) == enabled, msg
             return
-        # With ruff the app checks are always disabled from pylint (migrated to ODOOAPP*)
+        # With ruff the app checks are always disabled from pylint (migrated to OAPP*)
         assert "category-allowed-app" in pylintrc_content, msg
         with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
             ruff_lint = tomllib.load(f_ruff_toml)["lint"]
-        assert ({"ODOOAPP001", "ODOOAPP002", "ODOOAPP003"} <= set(ruff_lint["select"])) == enabled, msg
-        assert ("ODOOAPP" in ruff_lint["ignore"]) != enabled, msg
+        assert ({"OAPP001", "OAPP002", "OAPP003"} <= set(ruff_lint["select"])) == enabled, msg
+        assert ("OAPP" in ruff_lint["ignore"]) != enabled, msg
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             autofix_ignore = tomllib.load(f_ruff_toml)["lint"]["ignore"]
-        assert ("ODOOAPP" in autofix_ignore) != enabled, msg
+        assert ("OAPP" in autofix_ignore) != enabled, msg
 
     def test_apps_checks_disable(self, caplog):
         os.environ["PRECOMMIT_IS_PROJECT_FOR_APPS"] = "True"

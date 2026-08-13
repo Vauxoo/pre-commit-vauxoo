@@ -38,10 +38,9 @@ ignore = [
     "ODOO035",  # deprecated-self-cr only applies for odoo >= 19.0
 {% endif %}
 {% if not is_project_for_apps %}
-    # The ODOOAPP checks only apply for modules published in the Odoo Apps store
-    # so they are explicitly disabled since "ALL" (and the whole ODOO group) would
-    # enable them too (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
-    "ODOOAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
+    # The OAPP checks only apply for modules published in the Odoo Apps store
+    # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
+    "OAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
 {% endif %}
     # Disabled
     "AIR",  # Odoo is not using 'Airflow' library yet

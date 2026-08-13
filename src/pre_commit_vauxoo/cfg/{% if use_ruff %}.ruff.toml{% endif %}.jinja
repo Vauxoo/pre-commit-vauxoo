@@ -218,9 +218,9 @@ select = [
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
-    "ODOOAPP001",  # category-allowed-app
-    "ODOOAPP002",  # missing-odoo-file-app
-    "ODOOAPP003",  # manifest-required-key-app
+    "OAPP001",  # category-allowed-app
+    "OAPP002",  # missing-odoo-file-app
+    "OAPP003",  # manifest-required-key-app
 {% endif %}
 ]
 
@@ -232,10 +232,9 @@ ignore = [
 {% endfor %}
 {% endif %}
 {% if not is_project_for_apps %}
-    # The ODOOAPP checks only apply for modules published in the Odoo Apps store
-    # so they are explicitly disabled since selecting the whole ODOO group would
-    # enable them too (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
-    "ODOOAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
+    # The OAPP checks only apply for modules published in the Odoo Apps store
+    # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
+    "OAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
 {% endif %}
     # Same ignores previously configured in .config/.flake8
     "E203",  # whitespace before ':' is handled by black and it doesn't consider black syntax
