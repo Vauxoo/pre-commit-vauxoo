@@ -47,10 +47,13 @@ repos:
         name: flake8 mandatory checks
         args:
           - --config=.config/.flake8
-  - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.9
+  # TODO: Restore https://github.com/OCA/pylint-odoo after merging
+  # https://github.com/OCA/pylint-odoo/pull/583
+  - repo: https://github.com/vauxoo-dev/pylint-odoo
+    rev: 114aea9e1b71fe4c83c18b1a3281d9025a34013c
 {%- else %}
+  - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.24
 {%- endif %}
     hooks:

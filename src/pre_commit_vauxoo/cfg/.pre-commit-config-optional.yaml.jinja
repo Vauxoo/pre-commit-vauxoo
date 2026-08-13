@@ -27,10 +27,13 @@ default_language_version:
   python: python3
   node: "24.13.0"
 repos:
-  - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.9
+  # TODO: Restore https://github.com/OCA/pylint-odoo after merging
+  # https://github.com/OCA/pylint-odoo/pull/583
+  - repo: https://github.com/vauxoo-dev/pylint-odoo
+    rev: 114aea9e1b71fe4c83c18b1a3281d9025a34013c
 {%- else %}
+  - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.24
 {%- endif %}
     hooks:
@@ -42,10 +45,13 @@ repos:
 {%- if pylint_matrix_value >= 20 %}
           - --jobs=3
 {%- endif %}
-  - repo: https://github.com/OCA/odoo-pre-commit-hooks
 {%- if oca_hooks_matrix_value >= 20 %}
-    rev: v0.2.25
+  # TODO: Restore https://github.com/OCA/odoo-pre-commit-hooks after merging
+  # https://github.com/OCA/odoo-pre-commit-hooks/pull/197
+  - repo: https://github.com/vauxoo-dev/odoo-pre-commit-hooks
+    rev: 0ede46954ccf8cb7b8bcb02852a0049b02f041cd
 {%- else %}
+  - repo: https://github.com/OCA/odoo-pre-commit-hooks
     rev: v0.1.7
 {%- endif %}
     hooks:
@@ -125,10 +131,13 @@ repos:
           - --quiet
         # reduce the INFO logger
         require_serial: true
-  - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.9
+  # TODO: Restore https://github.com/OCA/pylint-odoo after merging
+  # https://github.com/OCA/pylint-odoo/pull/583
+  - repo: https://github.com/vauxoo-dev/pylint-odoo
+    rev: 114aea9e1b71fe4c83c18b1a3281d9025a34013c
 {%- else %}
+  - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.24
 {%- endif %}
     hooks:

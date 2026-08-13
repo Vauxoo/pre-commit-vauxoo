@@ -43,8 +43,10 @@ repos:
         types_or: [python, markdown]
         args:
           - --config=.config/.ruff-autofix.toml
-  - repo: https://github.com/OCA/odoo-pre-commit-hooks
-    rev: v0.2.25
+  # TODO: Restore https://github.com/OCA/odoo-pre-commit-hooks after merging
+  # https://github.com/OCA/odoo-pre-commit-hooks/pull/197
+  - repo: https://github.com/vauxoo-dev/odoo-pre-commit-hooks
+    rev: 0ede46954ccf8cb7b8bcb02852a0049b02f041cd
     hooks:
       - id: oca-checks-odoo-module
         args:
