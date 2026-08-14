@@ -220,8 +220,7 @@ def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, 
 # copy_cfg_files has too many "for-if" sentences
 # because it is a switch-case dummy logic
 # TODO: Migrate this method to use configuration files with jinja template
-# pylint: disable=too-complex
-def copy_cfg_files(
+def copy_cfg_files(  # ruff: ignore[complex-structure]
     precommit_config_dir,
     repo_dirname,
     no_overwrite,
@@ -374,7 +373,6 @@ def resolve_console_script(script_name):
 
 
 # There are a lot of if validations in this method. It is expected for now.
-# pylint: disable=too-complex
 def main(  # ruff: ignore[complex-structure]
     paths,
     no_overwrite,

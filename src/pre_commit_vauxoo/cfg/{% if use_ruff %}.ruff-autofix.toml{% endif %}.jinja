@@ -1,4 +1,6 @@
 line-length = 119
+# Required to select the checks by name instead of by code
+# (selecting rules by name requires preview mode)
 preview = true
 target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 fix-only = true
@@ -12,13 +14,13 @@ line-ending = "lf"
 
 [lint]
 # "ALL" also selects the autofixable Odoo checks from ruff-odoo:
-#   ODOO002 (manifest-deprecated-key), ODOO003 (vim-comment), ODOO006 (unused-logger),
-#   ODOO007 (field-string-redundant), ODOO024 (direct-translation-call),
-#   ODOO025 (manifest-superfluous-key), ODOO026 (header-comments), ODOO035 (deprecated-self-cr),
-#   ODOO048 (manifest-data-duplicated) and ODOO059 (translation-not-lazy)
-# The non-autofixable ODOO checks run as mandatory instead (see .ruff.toml)
-# Version-dependent gating (ODOO024 only applies for odoo >= 18.0, ODOO035 for odoo >= 19.0
-# and ODOO059 for odoo >= 14.0) is handled by ruff-odoo's internal logic when --odoo-version
+#   manifest-deprecated-key, use-vim-comment, unused-logger, attribute-string-redundant,
+#   prefer-env-translation, manifest-superfluous-key, header-comments, deprecated-self-cr,
+#   manifest-data-duplicated and translation-not-lazy
+# The non-autofixable Odoo checks run as mandatory instead (see .ruff.toml)
+# Version-dependent gating (prefer-env-translation only applies for odoo >= 18.0,
+# deprecated-self-cr for odoo >= 19.0 and translation-not-lazy for odoo >= 14.0) is handled
+# by ruff-odoo's internal logic when --odoo-version
 # is passed to ruff; all version-scoped checks are always enabled here and ruff filters them
 select = ["ALL"]
 
@@ -30,7 +32,7 @@ ignore = [
 {% endfor %}
 {% endif %}
 {% if not is_project_for_apps %}
-    # The OAPP checks only apply for modules published in the Odoo Apps store
+    # The odoo.com/apps checks only apply for modules published in the Odoo Apps store
     # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
     "OAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
 {% endif %}
@@ -437,7 +439,7 @@ ignore = [
 ]
 
 [lint.odoo]
-# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+# Version-scoped Odoo checks are gated by ruff-odoo based on this odoo-version setting
 {%- if odoo_version %}
 odoo-version = "{{ odoo_version }}"
 {%- endif %}

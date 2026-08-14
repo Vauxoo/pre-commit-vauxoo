@@ -56,19 +56,19 @@ def env_mode(request, monkeypatch):
 # Version-dependent gating is now handled by ruff-odoo's internal logic via --odoo-version;
 # all version-scoped checks are always in select/ignore lists, ruff filters them at runtime
 VERSIONED_MANDATORY_CHECKS = {
-    "ODOO012",  # manifest-summary-multiline
-    "ODOO034",  # deprecated-name-get
-    "ODOO039",  # no-raise-unlink
-    "ODOO041",  # translation-contains-variable
-    "ODOO044",  # deprecated-inselect-operator
-    "ODOO056",  # translation-format-interpolation
-    "ODOO057",  # translation-format-truncated
-    "ODOO058",  # translation-fstring-interpolation
-    "ODOO060",  # translation-too-few-args
-    "ODOO061",  # translation-too-many-args
-    "ODOO062",  # translation-unsupported-format
+    "deprecated-inselect-operator",
+    "deprecated-name-get",
+    "manifest-summary-multiline",
+    "no-raise-unlink",
+    "translation-contains-variable",
+    "translation-format-interpolation",
+    "translation-format-truncated",
+    "translation-fstring-interpolation",
+    "translation-too-few-args",
+    "translation-too-many-args",
+    "translation-unsupported-format",
 }
-VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035", "ODOO059"}
+VERSIONED_AUTOFIX_CHECKS = {"deprecated-self-cr", "prefer-env-translation", "translation-not-lazy"}
 
 
 @pytest.fixture(
@@ -633,6 +633,52 @@ class TestPreCommitVauxoo:
             f"Wrong version-dependent ignores in .ruff-autofix.toml for odoo version {odoo_version}"
         )
 
+    def test_ruff_odoo_options(self, caplog):
+        """The [lint.odoo] options must have the same values configured for the
+        pylint-odoo checks replaced by ruff-odoo (see the [ODOOLINT] section of .pylintrc*)"""
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", "17.0"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
+            data = tomllib.load(f_ruff_toml)
+        odoo_options = data["lint"]["odoo"]
+        # Same as the pylint "valid-odoo-version" option used by manifest-version-format
+        assert odoo_options["odoo-version"] == "17.0", "Wrong odoo-version in .ruff.toml"
+        # Same empty default of the pylint-odoo options so both checks are inert
+        assert odoo_options["category-allowed"] == [], "Wrong category-allowed in .ruff.toml"
+        assert odoo_options["odoo-required-files"] == [], "Wrong odoo-required-files in .ruff.toml"
+        expected_checks = {"category-allowed", "manifest-version-format", "missing-odoo-file"}
+        assert expected_checks.issubset(set(data["lint"]["select"])), (
+            "The checks using the [lint.odoo] options are not selected in .ruff.toml"
+        )
+
+    def test_ruff_checks_by_name(self, caplog):
+        """The ruff checks must be configured by name (e.g. "no-search-all") and never by
+        code (e.g. "ODOO038") to keep the same names used in the .pylintrc* configuration
+
+        Only the linter prefixes without a name equivalent (e.g. "E", "W", "F", "OAPP") are
+        allowed. Selecting the checks by name requires the "preview" mode enabled and an
+        unknown name is only warned by ruff (not selected) so it needs to be checked here
+        """
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", "17.0"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
+            with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
+                data = tomllib.load(f_ruff_toml)
+            assert data["preview"], (
+                f"The preview mode is required to select the checks by name in {ruff_toml_filename}"
+            )
+            checks = data["lint"].get("select", []) + data["lint"]["ignore"]
+            for per_file_checks in data["lint"].get("per-file-ignores", {}).values():
+                checks += per_file_checks
+            codes = [check for check in checks if re.match(r"^[A-Z]+\d+$", check)]
+            assert not codes, f"The checks {codes} should be configured by name in {ruff_toml_filename}"
+
     def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
         """The ruff target-version must be mapped from the odoo version
         (VERSION or --odoo-version)"""
@@ -805,7 +851,8 @@ class TestPreCommitVauxoo:
         assert "category-allowed-app" in pylintrc_content, msg
         with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
             ruff_lint = tomllib.load(f_ruff_toml)["lint"]
-        assert ({"OAPP001", "OAPP002", "OAPP003"} <= set(ruff_lint["select"])) == enabled, msg
+        apps_checks = {"category-allowed-app", "manifest-required-key-app", "missing-odoo-file-app"}
+        assert (apps_checks <= set(ruff_lint["select"])) == enabled, msg
         assert ("OAPP" in ruff_lint["ignore"]) != enabled, msg
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             autofix_ignore = tomllib.load(f_ruff_toml)["lint"]["ignore"]

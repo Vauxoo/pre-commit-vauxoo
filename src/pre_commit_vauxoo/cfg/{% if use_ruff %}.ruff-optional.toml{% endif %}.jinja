@@ -3,64 +3,73 @@
 #  - flake8-bugbear only keeps the checks without a ruff implementation (see .flake8-optional)
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc-optional)
 line-length = 119
-preview = true  # Required by PLC1901 and the bugbear B901/B903/B909 rules
+# Required by compare-to-empty-string, return-in-generator, class-as-data-structure and
+# loop-iterator-mutation and to select the checks by name instead of by code
+# (selecting rules by name requires preview mode)
+preview = true
 target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 
 [lint]
 select = [
     # flake8-bugbear replacement (same checks previously running from .config/.flake8-optional)
-    #  - B002, B006, B012, B019, B025 and B033 are already enabled from the mandatory .ruff.toml
-    #  - B001 is covered by ruff E722 and B902 by ruff N804/N805 (both mandatory .ruff.toml)
-    #  - B023, B024, B036, B904, B905 and B907 keep being disabled (see .flake8-optional comments)
-    #  - B906, B908 and B950 are not implemented in ruff so they keep running from flake8
-    "B003",  # assignment-to-os-environ
-    "B004",  # unreliable-callable-check
-    "B005",  # strip-with-multi-characters
-    "B007",  # unused-loop-control-variable
-    "B008",  # function-call-in-default-argument
-    "B009",  # get-attr-with-constant
-    "B010",  # set-attr-with-constant
-    "B011",  # assert-false
-    "B013",  # redundant-tuple-in-exception-handler
-    "B014",  # duplicate-handler-exception
-    "B015",  # useless-comparison
-    "B016",  # raise-literal
-    "B017",  # assert-raises-exception
-    "B018",  # useless-expression
-    "B020",  # loop-variable-overrides-iterator
-    "B021",  # f-string-docstring
-    "B022",  # useless-contextlib-suppress
-    "B026",  # star-arg-unpacking-after-keyword-arg
-    "B027",  # empty-method-without-abstract-decorator
-    "B028",  # no-explicit-stacklevel
-    "B029",  # except-with-empty-tuple
-    "B030",  # except-with-non-exception-classes
-    "B031",  # reuse-of-groupby-generator
-    "B032",  # unintentional-type-annotation
-    "B034",  # re-sub-positional-args
-    "B035",  # static-key-dict-comprehension
-    "B039",  # mutable-contextvar-default
-    "B901",  # return-in-generator
-    "B903",  # class-as-data-structure
-    "B909",  # loop-iterator-mutation
-    "B911",  # batched-without-explicit-strict
+    #  - unary-prefix-increment-decrement, mutable-argument-default, jump-statement-in-finally,
+    #    cached-instance-method, duplicate-try-block-exception and duplicate-value are already
+    #    enabled from the mandatory .ruff.toml
+    #  - The bugbear B001 is covered by bare-except and B902 by invalid-first-argument-name-for-method
+    #    and invalid-first-argument-name-for-class-method (all from the mandatory .ruff.toml)
+    #  - function-uses-loop-variable, abstract-base-class-without-abstract-method,
+    #    raise-without-from-inside-except, zip-without-explicit-strict and the bugbear B036 and B907
+    #    keep being disabled (see .flake8-optional comments)
+    #  - The bugbear B906, B908 and B950 are not implemented in ruff so they keep running from flake8
+    "assert-false",
+    "assert-raises-exception",
+    "assignment-to-os-environ",
+    "batched-without-explicit-strict",
+    "class-as-data-structure",
+    "duplicate-handler-exception",
+    "empty-method-without-abstract-decorator",
+    "except-with-empty-tuple",
+    "except-with-non-exception-classes",
+    "f-string-docstring",
+    "function-call-in-default-argument",
+    "get-attr-with-constant",
+    "loop-iterator-mutation",
+    "loop-variable-overrides-iterator",
+    "mutable-contextvar-default",
+    "no-explicit-stacklevel",
+    "raise-literal",
+    "re-sub-positional-args",
+    "redundant-tuple-in-exception-handler",
+    "return-in-generator",
+    "reuse-of-groupby-generator",
+    "set-attr-with-constant",
+    "star-arg-unpacking-after-keyword-arg",
+    "static-key-dict-comprehension",
+    "strip-with-multi-characters",
+    "unintentional-type-annotation",
+    "unreliable-callable-check",
+    "unused-loop-control-variable",
+    "useless-comparison",
+    "useless-contextlib-suppress",
+    "useless-expression",
     # Checks enabled in the optional flake8 but ignored in the mandatory one
-    "E242",  # tab after ','
-    "E741",  # ambiguous variable name 'l', 'O', or 'I'
-    "F811",  # redefined-while-unused
+    "ambiguous-variable-name",  # ambiguous variable name 'l', 'O', or 'I'
+    "redefined-while-unused",
+    "tab-after-comma",  # tab after ','
     # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
-    "C408",  # use-dict-literal and use-list-literal (the latter was mandatory from pylint but
-              # ruff C408 handles dict()/list()/tuple() with a single check so it runs as optional now)
-    "C901",  # too-complex (mccabe)
-    "D212",  # docstring-first-line-empty
-    "D300",  # bad-docstring-quotes
-    "ISC001",  # implicit-str-concat
-    "PLC1901",  # use-implicit-booleaness-not-comparison-to-string
-    # S110 (except-pass) was removed since ruff-odoo ODOO004 runs it as mandatory (see .ruff.toml)
-    # S113 (request-without-timeout) is not selected since ruff-odoo ODOO051 covers it
-    # (requests + more libraries) as mandatory (see .ruff.toml)
-    "T201",  # print-used
-    "UP025",  # redundant-u-string-prefix
+    #  - try-except-pass was removed since the ruff-odoo except-pass runs it as mandatory (see .ruff.toml)
+    #  - request-without-timeout is not selected since the ruff-odoo external-request-timeout
+    #    covers it (requests + more libraries) as mandatory (see .ruff.toml)
+    "compare-to-empty-string",  # use-implicit-booleaness-not-comparison-to-string
+    "complex-structure",  # too-complex (mccabe)
+    "multi-line-summary-first-line",  # docstring-first-line-empty
+    "print",  # print-used
+    "single-line-implicit-string-concatenation",  # implicit-str-concat
+    "triple-single-quotes",  # bad-docstring-quotes
+    "unicode-kind-prefix",  # redundant-u-string-prefix
+    "unnecessary-collection-call",  # use-dict-literal and use-list-literal (the latter was mandatory
+                                    # from pylint but unnecessary-collection-call handles
+                                    # dict()/list()/tuple() with a single check so it runs as optional now)
 ]
 
 ignore = [
@@ -81,12 +90,12 @@ ignore = [
 max-complexity = 15
 
 [lint.odoo]
-# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+# Version-scoped Odoo checks are gated by ruff-odoo based on this odoo-version setting
 {%- if odoo_version %}
 odoo-version = "{{ odoo_version }}"
 {%- endif %}
 
 [lint.per-file-ignores]
 "__manifest__.py" = [
-    "B018",  # Same as the old .flake8-optional per-file-ignores
+    "useless-expression",  # Same as the old .flake8-optional per-file-ignores
 ]

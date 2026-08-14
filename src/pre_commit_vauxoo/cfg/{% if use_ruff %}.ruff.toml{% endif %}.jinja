@@ -1,11 +1,13 @@
 # Mandatory ruff checks
 # It runs ruff-odoo (https://github.com/Vauxoo/ruff-odoo), the Vauxoo fork of ruff
-# with the Odoo-specific ODOO* rules ported from pylint-odoo and odoo-pre-commit-hooks
+# with the Odoo-specific rules ported from pylint-odoo and odoo-pre-commit-hooks
 # It replaces the flake8 and pylint mandatory checks already implemented in ruff:
 #  - flake8 only keeps the continuation-line rules (E12x/E13x/E704) not implemented in ruff (see .flake8)
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc "migrated to ruff" section)
 line-length = 119
-preview = true  # Required by the pycodestyle rules (E1xx,E2xx,E3xx,W391) migrated from flake8
+# Required by the pycodestyle rules migrated from flake8 and to select the checks by name
+# instead of by code (selecting rules by name requires preview mode)
+preview = true
 target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 
 [lint]
@@ -22,206 +24,211 @@ select = [
           # notimplemented-raised, f-string-without-interpolation, not-in-loop,
           # return-outside-function, yield-outside-function, too-many-star-expressions and undefined-all-variable)
     # pylint mandatory checks with a ruff replacement (disabled now from .config/.pylintrc)
-    "A001",  # redefined-builtin (variables)
-    "A002",  # redefined-builtin (arguments)
-    "A004",  # redefined-builtin (imports)
-    "B002",  # nonexistent-operator
-    "B006",  # dangerous-default-value
-    "B012",  # lost-exception
-    "B019",  # method-cache-max-size-none
-    "B025",  # duplicate-except
-    "B033",  # duplicate-value
-    "C401",  # consider-using-set-comprehension for set(generator)
-    "C402",  # consider-using-dict-comprehension for dict(generator)
-    "C403",  # consider-using-set-comprehension for set([...])
-    "C404",  # consider-using-dict-comprehension for dict([...])
-    "C416",  # unnecessary-comprehension
-    "C419",  # use-a-generator (with preview it also covers consider-using-generator)
-    "D419",  # empty-docstring
-    "G001",  # logging-format-interpolation
-    "G002",  # logging-not-lazy (%)
-    "G003",  # logging-not-lazy (+ concatenation)
-    "G004",  # logging-fstring-interpolation
-    "N804",  # bad-classmethod-argument
-    "N805",  # no-self-argument
-    "PIE790",  # unnecessary-pass
-    "PLC0105",  # typevar-name-incorrect-variance
-    "PLC0131",  # typevar-double-variance
-    "PLC0132",  # typevar-name-mismatch
-    "PLC0205",  # single-string-used-for-slots
-    "PLC0207",  # use-maxsplit-arg
-    "PLC0208",  # use-sequence-for-iteration
-    "PLC0414",  # useless-import-alias
-    "PLC0415",  # import-outside-toplevel
-    "PLC1802",  # use-implicit-booleaness-not-len
-    "PLC2401",  # non-ascii-name
-    "PLC2403",  # non-ascii-module-import
-    "PLC2801",  # unnecessary-dunder-call
-    "PLC3002",  # unnecessary-direct-lambda-call
-    "PLE0100",  # init-is-generator
-    "PLE0101",  # return-in-init
-    "PLE0115",  # nonlocal-and-global
-    "PLE0116",  # continue-in-finally
-    "PLE0117",  # nonlocal-without-binding
-    "PLE0118",  # used-prior-global-declaration
-    "PLE0237",  # assigning-non-slot
-    "PLE0241",  # duplicate-bases
-    "PLE0302",  # unexpected-special-method-signature
-    "PLE0303",  # invalid-length-returned
-    "PLE0304",  # invalid-bool-returned
-    "PLE0305",  # invalid-index-returned
-    "PLE0307",  # invalid-str-returned
-    "PLE0308",  # invalid-bytes-returned
-    "PLE0309",  # invalid-hash-returned
-    "PLE0604",  # invalid-all-object
-    "PLE0605",  # invalid-all-format
-    "PLE0643",  # potential-index-error
-    "PLE0704",  # misplaced-bare-raise
-    "PLE1132",  # repeated-keyword
-    "PLE1141",  # dict-iter-missing-items
-    "PLE1142",  # await-outside-async
-    "PLE1205",  # logging-too-many-args
-    "PLE1206",  # logging-too-few-args
-    "PLE1300",  # bad-format-character
-    "PLE1307",  # bad-string-format-type
-    "PLE1310",  # bad-str-strip-call
-    "PLE1507",  # invalid-envvar-value
-    "PLE1519",  # singledispatch-method
-    "PLE1520",  # singledispatchmethod-function
-    "PLE1700",  # yield-inside-async-function
-    "PLE2502",  # bidirectional-unicode
-    "PLE2510",  # invalid-character-backspace
-    "PLE2512",  # invalid-character-sub
-    "PLE2513",  # invalid-character-esc
-    "PLE2514",  # invalid-character-nul
-    "PLE2515",  # invalid-character-zero-width-space
-    "PLE4703",  # modified-iterating-set
-    "PLR0124",  # comparison-with-itself
-    "PLR0133",  # comparison-of-constants
-    "PLR0202",  # no-classmethod-decorator
-    "PLR0203",  # no-staticmethod-decorator
-    "PLR0206",  # property-with-parameters
-    "PLR0402",  # consider-using-from-import
-    "PLR0904",  # too-many-public-methods
-    "PLR0911",  # too-many-return-statements
-    "PLR0913",  # too-many-arguments
-    "PLR0914",  # too-many-locals
-    "PLR1702",  # too-many-nested-blocks
-    "PLR1704",  # redefined-argument-from-local
-    "PLR1708",  # stop-iteration-return
-    "PLR1711",  # useless-return
-    "PLR1712",  # consider-swap-variables
-    "PLR1714",  # consider-using-in
-    "PLR1716",  # chained-comparison
-    "PLR1722",  # consider-using-sys-exit
-    "PLR1730",  # consider-using-min-builtin and consider-using-max-builtin
-    "PLR1733",  # unnecessary-dict-index-lookup
-    "PLR1736",  # unnecessary-list-index-lookup
-    "PLW0108",  # unnecessary-lambda
-    "PLW0120",  # useless-else-on-loop
-    "PLW0127",  # self-assigning-variable
-    "PLW0128",  # redeclared-assigned-name
-    "PLW0129",  # assert-on-string-literal
-    "PLW0131",  # named-expr-without-context
-    "PLW0133",  # pointless-exception-statement
-    "PLW0177",  # nan-comparison
-    "PLW0211",  # bad-staticmethod-argument
-    "PLW0245",  # super-without-brackets
-    "PLW0602",  # global-variable-not-assigned
-    "PLW0603",  # global-statement
-    "PLW0604",  # global-at-module-level
-    "PLW0711",  # binary-op-exception
-    "PLW1501",  # bad-open-mode
-    "PLW1507",  # shallow-copy-environ
-    "PLW1508",  # invalid-envvar-default
-    "PLW1509",  # subprocess-popen-preexec-fn
-    "PLW1510",  # subprocess-run-check
-    "PLW2101",  # useless-with-lock
-    "PLW3301",  # nested-min-max
-    "RET505",  # no-else-return
-    "RET506",  # no-else-raise
-    "RET507",  # no-else-continue
-    "RET508",  # no-else-break
-    "S102",  # exec-used
-    "S307",  # eval-used
-    "SIM101",  # consider-merging-isinstance
-    "SIM103",  # simplifiable-if-statement
-    "SIM118",  # consider-iterating-dictionary
-    "SIM208",  # unnecessary-negation
-    "SIM210",  # simplifiable-if-expression (True if x else False)
-    "SIM211",  # simplifiable-if-expression (False if x else True)
-    "SIM220",  # condition-evals-to-constant (x and not x)
-    "SIM221",  # condition-evals-to-constant (x or not x)
-    "SIM222",  # condition-evals-to-constant (x or True)
-    "SIM223",  # condition-evals-to-constant (x and False)
-    "T100",  # forgotten-debug-statement
-    "UP004",  # useless-object-inheritance
-    "UP008",  # super-with-arguments
+    "assert-on-string-literal",
+    "await-outside-async",
+    "bad-open-mode",
+    "bad-staticmethod-argument",
+    "bad-str-strip-call",
+    "bad-string-format-character",  # bad-format-character
+    "bad-string-format-type",
+    "bidirectional-unicode",
+    "binary-op-exception",
+    "boolean-chained-comparison",  # chained-comparison
+    "builtin-argument-shadowing",  # redefined-builtin (arguments)
+    "builtin-import-shadowing",  # redefined-builtin (imports)
+    "builtin-variable-shadowing",  # redefined-builtin (variables)
+    "cached-instance-method",  # method-cache-max-size-none
+    "comparison-of-constant",  # comparison-of-constants
+    "comparison-with-itself",
+    "continue-in-finally",
+    "debugger",  # forgotten-debug-statement
+    "dict-iter-missing-items",
+    "double-negation",  # unnecessary-negation
+    "duplicate-bases",
+    "duplicate-isinstance-call",  # consider-merging-isinstance
+    "duplicate-try-block-exception",  # duplicate-except
+    "duplicate-value",
+    "empty-docstring",
+    "exec-builtin",  # exec-used
+    "expr-and-false",  # condition-evals-to-constant (x and False)
+    "expr-and-not-expr",  # condition-evals-to-constant (x and not x)
+    "expr-or-not-expr",  # condition-evals-to-constant (x or not x)
+    "expr-or-true",  # condition-evals-to-constant (x or True)
+    "global-at-module-level",
+    "global-statement",
+    "global-variable-not-assigned",
+    "if-expr-with-false-true",  # simplifiable-if-expression (False if x else True)
+    "if-expr-with-true-false",  # simplifiable-if-expression (True if x else False)
+    "if-stmt-min-max",  # consider-using-min-builtin and consider-using-max-builtin
+    "import-outside-top-level",  # import-outside-toplevel
+    "in-dict-keys",  # consider-iterating-dictionary
+    "invalid-all-format",
+    "invalid-all-object",
+    "invalid-bool-return-type",  # invalid-bool-returned
+    "invalid-bytes-return-type",  # invalid-bytes-returned
+    "invalid-character-backspace",
+    "invalid-character-esc",
+    "invalid-character-nul",
+    "invalid-character-sub",
+    "invalid-character-zero-width-space",
+    "invalid-envvar-default",
+    "invalid-envvar-value",
+    "invalid-first-argument-name-for-class-method",  # bad-classmethod-argument
+    "invalid-first-argument-name-for-method",  # no-self-argument
+    "invalid-hash-return-type",  # invalid-hash-returned
+    "invalid-index-return-type",  # invalid-index-returned
+    "invalid-length-return-type",  # invalid-length-returned
+    "invalid-str-return-type",  # invalid-str-returned
+    "iteration-over-set",  # use-sequence-for-iteration
+    "jump-statement-in-finally",  # lost-exception
+    "len-test",  # use-implicit-booleaness-not-len
+    "load-before-global-declaration",  # used-prior-global-declaration
+    "logging-f-string",  # logging-fstring-interpolation
+    "logging-percent-format",  # logging-not-lazy (%)
+    "logging-string-concat",  # logging-not-lazy (+ concatenation)
+    "logging-string-format",  # logging-format-interpolation
+    "logging-too-few-args",
+    "logging-too-many-args",
+    "manual-from-import",  # consider-using-from-import
+    "misplaced-bare-raise",
+    "missing-maxsplit-arg",  # use-maxsplit-arg
+    "modified-iterating-set",
+    "mutable-argument-default",  # dangerous-default-value
+    "named-expr-without-context",
+    "nan-comparison",
+    "needless-bool",  # simplifiable-if-statement
+    "nested-min-max",
+    "no-classmethod-decorator",
+    "no-staticmethod-decorator",
+    "non-ascii-import-name",  # non-ascii-module-import
+    "non-ascii-name",
+    "non-slot-assignment",  # assigning-non-slot
+    "nonlocal-and-global",
+    "nonlocal-without-binding",
+    "potential-index-error",
+    "property-with-parameters",
+    "redeclared-assigned-name",
+    "redefined-argument-from-local",
+    "repeated-equality-comparison",  # consider-using-in
+    "repeated-keyword-argument",  # repeated-keyword
+    "return-in-init",
+    "self-assigning-variable",
+    "shallow-copy-environ",
+    "single-string-slots",  # single-string-used-for-slots
+    "singledispatch-method",
+    "singledispatchmethod-function",
+    "stop-iteration-return",
+    "subprocess-popen-preexec-fn",
+    "subprocess-run-without-check",  # subprocess-run-check
+    "super-call-with-parameters",  # super-with-arguments
+    "super-without-brackets",
+    "superfluous-else-break",  # no-else-break
+    "superfluous-else-continue",  # no-else-continue
+    "superfluous-else-raise",  # no-else-raise
+    "superfluous-else-return",  # no-else-return
+    "suspicious-eval-usage",  # eval-used
+    "swap-with-temporary-variable",  # consider-swap-variables
+    "sys-exit-alias",  # consider-using-sys-exit
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "type-bivariance",  # typevar-double-variance
+    "type-name-incorrect-variance",  # typevar-name-incorrect-variance
+    "type-param-name-mismatch",  # typevar-name-mismatch
+    "unary-prefix-increment-decrement",  # nonexistent-operator
+    "unexpected-special-method-signature",
+    "unnecessary-comprehension",
+    "unnecessary-comprehension-in-call",  # use-a-generator (with preview it also covers consider-using-generator)
+    "unnecessary-dict-index-lookup",
+    "unnecessary-direct-lambda-call",
+    "unnecessary-dunder-call",
+    "unnecessary-generator-dict",  # consider-using-dict-comprehension for dict(generator)
+    "unnecessary-generator-set",  # consider-using-set-comprehension for set(generator)
+    "unnecessary-lambda",
+    "unnecessary-list-comprehension-dict",  # consider-using-dict-comprehension for dict([...])
+    "unnecessary-list-comprehension-set",  # consider-using-set-comprehension for set([...])
+    "unnecessary-list-index-lookup",
+    "unnecessary-placeholder",  # unnecessary-pass
+    "useless-else-on-loop",
+    "useless-exception-statement",  # pointless-exception-statement
+    "useless-import-alias",
+    "useless-object-inheritance",
+    "useless-return",
+    "useless-with-lock",
+    "yield-from-in-async-function",  # yield-inside-async-function
+    "yield-in-init",  # init-is-generator
     # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
-    #  - The autofixable ones (ODOO002, ODOO003, ODOO006, ODOO007, ODOO024, ODOO025, ODOO026,
-    #    ODOO035, ODOO048 and ODOO059) run from the autofix configuration instead (see .ruff-autofix.toml)
-    #  - ODOO008 (manifest-required-author) and ODOO010 (license-allowed) keep running from
+    #  - The autofixable ones (manifest-deprecated-key, use-vim-comment, unused-logger,
+    #    attribute-string-redundant, prefer-env-translation, manifest-superfluous-key, header-comments,
+    #    deprecated-self-cr, manifest-data-duplicated and translation-not-lazy) run from the
+    #    autofix configuration instead (see .ruff-autofix.toml)
+    #  - manifest-required-author and license-allowed keep running from
     #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
     #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
     #    is passed to ruff; all version-scoped checks are always enabled here and ruff filters them
-    "ODOO001",  # manifest-required-key
-    "ODOO004",  # except-pass
-    "ODOO005",  # method-required-super
-    "ODOO009",  # manifest-author-string
-    "ODOO011",  # manifest-maintainers-list
-    "ODOO012",  # manifest-summary-multiline
-    "ODOO013",  # development-status-allowed
-    "ODOO014",  # website-manifest-key-not-valid-uri
-    "ODOO015",  # invalid-email
-    "ODOO016",  # missing-readme
-    "ODOO017",  # invalid-commit
-    "ODOO018",  # context-overridden
-    "ODOO019",  # bad-builtin-groupby
-    "ODOO020",  # odoo-exception-warning
-    "ODOO021",  # attribute-deprecated
-    "ODOO022",  # missing-return
-    "ODOO023",  # odoo-addons-relative-import
-    "ODOO027",  # method-compute
-    "ODOO028",  # method-search
-    "ODOO029",  # method-inverse
-    "ODOO030",  # renamed-field-parameter
-    "ODOO031",  # translation-field
-    "ODOO032",  # inheritable-method-string
-    "ODOO033",  # inheritable-method-lambda
-    "ODOO034",  # deprecated-name-get
-    "ODOO036",  # super-method-mismatch
-    "ODOO037",  # deprecated-odoo-model-method
-    "ODOO038",  # no-search-all
-    "ODOO039",  # no-raise-unlink
-    "ODOO040",  # no-write-in-compute
-    "ODOO041",  # translation-contains-variable
-    "ODOO042",  # translation-positional
-    "ODOO043",  # translation-injection
-    "ODOO044",  # deprecated-inselect-operator
-    "ODOO045",  # test-folder-imported
-    "ODOO046",  # manifest-external-assets
-    "ODOO049",  # translation-required
-    "ODOO050",  # no-wizard-in-models
-    "ODOO051",  # external-request-timeout (S113 is a subset of it, don't enable both)
-    "ODOO052",  # sql-injection
-    "ODOO053",  # resource-not-exist
-    "ODOO054",  # manifest-behind-migrations
-    "ODOO055",  # prohibited-method-override
-    "ODOO056",  # translation-format-interpolation
-    "ODOO057",  # translation-format-truncated
-    "ODOO058",  # translation-fstring-interpolation
-    # ODOO059 (translation-not-lazy) is autofixable so it runs from .ruff-autofix.toml
-    "ODOO060",  # translation-too-few-args
-    "ODOO061",  # translation-too-many-args
-    "ODOO062",  # translation-unsupported-format
-    "ODOO063",  # consider-merging-classes-inherited (duplicate-inherited-model-extension)
+    "attribute-deprecated",
+    "bad-builtin-groupby",
+    "category-allowed",  # Inert until the category-allowed option is set (see [lint.odoo])
+    "consider-merging-classes-inherited",
+    "context-overridden",
+    "deprecated-inselect-operator",
+    "deprecated-name-get",
+    "deprecated-odoo-model-method",
+    "development-status-allowed",
+    "except-pass",
+    "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
+    "inheritable-method-lambda",
+    "inheritable-method-string",
+    "invalid-commit",
+    "invalid-email",
+    "manifest-author-string",
+    "manifest-behind-migrations",
+    "manifest-external-assets",
+    "manifest-maintainers-list",
+    "manifest-required-key",
+    "manifest-summary-multiline",
+    "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
+    "method-compute",
+    "method-inverse",
+    "method-required-super",
+    "method-search",
+    "missing-odoo-file",  # Inert until the odoo-required-files option is set (see [lint.odoo])
+    "missing-readme",
+    "missing-return",
+    "no-raise-unlink",
+    "no-search-all",
+    "no-wizard-in-models",
+    "no-write-in-compute",
+    "odoo-addons-relative-import",
+    "odoo-exception-warning",
+    "prohibited-method-override",
+    "renamed-field-parameter",
+    "resource-not-exist",
+    "sql-injection",
+    "super-method-mismatch",
+    "test-folder-imported",
+    "translation-contains-variable",
+    "translation-field",
+    "translation-format-interpolation",
+    "translation-format-truncated",
+    "translation-fstring-interpolation",
+    "translation-injection",
+    # translation-not-lazy is autofixable so it runs from .ruff-autofix.toml
+    "translation-positional-used",
+    "translation-required",
+    "translation-too-few-args",
+    "translation-too-many-args",
+    "translation-unsupported-format",
+    "website-manifest-key-not-valid-uri",
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
-    "OAPP001",  # category-allowed-app
-    "OAPP002",  # missing-odoo-file-app
-    "OAPP003",  # manifest-required-key-app
+    "category-allowed-app",
+    "manifest-required-key-app",
+    "missing-odoo-file-app",
 {% endif %}
 ]
 
@@ -233,18 +240,18 @@ ignore = [
 {% endfor %}
 {% endif %}
 {% if not is_project_for_apps %}
-    # The OAPP checks only apply for modules published in the Odoo Apps store
+    # The odoo.com/apps checks only apply for modules published in the Odoo Apps store
     # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
-    "OAPP",  # category-allowed-app, missing-odoo-file-app and manifest-required-key-app
+    "OAPP",  # category-allowed-app, manifest-required-key-app and missing-odoo-file-app
 {% endif %}
     # Same ignores previously configured in .config/.flake8
-    "E203",  # whitespace before ':' is handled by black and it doesn't consider black syntax
-    "E226",  # missing whitespace around arithmetic operator (better autofixing)
-    "E241",  # multiple spaces after ',' (better autofixing)
-    "E242",  # tab after ',' (enabled from the optional configuration)
-    "E501",  # line-too-long (handled by the autofix and bugbear B950 from optional)
-    "E741",  # do not use variables named 'l', 'O', or 'I' (enabled from the optional configuration)
-    "F811",  # redefinition is legal in odoo 8 when we implement 2 interfaces for a method
+    "ambiguous-variable-name",  # do not use variables named 'l', 'O', or 'I' (enabled from the optional configuration)
+    "line-too-long",  # line-too-long (handled by the autofix and bugbear B950 from optional)
+    "missing-whitespace-around-arithmetic-operator",  # missing whitespace around arithmetic operator (better autofixing)
+    "multiple-spaces-after-comma",  # multiple spaces after ',' (better autofixing)
+    "redefined-while-unused",  # redefinition is legal in odoo 8 when we implement 2 interfaces for a method
+    "tab-after-comma",  # tab after ',' (enabled from the optional configuration)
+    "whitespace-before-punctuation",  # whitespace before ':' is handled by black and it doesn't consider black syntax
 ]
 
 [lint.flake8-builtins]
@@ -252,10 +259,22 @@ ignore = [
 builtins-ignorelist = ["id"]
 
 [lint.odoo]
-# Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+# Version-scoped Odoo checks are gated by ruff-odoo based on this odoo-version setting
+# It is also the odoo serie required in the manifest "version" key by manifest-version-format
+# the same way pylint-odoo used its "valid-odoo-version" option
+# (see .pylintrc). Without it any 5 numeric parts version is valid
 {%- if odoo_version %}
 odoo-version = "{{ odoo_version }}"
 {%- endif %}
+# Same values configured for the pylint-odoo checks replaced by these ruff-odoo ones:
+#  - category-allowed uses the [ODOOLINT] "category-allowed" option
+#  - missing-odoo-file uses the [ODOOLINT] "odoo-required-files" option
+# Both are empty (the same pylint-odoo default) so both checks are inert, they are kept here
+# to configure them from a single place. The odoo.com/apps counterparts (category-allowed-app
+# and missing-odoo-file-app)
+# have their own fixed values so they are not configurable from here
+category-allowed = []
+odoo-required-files = []
 
 [lint.pylint]
 # Same limits as the .pylintrc [DESIGN] section
@@ -267,8 +286,8 @@ max-returns = 6
 
 [lint.per-file-ignores]
 "__init__.py" = [
-    "F401",  # imported but unused is legal in odoo __init__.py files
+    "unused-import",  # imported but unused is legal in odoo __init__.py files
 ]
 "docs/conf.py" = [
-    "A001",  # Sphinx requires assigning the "copyright" builtin variable name
+    "builtin-variable-shadowing",  # Sphinx requires assigning the "copyright" builtin variable name
 ]
