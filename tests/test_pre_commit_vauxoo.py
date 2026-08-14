@@ -633,6 +633,26 @@ class TestPreCommitVauxoo:
             f"Wrong version-dependent ignores in .ruff-autofix.toml for odoo version {odoo_version}"
         )
 
+    def test_ruff_odoo_options(self, caplog):
+        """The [lint.odoo] options must have the same values configured for the
+        pylint-odoo checks replaced by ruff-odoo (see the [ODOOLINT] section of .pylintrc*)"""
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", "17.0"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
+            data = tomllib.load(f_ruff_toml)
+        odoo_options = data["lint"]["odoo"]
+        # Same as the pylint "valid-odoo-version" option used by manifest-version-format
+        assert odoo_options["odoo-version"] == "17.0", "Wrong odoo-version in .ruff.toml"
+        # Same empty default of the pylint-odoo options so both checks are inert
+        assert odoo_options["category-allowed"] == [], "Wrong category-allowed in .ruff.toml"
+        assert odoo_options["odoo-required-files"] == [], "Wrong odoo-required-files in .ruff.toml"
+        assert {"ODOO064", "ODOO065", "ODOO066"}.issubset(set(data["lint"]["select"])), (
+            "The checks using the [lint.odoo] options are not selected in .ruff.toml"
+        )
+
     def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
         """The ruff target-version must be mapped from the odoo version
         (VERSION or --odoo-version)"""

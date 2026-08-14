@@ -196,7 +196,7 @@ select = [
     "ODOO039",  # no-raise-unlink
     "ODOO040",  # no-write-in-compute
     "ODOO041",  # translation-contains-variable
-    "ODOO042",  # translation-positional
+    "ODOO042",  # translation-positional-used
     "ODOO043",  # translation-injection
     "ODOO044",  # deprecated-inselect-operator
     "ODOO045",  # test-folder-imported
@@ -215,7 +215,10 @@ select = [
     "ODOO060",  # translation-too-few-args
     "ODOO061",  # translation-too-many-args
     "ODOO062",  # translation-unsupported-format
-    "ODOO063",  # consider-merging-classes-inherited (duplicate-inherited-model-extension)
+    "ODOO063",  # consider-merging-classes-inherited
+    "ODOO064",  # manifest-version-format (it uses the odoo-version option, see [lint.odoo])
+    "ODOO065",  # category-allowed (inert until the category-allowed option is set, see [lint.odoo])
+    "ODOO066",  # missing-odoo-file (inert until the odoo-required-files option is set, see [lint.odoo])
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
@@ -253,9 +256,20 @@ builtins-ignorelist = ["id"]
 
 [lint.odoo]
 # Version-scoped ODOO checks are gated by ruff-odoo based on this odoo-version setting
+# It is also the odoo serie required in the manifest "version" key by ODOO064
+# (manifest-version-format) the same way pylint-odoo used its "valid-odoo-version" option
+# (see .pylintrc). Without it any 5 numeric parts version is valid
 {%- if odoo_version %}
 odoo-version = "{{ odoo_version }}"
 {%- endif %}
+# Same values configured for the pylint-odoo checks replaced by these ruff-odoo ones:
+#  - category-allowed (ODOO065) uses the [ODOOLINT] "category-allowed" option
+#  - odoo-required-files (ODOO066) uses the [ODOOLINT] "odoo-required-files" option
+# Both are empty (the same pylint-odoo default) so both checks are inert, they are kept here
+# to configure them from a single place. The odoo.com/apps counterparts (OAPP001 and OAPP002)
+# have their own fixed values so they are not configurable from here
+category-allowed = []
+odoo-required-files = []
 
 [lint.pylint]
 # Same limits as the .pylintrc [DESIGN] section
