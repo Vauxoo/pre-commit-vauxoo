@@ -670,7 +670,9 @@ class TestPreCommitVauxoo:
         for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
             with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
                 data = tomllib.load(f_ruff_toml)
-            assert data["preview"], f"The preview mode is required to select the checks by name in {ruff_toml_filename}"
+            assert data["preview"], (
+                f"The preview mode is required to select the checks by name in {ruff_toml_filename}"
+            )
             checks = data["lint"].get("select", []) + data["lint"]["ignore"]
             for per_file_checks in data["lint"].get("per-file-ignores", {}).values():
                 checks += per_file_checks
@@ -849,7 +851,8 @@ class TestPreCommitVauxoo:
         assert "category-allowed-app" in pylintrc_content, msg
         with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
             ruff_lint = tomllib.load(f_ruff_toml)["lint"]
-        assert ({"OAPP001", "OAPP002", "OAPP003"} <= set(ruff_lint["select"])) == enabled, msg
+        apps_checks = {"category-allowed-app", "manifest-required-key-app", "missing-odoo-file-app"}
+        assert (apps_checks <= set(ruff_lint["select"])) == enabled, msg
         assert ("OAPP" in ruff_lint["ignore"]) != enabled, msg
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             autofix_ignore = tomllib.load(f_ruff_toml)["lint"]["ignore"]
