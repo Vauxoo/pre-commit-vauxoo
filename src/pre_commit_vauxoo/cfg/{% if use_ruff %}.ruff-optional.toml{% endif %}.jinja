@@ -53,23 +53,23 @@ select = [
     "useless-contextlib-suppress",
     "useless-expression",
     # Checks enabled in the optional flake8 but ignored in the mandatory one
-    "tab-after-comma",  # tab after ','
     "ambiguous-variable-name",  # ambiguous variable name 'l', 'O', or 'I'
     "redefined-while-unused",
+    "tab-after-comma",  # tab after ','
     # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
+    #  - try-except-pass was removed since the ruff-odoo except-pass runs it as mandatory (see .ruff.toml)
+    #  - request-without-timeout is not selected since the ruff-odoo external-request-timeout
+    #    covers it (requests + more libraries) as mandatory (see .ruff.toml)
     "compare-to-empty-string",  # use-implicit-booleaness-not-comparison-to-string
-    # try-except-pass was removed since the ruff-odoo except-pass runs it as mandatory (see .ruff.toml)
-    # request-without-timeout is not selected since the ruff-odoo external-request-timeout covers it
-    # (requests + more libraries) as mandatory (see .ruff.toml)
     "complex-structure",  # too-complex (mccabe)
     "multi-line-summary-first-line",  # docstring-first-line-empty
     "print",  # print-used
     "single-line-implicit-string-concatenation",  # implicit-str-concat
     "triple-single-quotes",  # bad-docstring-quotes
     "unicode-kind-prefix",  # redundant-u-string-prefix
-    "unnecessary-collection-call",  # use-dict-literal and use-list-literal (the latter was mandatory from pylint but
-              # unnecessary-collection-call handles dict()/list()/tuple() with a single check
-              # so it runs as optional now)
+    "unnecessary-collection-call",  # use-dict-literal and use-list-literal (the latter was mandatory
+                                    # from pylint but unnecessary-collection-call handles
+                                    # dict()/list()/tuple() with a single check so it runs as optional now)
 ]
 
 ignore = [

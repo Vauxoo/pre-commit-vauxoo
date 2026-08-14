@@ -654,6 +654,29 @@ class TestPreCommitVauxoo:
             "The checks using the [lint.odoo] options are not selected in .ruff.toml"
         )
 
+    def test_ruff_checks_by_name(self, caplog):
+        """The ruff checks must be configured by name (e.g. "no-search-all") and never by
+        code (e.g. "ODOO038") to keep the same names used in the .pylintrc* configuration
+
+        Only the linter prefixes without a name equivalent (e.g. "E", "W", "F", "OAPP") are
+        allowed. Selecting the checks by name requires the "preview" mode enabled and an
+        unknown name is only warned by ruff (not selected) so it needs to be checked here
+        """
+        self.skip_if_no_ruff()
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        os.environ.pop("VERSION", None)
+        result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", "17.0"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
+            with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
+                data = tomllib.load(f_ruff_toml)
+            assert data["preview"], f"The preview mode is required to select the checks by name in {ruff_toml_filename}"
+            checks = data["lint"].get("select", []) + data["lint"]["ignore"]
+            for per_file_checks in data["lint"].get("per-file-ignores", {}).values():
+                checks += per_file_checks
+            codes = [check for check in checks if re.match(r"^[A-Z]+\d+$", check)]
+            assert not codes, f"The checks {codes} should be configured by name in {ruff_toml_filename}"
+
     def test_ruff_py_target_version(self, ruff_py_target_use_case, caplog):
         """The ruff target-version must be mapped from the odoo version
         (VERSION or --odoo-version)"""
