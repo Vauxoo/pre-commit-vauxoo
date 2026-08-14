@@ -9,10 +9,6 @@ disable=po-pretty-format,
     xml-id-position-first,
     xml-oe-structure-missing-id,
     xml-redundant-module-name,
-{#- Always disabled: prettier is never configured with an aggressive xmlWhitespaceSensitivity
-    (it would inject real newlines inside e.g. `textarea` instead of a style-only change)
-    and this check is being removed from odoo-pre-commit-hooks upstream #}
-    xml-template-prettier-incompatible,
 {%- if oca_hooks_disable_checks %}
     {{ ",\n    ".join(oca_hooks_disable_checks) }},
 {%- endif %}
