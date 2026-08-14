@@ -56,19 +56,19 @@ def env_mode(request, monkeypatch):
 # Version-dependent gating is now handled by ruff-odoo's internal logic via --odoo-version;
 # all version-scoped checks are always in select/ignore lists, ruff filters them at runtime
 VERSIONED_MANDATORY_CHECKS = {
-    "ODOO012",  # manifest-summary-multiline
-    "ODOO034",  # deprecated-name-get
-    "ODOO039",  # no-raise-unlink
-    "ODOO041",  # translation-contains-variable
-    "ODOO044",  # deprecated-inselect-operator
-    "ODOO056",  # translation-format-interpolation
-    "ODOO057",  # translation-format-truncated
-    "ODOO058",  # translation-fstring-interpolation
-    "ODOO060",  # translation-too-few-args
-    "ODOO061",  # translation-too-many-args
-    "ODOO062",  # translation-unsupported-format
+    "deprecated-inselect-operator",
+    "deprecated-name-get",
+    "manifest-summary-multiline",
+    "no-raise-unlink",
+    "translation-contains-variable",
+    "translation-format-interpolation",
+    "translation-format-truncated",
+    "translation-fstring-interpolation",
+    "translation-too-few-args",
+    "translation-too-many-args",
+    "translation-unsupported-format",
 }
-VERSIONED_AUTOFIX_CHECKS = {"ODOO024", "ODOO035", "ODOO059"}
+VERSIONED_AUTOFIX_CHECKS = {"deprecated-self-cr", "prefer-env-translation", "translation-not-lazy"}
 
 
 @pytest.fixture(
@@ -649,7 +649,8 @@ class TestPreCommitVauxoo:
         # Same empty default of the pylint-odoo options so both checks are inert
         assert odoo_options["category-allowed"] == [], "Wrong category-allowed in .ruff.toml"
         assert odoo_options["odoo-required-files"] == [], "Wrong odoo-required-files in .ruff.toml"
-        assert {"ODOO064", "ODOO065", "ODOO066"}.issubset(set(data["lint"]["select"])), (
+        expected_checks = {"category-allowed", "manifest-version-format", "missing-odoo-file"}
+        assert expected_checks.issubset(set(data["lint"]["select"])), (
             "The checks using the [lint.odoo] options are not selected in .ruff.toml"
         )
 
