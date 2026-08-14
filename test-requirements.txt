@@ -1,7 +1,11 @@
 build
 bump2version
+colorama  # runtime dep of odoo-pre-commit-hooks, loaded from its sibling checkout by tests/test_oca_hooks_parity.py
 coverage
+lxml>=4.2.3  # runtime dep of odoo-pre-commit-hooks (xml checks), see colorama comment above
+packaging  # runtime dep of odoo-pre-commit-hooks, see colorama comment above
 pbr
+polib==1.2.*  # runtime dep of odoo-pre-commit-hooks (po checks), see colorama comment above
 pre-commit
 pylint-odoo
 pytest ; python_version < '3.13'

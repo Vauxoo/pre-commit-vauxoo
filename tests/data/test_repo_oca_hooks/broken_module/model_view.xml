@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_model_form" model="ir.ui.view">
+            <field name="name">view.model.form</field>
+            <field name="model">test.model</field>
+            <field name="arch" type="xml">
+                <form string="Test model">
+                    <field name="name"/>
+                    <xpath expr="//div[contains(text(), 'Translatable String')]/more/path" position="attributes">
+                        <attribute name="t-if">o.value</attribute>
+                    </xpath>
+                    <xpath expr="//span[@t-esc='o.amount_to_text()']/.." position="after">
+                        <attribute name="t-if">o.value</attribute>
+                    </xpath>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" groups="base.group_user"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+        <!-- Record without "id" -->
+        <record model="ir.ui.view"/>
+
+        <!-- Also no "id" -->
+        <record id="" model="ir.ui.view"/>
+    </data>
+</openerp>
