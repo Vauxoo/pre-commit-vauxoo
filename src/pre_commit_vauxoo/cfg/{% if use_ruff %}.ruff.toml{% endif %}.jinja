@@ -168,7 +168,8 @@ select = [
     #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
     #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
-    #    is passed to ruff; all version-scoped checks are always enabled here and ruff filters them
+    #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
+    #    filters them
     "attribute-deprecated",
     "bad-builtin-groupby",
     "category-allowed",  # Inert until the category-allowed option is set (see [lint.odoo])
