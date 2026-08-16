@@ -139,7 +139,9 @@ disable=abstract-method,
    website-manifest-key-not-valid-uri
    {%- if use_ruff %},
    # Checks migrated to ruff (see .config/.ruff.toml)
-   # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks
+   # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks,
+   # except the ones annotated with the configuration file running them (e.g. use-list-literal,
+   # which a single ruff rule reports together with the optional use-dict-literal)
    anomalous-backslash-in-string,  # ruff W605
    assert-on-string-literal,  # ruff PLW0129
    assert-on-tuple,  # ruff F631
@@ -258,7 +260,7 @@ disable=abstract-method,
    notimplemented-raised,  # ruff F901
    pointless-exception-statement,  # ruff PLW0133
    potential-index-error,  # ruff PLE0643
-   prefer-env-translation,  # ruff ODW8161 (autofix .ruff-autofix.toml)
+   prefer-env-translation,  # ruff ODW8161 (also autofixed from .ruff-autofix.toml)
    prohibited-method-override,  # ruff ODW8107
    property-with-parameters,  # ruff PLR0206
    redeclared-assigned-name,  # ruff PLW0128

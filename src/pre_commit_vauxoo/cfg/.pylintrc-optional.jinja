@@ -42,8 +42,10 @@ enable=deprecated-method,
   useless-parent-delegation
   {%- if not use_ruff %},
   # The following checks are migrated to ruff when it is enabled
-  # The OD* checks (from ruff-odoo), eval-used and except-pass run from the mandatory
-  # .config/.ruff.toml and the rest from .config/.ruff-optional.toml
+  # They keep the same optional level running from .config/.ruff-optional.toml, except the ones
+  # annotated as "mandatory .ruff.toml": those were also enabled by the "enable=all" of
+  # .config/.pylintrc so they keep the mandatory level
+  # The autofixable ones are also fixed from .config/.ruff-autofix.toml (annotated as "autofix")
   attribute-deprecated,  # ruff ODW8105
   attribute-string-redundant,  # ruff ODW8113 (autofix .ruff-autofix.toml)
   bad-builtin-groupby,  # ruff ODW8155
@@ -51,18 +53,18 @@ enable=deprecated-method,
   consider-merging-classes-inherited,  # ruff ODR8180 (mandatory .ruff.toml)
   consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
   context-overridden,  # ruff ODW8121
-  deprecated-odoo-model-method,  # ruff ODW8160 (and ODE8146 for name_get)
+  deprecated-odoo-model-method,  # ruff ODW8160 (ODE8146 for name_get is mandatory .ruff.toml)
   docstring-first-line-empty,  # ruff D212
-  eval-used,  # ruff S307
+  eval-used,  # ruff S307 (mandatory .ruff.toml)
   except-pass,  # ruff ODW8138
   external-request-timeout,  # ruff ODE8106
   implicit-str-concat,  # ruff ISC001
-  invalid-commit,  # ruff ODE8102
+  invalid-commit,  # ruff ODE8102 (mandatory .ruff.toml)
   manifest-author-string,  # ruff ODE8101
   manifest-data-duplicated,  # ruff ODW8125
   manifest-maintainers-list,  # ruff ODE8104
-  manifest-required-key,  # ruff ODC8102
-  manifest-version-format,  # ruff ODC8106 (mandatory .ruff.toml)
+  manifest-required-key,  # ruff ODC8102 (mandatory .ruff.toml)
+  manifest-version-format,  # ruff ODC8106
   method-compute,  # ruff ODC8108
   method-inverse,  # ruff ODC8110
   method-required-super,  # ruff ODW8106
