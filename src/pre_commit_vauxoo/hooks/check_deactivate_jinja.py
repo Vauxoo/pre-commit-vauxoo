@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# pylint: disable=print-used
 
 import json
 import os
