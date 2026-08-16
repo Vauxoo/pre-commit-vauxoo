@@ -35,8 +35,8 @@ re_pylint_check_ruff_codes = re.compile(
 # .pylintrc-optional) but ruff-odoo also implements them, so the same
 # PYLINT_DISABLE_CHECKS name disables the check from both tools
 PYLINT_TO_RUFF_EXTRA_CHECKS = {
-    "license-allowed": ("ODOO010",),
-    "manifest-required-author": ("ODOO008",),
+    "license-allowed": ("ODC8105",),
+    "manifest-required-author": ("ODC8101",),
 }
 
 CFG_SUBFOLDER = ".config"

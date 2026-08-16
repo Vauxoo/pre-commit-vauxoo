@@ -38,53 +38,53 @@ enable=attribute-string-redundant,
   useless-parent-delegation
   {%- if not use_ruff %},
   # The following checks are migrated to ruff when it is enabled
-  # The ODOO* checks (from ruff-odoo), eval-used and except-pass run from the mandatory
+  # The OD* checks (from ruff-odoo), eval-used and except-pass run from the mandatory
   # .config/.ruff.toml and the rest from .config/.ruff-optional.toml
-  attribute-deprecated,  # ruff ODOO021
-  bad-builtin-groupby,  # ruff ODOO019
+  attribute-deprecated,  # ruff ODW8105
+  bad-builtin-groupby,  # ruff ODW8155
   bad-docstring-quotes,  # ruff D300
-  consider-merging-classes-inherited,  # ruff ODOO063 (mandatory .ruff.toml)
+  consider-merging-classes-inherited,  # ruff ODR8180 (mandatory .ruff.toml)
   consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
-  context-overridden,  # ruff ODOO018
-  deprecated-odoo-model-method,  # ruff ODOO037 (and ODOO034 for name_get)
+  context-overridden,  # ruff ODW8121
+  deprecated-odoo-model-method,  # ruff ODW8160 (and ODE8146 for name_get)
   docstring-first-line-empty,  # ruff D212
   eval-used,  # ruff S307
-  except-pass,  # ruff ODOO004
-  external-request-timeout,  # ruff ODOO051
+  except-pass,  # ruff ODW8138
+  external-request-timeout,  # ruff ODE8106
   implicit-str-concat,  # ruff ISC001
-  invalid-commit,  # ruff ODOO017
-  manifest-author-string,  # ruff ODOO009
-  manifest-data-duplicated,  # ruff ODOO048
-  manifest-maintainers-list,  # ruff ODOO011
-  manifest-required-key,  # ruff ODOO001
-  manifest-version-format,  # ruff ODOO064 (mandatory .ruff.toml)
-  method-compute,  # ruff ODOO027
-  method-inverse,  # ruff ODOO029
-  method-required-super,  # ruff ODOO005
-  method-search,  # ruff ODOO028
-  missing-readme,  # ruff ODOO016
-  missing-return,  # ruff ODOO022
-  odoo-addons-relative-import,  # ruff ODOO023
-  odoo-exception-warning,  # ruff ODOO020
+  invalid-commit,  # ruff ODE8102
+  manifest-author-string,  # ruff ODE8101
+  manifest-data-duplicated,  # ruff ODW8125
+  manifest-maintainers-list,  # ruff ODE8104
+  manifest-required-key,  # ruff ODC8102
+  manifest-version-format,  # ruff ODC8106 (mandatory .ruff.toml)
+  method-compute,  # ruff ODC8108
+  method-inverse,  # ruff ODC8110
+  method-required-super,  # ruff ODW8106
+  method-search,  # ruff ODC8109
+  missing-readme,  # ruff ODC8112
+  missing-return,  # ruff ODW8110
+  odoo-addons-relative-import,  # ruff ODW8150
+  odoo-exception-warning,  # ruff ODR8101
   print-used,  # ruff T201
   redundant-u-string-prefix,  # ruff UP025
-  renamed-field-parameter,  # ruff ODOO030
-  resource-not-exist,  # ruff ODOO053
-  sql-injection,  # ruff ODOO052
+  renamed-field-parameter,  # ruff ODW8111
+  resource-not-exist,  # ruff ODF8101
+  sql-injection,  # ruff ODE8103
   too-complex,  # ruff C901
-  translation-contains-variable,  # ruff ODOO041
-  translation-field,  # ruff ODOO031
-  translation-format-interpolation,  # ruff ODOO056
-  translation-format-truncated,  # ruff ODOO057
-  translation-fstring-interpolation,  # ruff ODOO058
-  translation-not-lazy,  # ruff ODOO059
-  translation-required,  # ruff ODOO049
-  translation-too-few-args,  # ruff ODOO060
-  translation-too-many-args,  # ruff ODOO061
-  translation-unsupported-format,  # ruff ODOO062
+  translation-contains-variable,  # ruff ODW8115
+  translation-field,  # ruff ODW8103
+  translation-format-interpolation,  # ruff ODW8302
+  translation-format-truncated,  # ruff ODE8301
+  translation-fstring-interpolation,  # ruff ODW8303
+  translation-not-lazy,  # ruff ODW8301
+  translation-required,  # ruff ODC8107
+  translation-too-few-args,  # ruff ODE8306
+  translation-too-many-args,  # ruff ODE8305
+  translation-unsupported-format,  # ruff ODE8300
   use-dict-literal,  # ruff C408
   use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
-  website-manifest-key-not-valid-uri  # ruff ODOO014
+  website-manifest-key-not-valid-uri  # ruff ODW8114
   {%- endif %}
 
 [REPORTS]
