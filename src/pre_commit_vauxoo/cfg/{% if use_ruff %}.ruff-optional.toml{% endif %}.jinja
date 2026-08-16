@@ -64,7 +64,6 @@ select = [
     "complex-structure",  # too-complex (mccabe)
     "multi-line-summary-first-line",  # docstring-first-line-empty
     "print",  # print-used
-    "suspicious-eval-usage",  # eval-used
     "single-line-implicit-string-concatenation",  # implicit-str-concat
     "triple-single-quotes",  # bad-docstring-quotes
     "unicode-kind-prefix",  # redundant-u-string-prefix
@@ -87,16 +86,13 @@ select = [
     "attribute-deprecated",
     "attribute-string-redundant",
     "bad-builtin-groupby",
-    "consider-merging-classes-inherited",
     "context-overridden",
     "deprecated-odoo-model-method",
     "except-pass",
     "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
-    "invalid-commit",
     "manifest-author-string",
     "manifest-data-duplicated",
     "manifest-maintainers-list",
-    "manifest-required-key",
     "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
     "method-compute",
     "method-inverse",

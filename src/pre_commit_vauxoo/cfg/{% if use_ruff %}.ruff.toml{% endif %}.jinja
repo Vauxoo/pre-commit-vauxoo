@@ -129,7 +129,7 @@ select = [
     "superfluous-else-continue",  # no-else-continue
     "superfluous-else-raise",  # no-else-raise
     "superfluous-else-return",  # no-else-return
-    # suspicious-eval-usage (eval-used) was an optional pylint check so it runs from .ruff-optional.toml
+    "suspicious-eval-usage",  # eval-used
     "swap-with-temporary-variable",  # consider-swap-variables
     "sys-exit-alias",  # consider-using-sys-exit
     "too-many-arguments",
@@ -182,14 +182,17 @@ select = [
     #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
     #    filters them
     "category-allowed",  # Inert until the category-allowed option is set (see [lint.odoo])
+    "consider-merging-classes-inherited",
     "deprecated-inselect-operator",
     "deprecated-name-get",
     "development-status-allowed",
     "inheritable-method-lambda",
     "inheritable-method-string",
+    "invalid-commit",
     "invalid-email",
     "manifest-behind-migrations",
     "manifest-external-assets",
+    "manifest-required-key",
     "manifest-summary-multiline",
     "missing-odoo-file",  # Inert until the odoo-required-files option is set (see [lint.odoo])
     "no-raise-unlink",
