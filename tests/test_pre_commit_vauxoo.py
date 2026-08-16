@@ -75,7 +75,7 @@ VERSIONED_AUTOFIX_CHECKS = {"deprecated-self-cr", "prefer-env-translation", "tra
     name="ruff_odoo_version_use_case",
     params=[
         # odoo_version, expected checks in .ruff.toml (should be all regardless of version),
-        # expected autofix ignored checks (none: ODOO024/ODOO035/ODOO059 gating is handled
+        # expected autofix ignored checks (none: ODW8161/ODW8165/ODW8301 gating is handled
         # internally by ruff-odoo via --odoo-version, so they are never in the ignore list)
         (None, VERSIONED_MANDATORY_CHECKS, set()),
         ("master", VERSIONED_MANDATORY_CHECKS, set()),
@@ -578,10 +578,10 @@ class TestPreCommitVauxoo:
             < 30
         ):
             pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
-        # manifest-required-author (ODOO008) and invalid-commit (ODOO017) come from pylint-odoo,
+        # manifest-required-author (ODC8101) and invalid-commit (ODE8102) come from pylint-odoo,
         # dangerous-default-value (B006) comes from pylint and print-used (T201) runs as optional.
         # translation-required has no ruff equivalent so it should not add any ruff code
-        expected_ruff_codes = {"B006", "ODOO008", "ODOO017", "T201"}
+        expected_ruff_codes = {"B006", "ODC8101", "ODE8102", "T201"}
         ruff_toml_filenames = [".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"]
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         self.runner.invoke(main, ["--only-cp-cfg"])
@@ -656,7 +656,7 @@ class TestPreCommitVauxoo:
 
     def test_ruff_checks_by_name(self, caplog):
         """The ruff checks must be configured by name (e.g. "no-search-all") and never by
-        code (e.g. "ODOO038") to keep the same names used in the .pylintrc* configuration
+        code (e.g. "ODW8163") to keep the same names used in the .pylintrc* configuration
 
         Only the linter prefixes without a name equivalent (e.g. "E", "W", "F", "OAPP") are
         allowed. Selecting the checks by name requires the "preview" mode enabled and an
@@ -711,7 +711,7 @@ class TestPreCommitVauxoo:
         (["(logging-not-lazy)"], "logging-percent-format"),
         (["(consider-merging-isinstance)"], "duplicate-isinstance-call"),
         (["(too-many-format-args)"], "percent-format-positional-count-mismatch"),
-        # except-pass was optional in pylint-odoo but the ruff-odoo ODOO004 check
+        # except-pass was optional in pylint-odoo but the ruff-odoo ODW8138 check
         # runs as mandatory so there are no old mandatory markers to expect
         ([], "except-pass"),
     ]

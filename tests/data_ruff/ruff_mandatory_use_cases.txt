@@ -107,7 +107,7 @@ def too_many_format_args_use_case():
 
 def except_pass_use_case(value):
     # except-pass (pylint-odoo, optional so not reported by the old mandatory hooks)
-    # -> except-pass (ruff-odoo ODOO004, mandatory now)
+    # -> except-pass (ruff-odoo ODW8138, mandatory now)
     try:
         value = int(value)
     except ValueError:
