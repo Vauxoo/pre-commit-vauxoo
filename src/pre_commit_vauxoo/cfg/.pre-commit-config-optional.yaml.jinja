@@ -125,6 +125,20 @@ repos:
           - --quiet
         # reduce the INFO logger
         require_serial: true
+{%- if use_ruff %}
+  - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
+    rev: 0.16.2.17
+    hooks:
+      - id: ruff-check
+        name: ruff-odoo EXPERIMENTAL checks (Won't affect CI status)!
+        verbose: True  # exit-zero needs verbose
+        args:
+          - --config=.config/.ruff-experimental.toml
+          - --exit-zero
+{%- endif %}
+{%- if not use_ruff %}
+  # Both experimental checks are migrated to ruff so this hook is replaced by the
+  # ruff-odoo EXPERIMENTAL one above (see .config/.ruff-experimental.toml)
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
     rev: v10.0.9
@@ -140,4 +154,5 @@ repos:
           - --exit-zero
 {%- if pylint_matrix_value >= 20 %}
           - --jobs=3
+{%- endif %}
 {%- endif %}

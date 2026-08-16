@@ -26,21 +26,26 @@ manifest-deprecated-keys=active,
 
 [MESSAGES CONTROL]
 disable=all,unknown-option-value
-enable=attribute-string-redundant,
-  deprecated-method,
+enable=deprecated-method,
   deprecated-pragma,
+  # license-allowed and manifest-required-author keep running from pylint-odoo even with ruff
+  # enabled since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo, Jarsa)
+  # nor the OPL-1 license (see the [ODOOLINT] section above and .config/.ruff.toml)
   license-allowed,
+  # manifest-deprecated-key also keeps running from pylint-odoo since the ruff-odoo ODC8103
+  # only reports the "description" key while this one reports all the [ODOOLINT]
+  # "manifest-deprecated-keys" values (active, description and qweb)
   manifest-deprecated-key,
   manifest-required-author,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
-  use-vim-comment,
   useless-parent-delegation
   {%- if not use_ruff %},
   # The following checks are migrated to ruff when it is enabled
   # The OD* checks (from ruff-odoo), eval-used and except-pass run from the mandatory
   # .config/.ruff.toml and the rest from .config/.ruff-optional.toml
   attribute-deprecated,  # ruff ODW8105
+  attribute-string-redundant,  # ruff ODW8113 (autofix .ruff-autofix.toml)
   bad-builtin-groupby,  # ruff ODW8155
   bad-docstring-quotes,  # ruff D300
   consider-merging-classes-inherited,  # ruff ODR8180 (mandatory .ruff.toml)
@@ -84,6 +89,7 @@ enable=attribute-string-redundant,
   translation-unsupported-format,  # ruff ODE8300
   use-dict-literal,  # ruff C408
   use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
+  use-vim-comment,  # ruff ODW8202 (autofix .ruff-autofix.toml)
   website-manifest-key-not-valid-uri  # ruff ODW8114
   {%- endif %}
 
