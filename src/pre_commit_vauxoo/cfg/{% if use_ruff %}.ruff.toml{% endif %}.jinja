@@ -57,6 +57,8 @@ select = [
     "global-at-module-level",
     "global-statement",
     "global-variable-not-assigned",
+    "if-else-block-instead-of-dict-get",  # consider-using-get (autofixed from .ruff-autofix.toml,
+                                          # selected here to keep the mandatory level it had in pylint)
     "if-expr-with-false-true",  # simplifiable-if-expression (False if x else True)
     "if-expr-with-true-false",  # simplifiable-if-expression (True if x else False)
     "if-stmt-min-max",  # consider-using-min-builtin and consider-using-max-builtin
@@ -109,6 +111,7 @@ select = [
     "property-with-parameters",
     "redeclared-assigned-name",
     "redefined-argument-from-local",
+    "redefined-slots-in-subclass",
     "repeated-equality-comparison",  # consider-using-in
     "repeated-keyword-argument",  # repeated-keyword
     "return-in-init",
@@ -140,7 +143,10 @@ select = [
     "unary-prefix-increment-decrement",  # nonexistent-operator
     "unexpected-special-method-signature",
     "unnecessary-comprehension",
-    "unnecessary-comprehension-in-call",  # use-a-generator (with preview it also covers consider-using-generator)
+    "unnecessary-comprehension-in-call",  # use-a-generator (with preview it also covers
+                                          # consider-using-generator, which was optional in pylint,
+                                          # but a single ruff rule reports both so it keeps the
+                                          # mandatory level of use-a-generator)
     "unnecessary-dict-index-lookup",
     "unnecessary-direct-lambda-call",
     "unnecessary-dunder-call",
@@ -160,70 +166,44 @@ select = [
     "yield-from-in-async-function",  # yield-inside-async-function
     "yield-in-init",  # init-is-generator
     # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
-    #  - The autofixable ones (manifest-deprecated-key, use-vim-comment, unused-logger,
-    #    attribute-string-redundant, prefer-env-translation, manifest-superfluous-key, header-comments,
-    #    deprecated-self-cr, manifest-data-duplicated and translation-not-lazy) run from the
-    #    autofix configuration instead (see .ruff-autofix.toml)
+    # Each check keeps the same level it had before the ruff migration, so only the ones
+    # that were mandatory in pylint-odoo are selected here:
+    #  - The ones that were optional (attribute-deprecated, sql-injection, the translation-*
+    #    family, ...) run from .ruff-optional.toml
+    #  - no-search-all was experimental so it runs from .ruff-experimental.toml
+    #  - The autofixable ones (manifest-deprecated-key, unused-logger, header-comments and
+    #    deprecated-self-cr) run from the autofix configuration instead (see .ruff-autofix.toml).
+    #    prefer-env-translation is autofixable too but it was mandatory, so it is also selected
+    #    here to keep reporting it when the autofix hook is not executed
     #  - manifest-required-author and license-allowed keep running from
     #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
     #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
     #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
     #    filters them
-    "attribute-deprecated",
-    "bad-builtin-groupby",
     "category-allowed",  # Inert until the category-allowed option is set (see [lint.odoo])
     "consider-merging-classes-inherited",
-    "context-overridden",
     "deprecated-inselect-operator",
     "deprecated-name-get",
-    "deprecated-odoo-model-method",
     "development-status-allowed",
-    "except-pass",
-    "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
     "inheritable-method-lambda",
     "inheritable-method-string",
     "invalid-commit",
     "invalid-email",
-    "manifest-author-string",
     "manifest-behind-migrations",
     "manifest-external-assets",
-    "manifest-maintainers-list",
     "manifest-required-key",
     "manifest-summary-multiline",
-    "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
-    "method-compute",
-    "method-inverse",
-    "method-required-super",
-    "method-search",
     "missing-odoo-file",  # Inert until the odoo-required-files option is set (see [lint.odoo])
-    "missing-readme",
-    "missing-return",
     "no-raise-unlink",
-    "no-search-all",
     "no-wizard-in-models",
     "no-write-in-compute",
-    "odoo-addons-relative-import",
-    "odoo-exception-warning",
+    "prefer-env-translation",  # Autofixed from .ruff-autofix.toml, reported here as mandatory
     "prohibited-method-override",
-    "renamed-field-parameter",
-    "resource-not-exist",
-    "sql-injection",
     "super-method-mismatch",
     "test-folder-imported",
-    "translation-contains-variable",
-    "translation-field",
-    "translation-format-interpolation",
-    "translation-format-truncated",
-    "translation-fstring-interpolation",
     "translation-injection",
-    # translation-not-lazy is autofixable so it runs from .ruff-autofix.toml
     "translation-positional-used",
-    "translation-required",
-    "translation-too-few-args",
-    "translation-too-many-args",
-    "translation-unsupported-format",
-    "website-manifest-key-not-valid-uri",
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)

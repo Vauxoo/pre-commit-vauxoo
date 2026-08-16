@@ -4,6 +4,9 @@ persistent=yes
 load-plugins=pylint_odoo
 
 [MESSAGES CONTROL]
+# This configuration is not generated when ruff is enabled since both checks are
+# migrated to ruff: no-search-all runs as mandatory (ODW8163 from .config/.ruff.toml)
+# and manifest-superfluous-key from the autofix one (ODC8116 from .config/.ruff-autofix.toml)
 disable=all,unknown-option-value
 enable=manifest-superfluous-key,
    no-search-all

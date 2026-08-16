@@ -60,6 +60,9 @@ VERSIONED_MANDATORY_CHECKS = {
     "deprecated-name-get",
     "manifest-summary-multiline",
     "no-raise-unlink",
+}
+# The translation-* family was optional in pylint-odoo so it keeps running as optional
+VERSIONED_OPTIONAL_CHECKS = {
     "translation-contains-variable",
     "translation-format-interpolation",
     "translation-format-truncated",
@@ -69,6 +72,7 @@ VERSIONED_MANDATORY_CHECKS = {
     "translation-unsupported-format",
 }
 VERSIONED_AUTOFIX_CHECKS = {"deprecated-self-cr", "prefer-env-translation", "translation-not-lazy"}
+RUFF_TOML_FILENAMES = (".ruff.toml", ".ruff-optional.toml", ".ruff-experimental.toml", ".ruff-autofix.toml")
 
 
 @pytest.fixture(
@@ -582,7 +586,7 @@ class TestPreCommitVauxoo:
         # dangerous-default-value (B006) comes from pylint and print-used (T201) runs as optional.
         # translation-required has no ruff equivalent so it should not add any ruff code
         expected_ruff_codes = {"B006", "ODC8101", "ODE8102", "T201"}
-        ruff_toml_filenames = [".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"]
+        ruff_toml_filenames = RUFF_TOML_FILENAMES
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         self.runner.invoke(main, ["--only-cp-cfg"])
         for ruff_toml_filename in ruff_toml_filenames:
@@ -627,6 +631,11 @@ class TestPreCommitVauxoo:
         assert selected & VERSIONED_MANDATORY_CHECKS == expected_selected, (
             f"Wrong version-scoped checks selected in .ruff.toml for odoo version {odoo_version}"
         )
+        with (cfg_subfolder / ".ruff-optional.toml").open("rb") as f_ruff_toml:
+            selected_optional = set(tomllib.load(f_ruff_toml)["lint"]["select"])
+        assert selected_optional & VERSIONED_OPTIONAL_CHECKS == VERSIONED_OPTIONAL_CHECKS, (
+            f"Wrong version-scoped checks selected in .ruff-optional.toml for odoo version {odoo_version}"
+        )
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             ignored = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
         assert ignored & VERSIONED_AUTOFIX_CHECKS == expected_ignored, (
@@ -644,14 +653,21 @@ class TestPreCommitVauxoo:
         with (cfg_subfolder / ".ruff.toml").open("rb") as f_ruff_toml:
             data = tomllib.load(f_ruff_toml)
         odoo_options = data["lint"]["odoo"]
-        # Same as the pylint "valid-odoo-version" option used by manifest-version-format
         assert odoo_options["odoo-version"] == "17.0", "Wrong odoo-version in .ruff.toml"
         # Same empty default of the pylint-odoo options so both checks are inert
         assert odoo_options["category-allowed"] == [], "Wrong category-allowed in .ruff.toml"
         assert odoo_options["odoo-required-files"] == [], "Wrong odoo-required-files in .ruff.toml"
-        expected_checks = {"category-allowed", "manifest-version-format", "missing-odoo-file"}
+        expected_checks = {"category-allowed", "missing-odoo-file"}
         assert expected_checks.issubset(set(data["lint"]["select"])), (
             "The checks using the [lint.odoo] options are not selected in .ruff.toml"
+        )
+        # manifest-version-format was an optional pylint-odoo check so it uses the odoo-version
+        # option (the pylint "valid-odoo-version" one) from the optional configuration
+        with (cfg_subfolder / ".ruff-optional.toml").open("rb") as f_ruff_toml:
+            data_optional = tomllib.load(f_ruff_toml)
+        assert data_optional["lint"]["odoo"]["odoo-version"] == "17.0", "Wrong odoo-version in .ruff-optional.toml"
+        assert "manifest-version-format" in set(data_optional["lint"]["select"]), (
+            "manifest-version-format is not selected in .ruff-optional.toml"
         )
 
     def test_ruff_checks_by_name(self, caplog):
@@ -667,7 +683,7 @@ class TestPreCommitVauxoo:
         os.environ.pop("VERSION", None)
         result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", "17.0"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
+        for ruff_toml_filename in RUFF_TOML_FILENAMES:
             with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
                 data = tomllib.load(f_ruff_toml)
             assert data["preview"], (
@@ -688,7 +704,7 @@ class TestPreCommitVauxoo:
         argv, expected_py_target = ruff_py_target_use_case
         result = self.runner.invoke(main, ["--only-cp-cfg"] + argv)
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        for ruff_toml_filename in (".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"):
+        for ruff_toml_filename in RUFF_TOML_FILENAMES:
             with (cfg_subfolder / ruff_toml_filename).open("rb") as f_ruff_toml:
                 py_target = tomllib.load(f_ruff_toml)["target-version"]
             assert py_target == expected_py_target, f"Wrong target-version in {ruff_toml_filename} for {argv}"
@@ -711,12 +727,10 @@ class TestPreCommitVauxoo:
         (["(logging-not-lazy)"], "logging-percent-format"),
         (["(consider-merging-isinstance)"], "duplicate-isinstance-call"),
         (["(too-many-format-args)"], "percent-format-positional-count-mismatch"),
-        # except-pass was optional in pylint-odoo but the ruff-odoo ODW8138 check
-        # runs as mandatory so there are no old mandatory markers to expect
-        ([], "except-pass"),
     ]
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
+        (["(except-pass)"], "except-pass"),
         (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
         (["(redundant-u-string-prefix)"], "unicode-kind-prefix"),
         (["(use-implicit-booleaness-not-comparison-to-string)"], "compare-to-empty-string"),

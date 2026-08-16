@@ -1,0 +1,33 @@
+# Experimental ruff checks (they won't affect the CI status, same as the pylint EXPERIMENTAL hook)
+# It replaces the pylint-odoo experimental checks already implemented in ruff-odoo, keeping the
+# same level they had before the ruff migration (see .config/.pylintrc-experimental without ruff)
+line-length = 119
+# Required to select the checks by name instead of by code (selecting rules by name requires
+# preview mode)
+preview = true
+target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
+
+[lint]
+# Only the experimental checks are selected, the "all" default would report the mandatory
+# and optional ones twice
+# manifest-superfluous-key was experimental too but it is autofixable, so it keeps running
+# from .ruff-autofix.toml (removing the superfluous keys is part of the autofixes enabled by
+# the compatibility version 30, see the --compatibility-version option)
+select = [
+    "no-search-all",
+]
+
+ignore = [
+{% if ruff_disable_checks %}
+    # Disabled from RUFF_DISABLE_CHECKS option
+{% for check in ruff_disable_checks %}
+    "{{ check }}",
+{% endfor %}
+{% endif %}
+]
+
+[lint.odoo]
+# Version-scoped Odoo checks are gated by ruff-odoo based on this odoo-version setting
+{%- if odoo_version %}
+odoo-version = "{{ odoo_version }}"
+{%- endif %}

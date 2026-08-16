@@ -194,6 +194,8 @@ disable=abstract-method,
    global-statement,  # ruff PLW0603
    global-variable-not-assigned,  # ruff PLW0602
    import-outside-toplevel,  # ruff PLC0415
+   inheritable-method-lambda,  # ruff ODE8148
+   inheritable-method-string,  # ruff ODE8147
    init-is-generator,  # ruff PLE0100
    invalid-all-format,  # ruff PLE0605
    invalid-all-object,  # ruff PLE0604
@@ -205,6 +207,7 @@ disable=abstract-method,
    invalid-character-sub,  # ruff PLE2512
    invalid-character-zero-width-space,  # ruff PLE2515
    invalid-commit,  # ruff ODE8102
+   invalid-email,  # ruff ODR8181
    invalid-envvar-default,  # ruff PLW1508
    invalid-envvar-value,  # ruff PLE1507
    invalid-hash-returned,  # ruff PLE0309
@@ -255,11 +258,13 @@ disable=abstract-method,
    notimplemented-raised,  # ruff F901
    pointless-exception-statement,  # ruff PLW0133
    potential-index-error,  # ruff PLE0643
+   prefer-env-translation,  # ruff ODW8161 (autofix .ruff-autofix.toml)
    prohibited-method-override,  # ruff ODW8107
    property-with-parameters,  # ruff PLR0206
    redeclared-assigned-name,  # ruff PLW0128
    redefined-argument-from-local,  # ruff PLR1704
    redefined-builtin,  # ruff A001,A002,A004
+   redefined-slots-in-subclass,  # ruff PLW0244
    repeated-keyword,  # ruff PLE1132
    return-in-init,  # ruff PLE0101
    return-outside-function,  # ruff F706
@@ -274,6 +279,7 @@ disable=abstract-method,
    stop-iteration-return,  # ruff PLR1708
    subprocess-popen-preexec-fn,  # ruff PLW1509
    subprocess-run-check,  # ruff PLW1510
+   super-method-mismatch,  # ruff ODW8164
    super-with-arguments,  # ruff UP008
    super-without-brackets,  # ruff PLW0245
    test-folder-imported,  # ruff ODE8130
@@ -287,6 +293,7 @@ disable=abstract-method,
    too-many-star-expressions,  # ruff F622
    trailing-newlines,  # ruff W391
    trailing-whitespace,  # ruff W291
+   translation-injection,  # ruff ODE8151
    truncated-format-string,  # ruff F501
    typevar-double-variance,  # ruff PLC0131
    typevar-name-incorrect-variance,  # ruff PLC0105

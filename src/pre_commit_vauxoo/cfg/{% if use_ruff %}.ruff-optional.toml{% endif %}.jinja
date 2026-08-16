@@ -57,9 +57,9 @@ select = [
     "redefined-while-unused",
     "tab-after-comma",  # tab after ','
     # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
-    #  - try-except-pass was removed since the ruff-odoo except-pass runs it as mandatory (see .ruff.toml)
+    #  - try-except-pass was removed since the ruff-odoo except-pass covers it (see below)
     #  - request-without-timeout is not selected since the ruff-odoo external-request-timeout
-    #    covers it (requests + more libraries) as mandatory (see .ruff.toml)
+    #    covers it (requests + more libraries)
     "compare-to-empty-string",  # use-implicit-booleaness-not-comparison-to-string
     "complex-structure",  # too-complex (mccabe)
     "multi-line-summary-first-line",  # docstring-first-line-empty
@@ -70,6 +70,53 @@ select = [
     "unnecessary-collection-call",  # use-dict-literal and use-list-literal (the latter was mandatory
                                     # from pylint but unnecessary-collection-call handles
                                     # dict()/list()/tuple() with a single check so it runs as optional now)
+    # Odoo checks from ruff-odoo that were optional in pylint-odoo, so they keep running as
+    # optional (the mandatory ones are selected from .ruff.toml and no-search-all, the only
+    # experimental one, from .ruff-experimental.toml)
+    #  - The autofixable ones (attribute-string-redundant, manifest-data-duplicated,
+    #    translation-not-lazy and use-vim-comment) are autofixed from .ruff-autofix.toml, they are
+    #    also selected here to keep reporting them when the autofix hook is not executed
+    #  - manifest-required-author and license-allowed keep running from pylint-odoo since ruff-odoo
+    #    doesn't support yet configuring the Vauxoo authors (Vauxoo, Jarsa) nor the OPL-1 license,
+    #    same for manifest-deprecated-key which only reports the "description" key in ruff-odoo
+    #    (see the [ODOOLINT] section in .pylintrc-optional)
+    #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
+    #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
+    #    filters them
+    "attribute-deprecated",
+    "attribute-string-redundant",
+    "bad-builtin-groupby",
+    "context-overridden",
+    "deprecated-odoo-model-method",
+    "except-pass",
+    "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
+    "manifest-author-string",
+    "manifest-data-duplicated",
+    "manifest-maintainers-list",
+    "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
+    "method-compute",
+    "method-inverse",
+    "method-required-super",
+    "method-search",
+    "missing-readme",
+    "missing-return",
+    "odoo-addons-relative-import",
+    "odoo-exception-warning",
+    "renamed-field-parameter",
+    "resource-not-exist",
+    "sql-injection",
+    "translation-contains-variable",
+    "translation-field",
+    "translation-format-interpolation",
+    "translation-format-truncated",
+    "translation-fstring-interpolation",
+    "translation-not-lazy",
+    "translation-required",
+    "translation-too-few-args",
+    "translation-too-many-args",
+    "translation-unsupported-format",
+    "use-vim-comment",
+    "website-manifest-key-not-valid-uri",
 ]
 
 ignore = [

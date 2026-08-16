@@ -102,4 +102,7 @@ repos:
         exclude: /README\.rst$|^docs/.*\.rst$
       - id: check-symlinks
       - id: check-xml
+{%- if not use_ruff %}
+      # Migrated to ruff: forgotten-debug-statement (T100 from .config/.ruff.toml)
       - id: debug-statements
+{%- endif %}
