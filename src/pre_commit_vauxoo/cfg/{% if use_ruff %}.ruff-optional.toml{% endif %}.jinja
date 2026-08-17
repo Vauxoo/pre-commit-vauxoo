@@ -51,17 +51,33 @@ select = [
     "unused-loop-control-variable",
     "useless-comparison",
     "useless-contextlib-suppress",
-    "useless-expression",
-    # bandit replacement (the only check enabled in the old .config/.bandit-optional.yml)
+    #  - useless-expression moved to the mandatory configuration, which is the level pylint gave
+    #    expression-not-assigned and pointless-statement (it used to be reported from both)
+    # bandit replacement
+    #  - unsafe-markup-use was the only check enabled in the old .config/.bandit-optional.yml
+    #  - assert and suspicious-non-cryptographic-random-usage come from the experimental
+    #    configuration: an assert is dropped by "python -O" and a random built on the Mersenne
+    #    Twister is fine for anything that is not a secret, so both are worth a look but neither
+    #    should fail the build only when the developer opts into the experimental hook. The
+    #    "exclude_dirs: tests" of the old bandit configuration is not reproduced for them: Odoo
+    #    tests are unittest, they assert through self.assertX() and not the assert statement
+    "assert",  # B101 assert_used
+    "suspicious-non-cryptographic-random-usage",  # B311 random
     "unsafe-markup-use",  # B704 markupsafe_markup_xss
     # Checks enabled in the optional flake8 but ignored in the mandatory one
-    "ambiguous-variable-name",  # ambiguous variable name 'l', 'O', or 'I'
+    #  - ambiguous-variable-name is disabled at every level now (see the mandatory ignore)
     "redefined-while-unused",
     "tab-after-comma",  # tab after ','
+    # line-too-long with the same 10% tolerance bugbear B950 applies (see [lint.pycodestyle]),
+    # which is what used to report it from flake8-optional
+    "line-too-long",
     # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
-    #  - try-except-pass was removed since the ruff-odoo except-pass covers it (see below)
     #  - request-without-timeout is not selected since the ruff-odoo external-request-timeout
     #    covers it (requests + more libraries)
+    "try-except-pass",  # It reports the same handler the ruff-odoo except-pass did (an "except"
+                        # whose whole body is a "pass"), so except-pass is deprecated in favor of
+                        # it and this level keeps the one that stays. It also runs from the
+                        # experimental bandit replacement as S110, ignored there for this reason
     "compare-to-empty-string",  # use-implicit-booleaness-not-comparison-to-string
     "complex-structure",  # too-complex (mccabe)
     "multi-line-summary-first-line",  # docstring-first-line-empty
@@ -89,7 +105,8 @@ select = [
     "bad-builtin-groupby",
     "context-overridden",
     "deprecated-odoo-model-method",
-    "except-pass",
+    #  - except-pass is deprecated in ruff-odoo, the flake8-bandit try-except-pass selected above
+    #    reports the very same handler
     "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
     "license-allowed",  # It uses the license-allowed option (see [lint.odoo])
     "manifest-author-string",
@@ -133,6 +150,10 @@ ignore = [
 ]
 
 [lint.flake8-bandit]
+# try-except-pass only reports "except Exception"/"except BaseException" by default, while the
+# ruff-odoo except-pass it replaces reported any handler whose body is a bare "pass" -- and so did
+# the bandit B110 it is ported from. This option restores that scope
+check-typed-exception = true
 # Same as the "markupsafe_xss allowed_calls" option of the old .config/.bandit-optional.yml
 # Markup() is required to post HTML in Odoo (mail_thread.message_post() runs escape(body) and
 # keeps it as is only for Markup objects), so the value can not simply be escaped. Wrapping the
@@ -142,6 +163,14 @@ allowed-markup-calls = [
     "odoo.tools.html_sanitize",
     "odoo.tools.mail.html_sanitize",
 ]
+
+[lint.pycodestyle]
+# The bugbear B950 that used to report the long lines from .config/.flake8-optional allows the
+# line to run 10% past the limit before complaining, so a line is only reported past 130
+# characters even though the formatter still wraps at the 119 of "line-length" above. ruff draws
+# the same distinction: "line-length" is what the formatter targets, this option is where
+# line-too-long starts reporting
+max-line-length = 130
 
 [lint.mccabe]
 # Same as the .pylintrc-optional [DESIGN] max-complexity option
@@ -182,9 +211,6 @@ manifest-required-authors = [
 ]
 
 [lint.per-file-ignores]
-"__manifest__.py" = [
-    "useless-expression",  # Same as the old .flake8-optional per-file-ignores
-]
 "**/tests/**" = [
     "unsafe-markup-use",  # Same as the "exclude_dirs: tests" of the old .bandit-optional.yml
 ]

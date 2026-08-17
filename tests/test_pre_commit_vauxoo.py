@@ -770,15 +770,20 @@ class TestPreCommitVauxoo:
         (["(unnecessary-ellipsis)"], "unnecessary-placeholder"),
         (["(trailing-comma-tuple)"], "trailing-comma-on-bare-tuple"),
         (["(use-yield-from)"], "yield-in-for-loop"),
+        (["(expression-not-assigned)"], "useless-expression"),
     ]
+    # "ambiguous-variable-name" (E741) is not listed here on purpose: the optional flake8 did
+    # report it before the ruff migration and now no level does, since "l" for "line" is used
+    # everywhere and the IDE fonts do tell "1" and "l" apart
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
-        (["(except-pass)"], "except-pass"),
+        # pylint-odoo reported the "except: pass" handler as except-pass, ruff reports it as the
+        # flake8-bandit try-except-pass (the ruff-odoo except-pass is deprecated in favor of it)
+        (["(except-pass)"], "try-except-pass"),
         (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
         (["(redundant-u-string-prefix)"], "unicode-kind-prefix"),
         (["(use-implicit-booleaness-not-comparison-to-string)"], "compare-to-empty-string"),
         (["(too-complex)"], "complex-structure"),
-        (["E741"], "ambiguous-variable-name"),
         (["E242"], "tab-after-comma"),
         (["B008"], "function-call-in-default-argument"),
         (["B011"], "assert-false"),
