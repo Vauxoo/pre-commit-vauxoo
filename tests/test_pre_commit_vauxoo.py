@@ -254,11 +254,17 @@ class TestPreCommitVauxoo:
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
         output = self.strip_ansi(capfd.readouterr().out)
-        # "resources/module_example1/models/markupsafe_sanitized.py" sanitizes the value
-        # so B704:markupsafe_markup_xss must not be raised for it, it is defined
-        # from the "allowed_calls" of the ".bandit-optional.yml" configuration file
-        bandit_passed = re.search(r"^bandit optional\.+Passed$", output, re.MULTILINE)
-        assert bandit_passed, "bandit optional did not pass\n%s" % output
+        # "resources/module_example1/models/markupsafe_sanitized.py" sanitizes the value so the
+        # markupsafe XSS check must not be raised for it: it is whitelisted from the
+        # "allowed_calls" of ".bandit-optional.yml" and, once ruff replaces bandit, from the
+        # "allowed-markup-calls" of ".ruff-optional.toml"
+        if self.uses_ruff():
+            assert "unsafe-markup-use" not in output, (
+                "unsafe-markup-use was raised for the sanitized Markup() call\n%s" % output
+            )
+        else:
+            bandit_passed = re.search(r"^bandit optional\.+Passed$", output, re.MULTILINE)
+            assert bandit_passed, "bandit optional did not pass\n%s" % output
 
     def test_rm_options(self, caplog):
         # Only mandatory
@@ -608,13 +614,18 @@ class TestPreCommitVauxoo:
                 "when PYLINT_DISABLE_CHECKS is set"
             )
 
-    def skip_if_no_ruff(self):
-        if (
+    @staticmethod
+    def uses_ruff():
+        """The compatibility matrix enables ruff, so the checks migrated to it run from ruff"""
+        return (
             parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
                 "black_autoflake_matrix_value"
             ]
-            < 30
-        ):
+            >= 30
+        )
+
+    def skip_if_no_ruff(self):
+        if not self.uses_ruff():
             pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
 
     def test_ruff_odoo_version_checks(self, ruff_odoo_version_use_case, caplog):
@@ -793,12 +804,7 @@ class TestPreCommitVauxoo:
         migration (pylint and flake8+bugbear) and after it (ruff)"""
         result = self.runner.invoke(main, ["--only-cp-cfg"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
-        use_ruff = (
-            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
-                "black_autoflake_matrix_value"
-            ]
-            >= 30
-        )
+        use_ruff = self.uses_ruff()
         # The mandatory use cases can not live in "resources/" since the other tests
         # expect the mandatory checks passing for the resources modules
         mandatory_cases_fname = "ruff_mandatory_use_cases.py"
@@ -882,12 +888,7 @@ class TestPreCommitVauxoo:
         assert result.exit_code == 1, "Exited without error"
 
     def assert_apps_checks_enabled(self, enabled, msg):
-        use_ruff = (
-            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
-                "black_autoflake_matrix_value"
-            ]
-            >= 30
-        )
+        use_ruff = self.uses_ruff()
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         pylintrc_content = (cfg_subfolder / ".pylintrc").read_text()
         if not use_ruff:
