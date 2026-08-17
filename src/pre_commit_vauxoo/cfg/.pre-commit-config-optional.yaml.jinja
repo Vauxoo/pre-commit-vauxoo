@@ -96,6 +96,10 @@ repos:
 {%- endif %}
         args:
           - --config=.config/.flake8-optional
+{%- if not use_ruff %}
+  # B704 (markupsafe_markup_xss) is the only check enabled here and it is migrated to the ruff
+  # unsafe-markup-use (S704) selected from .config/.ruff-optional.toml, which reproduces both
+  # the "markupsafe_xss allowed_calls" and the "exclude_dirs: tests" options of that file
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.4
     hooks:
@@ -111,6 +115,10 @@ repos:
           - --quiet
         # reduce the INFO logger
         require_serial: true
+{%- endif %}
+{%- if not use_ruff %}
+  # Every check enabled here has a ruff S rule, so this hook is replaced by the ruff-odoo
+  # EXPERIMENTAL one below (see .config/.ruff-experimental.toml)
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.4
     hooks:
@@ -125,6 +133,7 @@ repos:
           - --quiet
         # reduce the INFO logger
         require_serial: true
+{%- endif %}
 {%- if use_ruff %}
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
     rev: 0.16.3.21

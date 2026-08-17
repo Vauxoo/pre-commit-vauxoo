@@ -107,3 +107,20 @@ def merge_isinstance_use_case(value):
 def too_many_format_args_use_case():
     # too-many-format-args (pylint) -> percent-format-positional-count-mismatch (ruff F507)
     return "%s" % (1, 2)
+
+
+def unnecessary_ellipsis_use_case():
+    """unnecessary-ellipsis (pylint) -> unnecessary-placeholder (ruff PIE790)"""
+    ...
+
+
+def trailing_comma_tuple_use_case():
+    # trailing-comma-tuple (pylint) -> trailing-comma-on-bare-tuple (ruff COM818)
+    values = 1,
+    return values
+
+
+def use_yield_from_use_case(values):
+    # use-yield-from (pylint) -> yield-in-for-loop (ruff UP028)
+    for value in values:
+        yield value

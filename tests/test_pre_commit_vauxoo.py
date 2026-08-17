@@ -60,6 +60,7 @@ VERSIONED_MANDATORY_CHECKS = {
     "deprecated-name-get",
     "manifest-summary-multiline",
     "no-raise-unlink",
+    "prefer-env-attribute",  # deprecated-self-cr, autofixable but mandatory (see .ruff.toml)
 }
 # The translation-* family was optional in pylint-odoo so it keeps running as optional
 VERSIONED_OPTIONAL_CHECKS = {
@@ -755,6 +756,9 @@ class TestPreCommitVauxoo:
         (["(logging-not-lazy)"], "logging-percent-format"),
         (["(consider-merging-isinstance)"], "duplicate-isinstance-call"),
         (["(too-many-format-args)"], "percent-format-positional-count-mismatch"),
+        (["(unnecessary-ellipsis)"], "unnecessary-placeholder"),
+        (["(trailing-comma-tuple)"], "trailing-comma-on-bare-tuple"),
+        (["(use-yield-from)"], "yield-in-for-loop"),
     ]
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),

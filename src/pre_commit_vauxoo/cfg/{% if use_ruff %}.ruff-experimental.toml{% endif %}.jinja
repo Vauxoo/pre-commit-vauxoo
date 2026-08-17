@@ -1,6 +1,7 @@
 # Experimental ruff checks (they won't affect the CI status, same as the pylint EXPERIMENTAL hook)
-# It replaces the pylint-odoo experimental checks already implemented in ruff-odoo, keeping the
-# same level they had before the ruff migration (see .config/.pylintrc-experimental without ruff)
+# It replaces the pylint-odoo and bandit experimental checks already implemented in ruff, keeping
+# the same level they had before the ruff migration (see .config/.pylintrc-experimental and
+# .config/.bandit-experimental.yml without ruff)
 line-length = 119
 # Required to select the checks by name instead of by code (selecting rules by name requires
 # preview mode)
@@ -15,6 +16,14 @@ target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERS
 # the compatibility version 30, see the --compatibility-version option)
 select = [
     "no-search-all",
+    # bandit replacement (same checks previously running from .config/.bandit-experimental.yml,
+    # which ran every bandit test except the ones listed in its "skips" option, mirrored in the
+    # "ignore" below). ruff numbers its flake8-bandit rules after bandit's own test ids, so
+    # B101 is S101, B602 is S602 and so on
+    "S",
+    # B613 (trojansource) is the only remaining bandit test without an S rule, ruff reports the
+    # same bidirectional control characters from pylint instead
+    "bidirectional-unicode",
 ]
 
 ignore = [
@@ -24,6 +33,32 @@ ignore = [
     "{{ check }}",
 {% endfor %}
 {% endif %}
+    # Same skips as the old .config/.bandit-experimental.yml
+    # hardcoded-sql-expression (B608) is considered from the ruff-odoo sql-injection check
+    "hardcoded-sql-expression",
+    # defusedxml checks (B313-B319 and B405-B409): Odoo's team via inbox twitter is not convinced
+    # to repair them and the entire Odoo is raising these checks
+    "suspicious-xmlc-element-tree-usage",
+    "suspicious-xml-element-tree-usage",
+    "suspicious-xml-expat-reader-usage",
+    "suspicious-xml-expat-builder-usage",
+    "suspicious-xml-sax-usage",
+    "suspicious-xml-mini-dom-usage",
+    "suspicious-xml-pull-dom-usage",
+    "suspicious-xml-etree-import",
+    "suspicious-xml-sax-import",
+    "suspicious-xml-expat-import",
+    "suspicious-xml-minidom-import",
+    "suspicious-xml-pulldom-import",
+    # Reported from another level, so they are not repeated here (B102, B307 and B704)
+    "exec-builtin",  # mandatory from .ruff.toml
+    "suspicious-eval-usage",  # mandatory from .ruff.toml
+    "unsafe-markup-use",  # optional from .ruff-optional.toml
+]
+
+[lint.per-file-ignores]
+"**/tests/**" = [
+    "S",  # Same as the "exclude_dirs: tests" of the old .bandit-experimental.yml
 ]
 
 [lint.odoo]

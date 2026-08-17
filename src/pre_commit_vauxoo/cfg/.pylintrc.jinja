@@ -178,7 +178,9 @@ disable=abstract-method,
    consider-using-sys-exit,  # ruff PLR1722
    continue-in-finally,  # ruff PLE0116
    dangerous-default-value,  # ruff B006
+   deprecated-inselect-operator,  # ruff ODE8149
    deprecated-name-get,  # ruff ODE8146
+   deprecated-self-cr,  # ruff ODW8165 (renamed to prefer-env-attribute in ruff-odoo)
    dict-iter-missing-items,  # ruff PLE1141
    duplicate-argument-name,  # always-on ruff syntax error
    duplicate-bases,  # ruff PLE0241
@@ -227,6 +229,7 @@ disable=abstract-method,
    manifest-external-assets,  # ruff ODW8162
    manifest-required-key,  # ruff ODC8102
    manifest-required-key-app,  # ruff OAPP003
+   manifest-summary-multiline,  # ruff ODC8120
    method-cache-max-size-none,  # ruff B019
    misplaced-bare-raise,  # ruff PLE0704
    misplaced-future,  # ruff F404
@@ -293,6 +296,7 @@ disable=abstract-method,
    too-many-public-methods,  # ruff PLR0904
    too-many-return-statements,  # ruff PLR0911
    too-many-star-expressions,  # ruff F622
+   trailing-comma-tuple,  # ruff COM818
    trailing-newlines,  # ruff W391
    trailing-whitespace,  # ruff W291
    translation-injection,  # ruff ODE8151
@@ -311,6 +315,7 @@ disable=abstract-method,
    unnecessary-lambda,  # ruff PLW0108
    unnecessary-lambda-assignment,  # ruff E731
    unnecessary-list-index-lookup,  # ruff PLR1736
+   unnecessary-ellipsis,  # ruff PIE790
    unnecessary-negation,  # ruff SIM208
    unnecessary-pass,  # ruff PIE790
    unnecessary-semicolon,  # ruff E702,E703
@@ -323,6 +328,7 @@ disable=abstract-method,
    use-list-literal,  # ruff C408 (moved to the optional level with use-dict-literal)
    use-maxsplit-arg,  # ruff PLC0207
    use-sequence-for-iteration,  # ruff PLC0208
+   use-yield-from,  # ruff UP028
    used-prior-global-declaration,  # ruff PLE0118
    useless-else-on-loop,  # ruff PLW0120
    useless-import-alias,  # ruff PLC0414

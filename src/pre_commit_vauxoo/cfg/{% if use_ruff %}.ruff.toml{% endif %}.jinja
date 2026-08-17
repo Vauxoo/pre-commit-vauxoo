@@ -137,6 +137,7 @@ select = [
     "too-many-nested-blocks",
     "too-many-public-methods",
     "too-many-return-statements",
+    "trailing-comma-on-bare-tuple",  # trailing-comma-tuple
     "type-bivariance",  # typevar-double-variance
     "type-name-incorrect-variance",  # typevar-name-incorrect-variance
     "type-param-name-mismatch",  # typevar-name-mismatch
@@ -164,6 +165,7 @@ select = [
     "useless-return",
     "useless-with-lock",
     "yield-from-in-async-function",  # yield-inside-async-function
+    "yield-in-for-loop",  # use-yield-from
     "yield-in-init",  # init-is-generator
     # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
     # Each check keeps the same level it had before the ruff migration, so only the ones
@@ -171,10 +173,11 @@ select = [
     #  - The ones that were optional (attribute-deprecated, sql-injection, the translation-*
     #    family, ...) run from .ruff-optional.toml
     #  - no-search-all was experimental so it runs from .ruff-experimental.toml
-    #  - The autofixable ones (unused-logger, header-comments and deprecated-self-cr) run from
-    #    the autofix configuration instead (see .ruff-autofix.toml). prefer-env-translation is
-    #    autofixable too but it was mandatory, so it is also selected here to keep reporting it
-    #    when the autofix hook is not executed
+    #  - The autofixable ones (manifest-deprecated-key, unused-logger and header-comments) run
+    #    from the autofix configuration instead (see .ruff-autofix.toml).
+    #    prefer-env-translation and prefer-env-attribute (deprecated-self-cr) are autofixable too
+    #    but they were mandatory, so they are also selected here to keep reporting them when the
+    #    autofix hook is not executed
     #  - manifest-required-author, license-allowed and manifest-deprecated-key were optional in
     #    pylint-odoo so they run from .ruff-optional.toml, where the [lint.odoo] options keep the
     #    values the [ODOOLINT] section of .pylintrc-optional configured for them
@@ -198,6 +201,8 @@ select = [
     "no-raise-unlink",
     "no-wizard-in-models",
     "no-write-in-compute",
+    "prefer-env-attribute",  # deprecated-self-cr, autofixed from .ruff-autofix.toml, reported
+                             # here as mandatory the same way prefer-env-translation is
     "prefer-env-translation",  # Autofixed from .ruff-autofix.toml, reported here as mandatory
     "prohibited-method-override",
     "super-method-mismatch",

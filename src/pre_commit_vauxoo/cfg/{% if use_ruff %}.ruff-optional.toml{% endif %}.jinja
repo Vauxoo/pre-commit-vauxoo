@@ -52,6 +52,8 @@ select = [
     "useless-comparison",
     "useless-contextlib-suppress",
     "useless-expression",
+    # bandit replacement (the only check enabled in the old .config/.bandit-optional.yml)
+    "unsafe-markup-use",  # B704 markupsafe_markup_xss
     # Checks enabled in the optional flake8 but ignored in the mandatory one
     "ambiguous-variable-name",  # ambiguous variable name 'l', 'O', or 'I'
     "redefined-while-unused",
@@ -130,6 +132,17 @@ ignore = [
 {% endif %}
 ]
 
+[lint.flake8-bandit]
+# Same as the "markupsafe_xss allowed_calls" option of the old .config/.bandit-optional.yml
+# Markup() is required to post HTML in Odoo (mail_thread.message_post() runs escape(body) and
+# keeps it as is only for Markup objects), so the value can not simply be escaped. Wrapping the
+# value with html_sanitize() is the safe way to build it, so it is whitelisted instead of
+# forcing "# noqa" comments
+allowed-markup-calls = [
+    "odoo.tools.html_sanitize",
+    "odoo.tools.mail.html_sanitize",
+]
+
 [lint.mccabe]
 # Same as the .pylintrc-optional [DESIGN] max-complexity option
 #  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
@@ -171,4 +184,7 @@ manifest-required-authors = [
 [lint.per-file-ignores]
 "__manifest__.py" = [
     "useless-expression",  # Same as the old .flake8-optional per-file-ignores
+]
+"**/tests/**" = [
+    "unsafe-markup-use",  # Same as the "exclude_dirs: tests" of the old .bandit-optional.yml
 ]
