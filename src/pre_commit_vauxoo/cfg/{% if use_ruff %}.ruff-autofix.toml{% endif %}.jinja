@@ -46,13 +46,18 @@ ignore = [
     "ASYNC",  # Odoo is not using 'trio' library yet
     "bad-exit-annotation",  # We are not using typing entirely yet
     "blank-line-after-function",  # Big diff for only blank-line
+    "blank-line-before-class",  # Big diff for only docstring
+    "blank-line-before-function",  # Big diff for only docstring
     "blank-lines-between-header-and-content",  # Big diff for only docstring
     "collection-literal-concatenation",  # No regular way using list([], *[])
-    "D",  # (pydocstyle) Big diff for only docstring styles
     "deprecated-import",  # We are not using typing entirely yet
     "deprecated-mock-import",  # try-except import is a valid multi-compatibility import
+    "docstring-starts-with-this",  # Big diff for only docstring
+    "docstring-tab-indentation",  # Big diff for only docstring
     "dot-format-in-exception",  # Only add an extra variable for the same string
     "duplicate-class-field-definition",  # It is unsafe removing a field definition it could need a migration script and decide by the developer the correct one
+    "empty-docstring",  # Reported from the mandatory .ruff.toml, it has no autofix
+    "empty-docstring-section",  # Big diff for only docstring
     "error-instead-of-exception",  # Sometimes we need only to log the error instead of raise it
     "escape-sequence-in-docstring",  # Big diff for only docstring
     "f-string-in-exception",  # Only add an extra variable for the same string
@@ -66,6 +71,9 @@ ignore = [
     "implicit-return-value",  # We prefer "return" than "return None"
     "implicit-return",  # We have too many methods without return
     "implicit-string-concatenation-in-collection-literal",  # Add parentheses (str\nstr) could be not needed
+    "incorrect-blank-line-after-class",  # Big diff for only docstring
+    "incorrect-blank-line-before-class",  # Big diff for only docstring
+    "incorrect-section-order",  # Big diff for only docstring
     "incorrectly-parenthesized-tuple-in-subscript",  # Could be buggy
     "invalid-rule-code",  # We could even use noqa with other tools
     "lambda-assignment",  # We use a lot lambda in Odoo
@@ -75,6 +83,7 @@ ignore = [
     "map-without-explicit-strict",  # "strict" should be decided by the developer explicitly
     "mismatched-section-underline-length",  # Big diff for only docstring
     "missing-blank-line-after-last-section",  # Big diff for only docstring
+    "missing-blank-line-after-summary",  # Big diff for only docstring
     "missing-dashed-underline-after-section",  # Big diff for only docstring
     "missing-f-string-syntax",  # Only add an extra variable for the same string
     "missing-new-line-after-section-name",  # Big diff for only docstring
@@ -84,12 +93,15 @@ ignore = [
     "missing-return-type-static-method",  # We are not using typing entirely yet
     "missing-return-type-undocumented-public-function",  # We are not using typing entirely yet
     "missing-section-name-colon",  # Big diff for only docstring
+    "missing-section-underline-after-name",  # Big diff for only docstring
     "missing-terminal-punctuation",  # Big diff for only docstring
     "missing-trailing-comma",  # Big diff and not even needed for all cases
     "missing-trailing-period",  # Big diff for only docstring
     "module-import-not-at-top-of-file",  # TODO: Check if there are not errors
-    "multi-line-summary-first-line",  # Big diff for only docstring. WAIT: It was fixed from black???
-    "multi-line-summary-second-line",  # Big diff for only docstring. WAIT: It was fixed from black???
+    # multi-line-summary-first-line is deliberately absent: moving the summary up to the opening
+    # quotes is what we always do by hand, so it is the one docstring rule worth autofixing
+    "multi-line-summary-second-line",  # Mutually exclusive with the one above, it would push the
+                                       # summary back down to the second line
     "multiple-with-statements",  # A few cases could raise errors since the second "with" depends on the first one
     "never-union",  #  We are not using typing entirely yet
     "new-line-after-last-paragraph",  # Big diff for only docstring
@@ -97,14 +109,20 @@ ignore = [
     "no-blank-line-before-section",  # Big diff for only docstring
     "no-explicit-stacklevel",  # TODO: R&D why it is needed (in Odoo warnings.warn)
     "non-capitalized-section-name",  # Sometimes we want to capitalize TODO in the docstring
+    "non-imperative-mood",  # The mood of the summary is the developer's call
     "non-pep585-annotation",  # We are not using typing entirely yet
     "non-pep604-annotation-optional",  # We are not using typing entirely yet
     "non-pep604-annotation-union",  # We are not using typing entirely yet
     "non-self-return-type",  # We are not using typing entirely yet
     "NPY",  # We prefer not using 'numpy' library
     "outdated-version-block",  # valid multi-compatibility code
+    "over-indentation",  # Big diff for only docstring
+    "overindented-section",  # Big diff for only docstring
+    "overindented-section-underline",  # Big diff for only docstring
+    "overload-with-docstring",  # We are not using typing entirely yet
     "parenthesize-chained-operators",  # We don't need parenthesize "and" operator
     "printf-string-formatting",  # We are not fan to use str.format because of security issues
+    "property-docstring-starts-with-verb",  # Big diff for only docstring
     "PT",  # Odoo is not using 'pyttest' library yet
     "PYI",  # We are not using typing entirely yet
     "quadratic-list-summation",  # TODO: Check more cases
@@ -115,15 +133,29 @@ ignore = [
     "relative-imports",  # Odoo allows relative-imports and non-relative are imported different
     "repeated-append",  # We could prefer list.append instead of list.extend
     "rule-codes-in-selectors",  # The ruff cfg is managed from pre-commit-vauxoo
+    "signature-in-docstring",  # Big diff for only docstring
     "subclass-builtin",  # TODO: R&D why it is better using class "x(collections.UserDict)" instead of "class x(dict)"
     "subprocess-run-without-check",  # Forcing "check=False" could masking the original intention
+    "surrounding-whitespace",  # Big diff for only docstring
     "TC",  # (Type Checking) We are not using typing entirely yet
+    "triple-single-quotes",  # Reported from the optional configuration (bad-docstring-quotes)
     "true-false-comparison",  # "var != True" is different than "not var"
     "type-alias-without-annotation",  # We are not using typing entirely yet
     "uncapitalized-environment-variables",  # It could generate issues and we are not using WIN
+    "under-indentation",  # Big diff for only docstring
+    "undocumented-magic-method",  # We don't require a docstring on every definition
+    "undocumented-param",  # We don't require a docstring on every definition
+    "undocumented-public-class",  # We don't require a docstring on every definition
+    "undocumented-public-function",  # We don't require a docstring on every definition
+    "undocumented-public-init",  # We don't require a docstring on every definition
+    "undocumented-public-method",  # We don't require a docstring on every definition
+    "undocumented-public-module",  # We don't require a docstring on every definition
+    "undocumented-public-nested-class",  # We don't require a docstring on every definition
+    "undocumented-public-package",  # We don't require a docstring on every definition
     "unnecessary-assign-before-yield",  # Better explicit named of variable even if it is only for yield
     "unnecessary-assign",  # Explicit named of variable even if it is only to return it
     "unnecessary-iterable-allocation-for-first-element",  # For list[0] could raise IndexError but using next() raise StopIteration and it don't autofix "try-except(IndexError)"
+    "unnecessary-multiline-docstring",  # Big diff for only docstring
     "unspecified-encoding",  # New py versions have using utf-8 by default
     "unused-noqa",  # We could even use noqa with other tools
     "zip-without-explicit-strict",  #  "strict" should be decided by the developer explicitly

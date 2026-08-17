@@ -73,7 +73,6 @@ select = [
     "invalid-character-nul",
     "invalid-character-sub",
     "invalid-character-zero-width-space",
-    "invalid-envvar-default",
     "invalid-envvar-value",
     "invalid-first-argument-name-for-class-method",  # bad-classmethod-argument
     "invalid-first-argument-name-for-method",  # no-self-argument
@@ -160,6 +159,10 @@ select = [
     "unnecessary-placeholder",  # unnecessary-pass
     "useless-else-on-loop",
     "useless-exception-statement",  # pointless-exception-statement
+    "useless-expression",  # expression-not-assigned and pointless-statement, both mandatory in
+                           # pylint (a single ruff rule reports the two of them). It used to run
+                           # from the optional configuration while pylint kept reporting it here,
+                           # so the same statement was reported twice at two different levels
     "useless-import-alias",
     "useless-object-inheritance",
     "useless-return",
@@ -208,7 +211,6 @@ select = [
     "super-method-mismatch",
     "test-folder-imported",
     "translation-injection",
-    "translation-positional-used",
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
@@ -230,9 +232,21 @@ ignore = [
     # so they are explicitly disabled (see --is-project-for-apps / PRECOMMIT_IS_PROJECT_FOR_APPS)
     "OAPP",  # category-allowed-app, manifest-required-key-app and missing-odoo-file-app
 {% endif %}
+    # Checks disabled at every level, not only here (they are listed in this ignore to keep
+    # a record of the decision, the select above simply does not name them):
+    #  - ambiguous-variable-name: "l" is used everywhere for "line" and the IDE fonts do
+    #    distinguish "1" from "l", so the check only produces churn
+    #  - invalid-envvar-default: too nitpick, only the non-str value (invalid-envvar-value,
+    #    a real TypeError) is kept selected above
+    #  - translation-positional-used: we always write English thinking in Spanish, a term that
+    #    does not fit the other language is noticed right away and the cases actually needing
+    #    the positional form are rare
+    "ambiguous-variable-name",
+    "invalid-envvar-default",
+    "translation-positional-used",
     # Same ignores previously configured in .config/.flake8
-    "ambiguous-variable-name",  # do not use variables named 'l', 'O', or 'I' (enabled from the optional configuration)
-    "line-too-long",  # line-too-long (handled by the autofix and bugbear B950 from optional)
+    "line-too-long",  # line-too-long (reported by the optional configuration, which reproduces
+                      # the bugbear B950 tolerance, and reformatted by the autofix)
     "missing-whitespace-around-arithmetic-operator",  # missing whitespace around arithmetic operator (better autofixing)
     "multiple-spaces-after-comma",  # multiple spaces after ',' (better autofixing)
     "redefined-while-unused",  # redefinition is legal in odoo 8 when we implement 2 interfaces for a method
@@ -273,6 +287,11 @@ max-returns = 6
 [lint.per-file-ignores]
 "__init__.py" = [
     "unused-import",  # imported but unused is legal in odoo __init__.py files
+]
+"__manifest__.py" = [
+    "useless-expression",  # the manifest is a bare dict literal, so the whole file is one
+                           # expression nothing assigns (same ignore the optional configuration
+                           # had while this check ran from there)
 ]
 "docs/conf.py" = [
     "builtin-variable-shadowing",  # Sphinx requires assigning the "copyright" builtin variable name

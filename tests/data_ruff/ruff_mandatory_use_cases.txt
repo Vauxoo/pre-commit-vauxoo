@@ -124,3 +124,11 @@ def use_yield_from_use_case(values):
     # use-yield-from (pylint) -> yield-in-for-loop (ruff UP028)
     for value in values:
         yield value
+
+
+def expression_not_assigned_use_case(record, uid):
+    # expression-not-assigned (pylint) -> useless-expression (ruff B018), moved to the mandatory
+    # level because that is where pylint reported it. The attribute is read from a call on
+    # purpose: a plain "record.name" is pointless-statement for pylint, the same ruff rule
+    # reports both
+    record.with_user(uid).name

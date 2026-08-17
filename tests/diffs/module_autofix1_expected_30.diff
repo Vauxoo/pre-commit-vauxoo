@@ -58,3 +58,11 @@ diff --git a/module_autofix1/views/views.xml b/module_autofix1/views/views.xml
 -  <menuitem name="module_warnings1" id="module_autofix1.menu_root" />
 +  <menuitem id="menu_root" name="module_warnings1" />
  </odoo>
+diff --git a/module_warnings1/models/models.py b/module_warnings1/models/models.py
+--- a/module_warnings1/models/models.py
++++ b/module_warnings1/models/models.py
+@@ -1,3 +1 @@
+-"""
+-warning docstring-first-line-empty
+-"""
++"""warning docstring-first-line-empty"""

@@ -190,6 +190,7 @@ disable=abstract-method,
    empty-docstring,  # ruff D419
    eval-used,  # ruff S307
    exec-used,  # ruff S102
+   expression-not-assigned,  # ruff B018
    f-string-without-interpolation,  # ruff F541
    forgotten-debug-statement,  # ruff T100
    format-combined-specification,  # ruff F525
@@ -262,6 +263,7 @@ disable=abstract-method,
    not-in-loop,  # ruff F701,F702
    notimplemented-raised,  # ruff F901
    pointless-exception-statement,  # ruff PLW0133
+   pointless-statement,  # ruff B018 (the same rule reports expression-not-assigned)
    potential-index-error,  # ruff PLE0643
    prefer-env-translation,  # ruff ODW8161 (also autofixed from .ruff-autofix.toml)
    prohibited-method-override,  # ruff ODW8107

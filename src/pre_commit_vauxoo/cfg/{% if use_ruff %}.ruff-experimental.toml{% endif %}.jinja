@@ -50,10 +50,18 @@ ignore = [
     "suspicious-xml-expat-import",
     "suspicious-xml-minidom-import",
     "suspicious-xml-pulldom-import",
-    # Reported from another level, so they are not repeated here (B102, B307 and B704)
+    # Reported from another level, so they are not repeated here (B102, B307, B704, B110, B101
+    # and B311)
     "exec-builtin",  # mandatory from .ruff.toml
     "suspicious-eval-usage",  # mandatory from .ruff.toml
+    "try-except-pass",  # optional from .ruff-optional.toml, where it also replaces the
+                        # deprecated ruff-odoo except-pass, which reported the same handler
     "unsafe-markup-use",  # optional from .ruff-optional.toml
+    # Moved to the optional configuration: both are worth a look on every merge request and not
+    # only when the developer opts into this hook, an assert being dropped by "python -O" and a
+    # Mersenne Twister random being unfit for anything secret
+    "assert",  # optional from .ruff-optional.toml
+    "suspicious-non-cryptographic-random-usage",  # optional from .ruff-optional.toml
 ]
 
 [lint.per-file-ignores]
