@@ -74,12 +74,11 @@ select = [
     # optional (the mandatory ones are selected from .ruff.toml and no-search-all, the only
     # experimental one, from .ruff-experimental.toml)
     #  - The autofixable ones (attribute-string-redundant, manifest-data-duplicated,
-    #    translation-not-lazy and use-vim-comment) are autofixed from .ruff-autofix.toml, they are
-    #    also selected here to keep reporting them when the autofix hook is not executed
-    #  - manifest-required-author and license-allowed keep running from pylint-odoo since ruff-odoo
-    #    doesn't support yet configuring the Vauxoo authors (Vauxoo, Jarsa) nor the OPL-1 license,
-    #    same for manifest-deprecated-key which only reports the "description" key in ruff-odoo
-    #    (see the [ODOOLINT] section in .pylintrc-optional)
+    #    manifest-deprecated-key, translation-not-lazy and use-vim-comment) are autofixed from
+    #    .ruff-autofix.toml, they are also selected here to keep reporting them when the autofix
+    #    hook is not executed
+    #  - license-allowed, manifest-required-author and manifest-deprecated-key use the [lint.odoo]
+    #    options below with the same values the [ODOOLINT] section of .pylintrc-optional used
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
     #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
     #    filters them
@@ -90,9 +89,12 @@ select = [
     "deprecated-odoo-model-method",
     "except-pass",
     "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
+    "license-allowed",  # It uses the license-allowed option (see [lint.odoo])
     "manifest-author-string",
     "manifest-data-duplicated",
+    "manifest-deprecated-key",  # It uses the manifest-deprecated-keys default (see [lint.odoo])
     "manifest-maintainers-list",
+    "manifest-required-author",  # It uses the manifest-required-authors option (see [lint.odoo])
     "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
     "method-compute",
     "method-inverse",
@@ -141,6 +143,30 @@ max-complexity = 15
 {%- if odoo_version %}
 odoo-version = "{{ odoo_version }}"
 {%- endif %}
+# Same values the [ODOOLINT] section of .config/.pylintrc-optional configured for the
+# pylint-odoo checks replaced by these ruff-odoo ones:
+#  - license-allowed uses the [ODOOLINT] "license-allowed" option
+#  - manifest-required-author uses the [ODOOLINT] "manifest-required-authors" option
+# manifest-deprecated-key is not configured here on purpose: the ruff-odoo default is already
+# the [ODOOLINT] "manifest-deprecated-keys" value (active and description, plus qweb from 16.0
+# on) and it gates qweb by the odoo-version above instead of by the configuration file
+license-allowed = [
+    "AGPL-3",
+    "GPL-2",
+    "GPL-2 or any later version",
+    "GPL-3",
+    "GPL-3 or any later version",
+    "LGPL-3",
+    "Other OSI approved licence",
+    "Other proprietary",
+    "OEEL-1",
+    "OPL-1",
+]
+manifest-required-authors = [
+    "Vauxoo",
+    "Odoo Community Association (OCA)",
+    "Jarsa",
+]
 
 [lint.per-file-ignores]
 "__manifest__.py" = [

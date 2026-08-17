@@ -669,6 +669,34 @@ class TestPreCommitVauxoo:
         assert "manifest-version-format" in set(data_optional["lint"]["select"]), (
             "manifest-version-format is not selected in .ruff-optional.toml"
         )
+        # license-allowed and manifest-required-author were optional pylint-odoo checks configured
+        # from the [ODOOLINT] section of .pylintrc-optional, so the ruff-odoo ones must keep the
+        # same values from the optional configuration
+        odoo_options_optional = data_optional["lint"]["odoo"]
+        pylintrc_optional = ConfigParser(inline_comment_prefixes=("#", ";"))
+        pylintrc_optional.read(cfg_subfolder / ".pylintrc-optional")
+        for ruff_option, pylint_option in (
+            ("license-allowed", "license-allowed"),
+            ("manifest-required-authors", "manifest-required-authors"),
+        ):
+            expected_values = [
+                value.strip()
+                for value in pylintrc_optional.get("ODOOLINT", pylint_option).replace("\n", "").split(",")
+                if value.strip()
+            ]
+            assert odoo_options_optional[ruff_option] == expected_values, (
+                f"The [lint.odoo] {ruff_option} of .ruff-optional.toml is not the [ODOOLINT] "
+                f"{pylint_option} of .pylintrc-optional"
+            )
+        # manifest-deprecated-key is not configured: the ruff-odoo default already reports the
+        # [ODOOLINT] manifest-deprecated-keys values gating qweb by the odoo-version option
+        assert "manifest-deprecated-keys" not in odoo_options_optional, (
+            "manifest-deprecated-keys should not be configured in .ruff-optional.toml"
+        )
+        expected_optional_checks = {"license-allowed", "manifest-required-author", "manifest-deprecated-key"}
+        assert expected_optional_checks.issubset(set(data_optional["lint"]["select"])), (
+            "The checks using the [lint.odoo] options are not selected in .ruff-optional.toml"
+        )
 
     def test_ruff_checks_by_name(self, caplog):
         """The ruff checks must be configured by name (e.g. "no-search-all") and never by

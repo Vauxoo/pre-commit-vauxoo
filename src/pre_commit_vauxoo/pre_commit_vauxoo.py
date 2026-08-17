@@ -31,14 +31,6 @@ re_pylint_check_ruff_codes = re.compile(
     re.MULTILINE,
 )
 
-# pylint-odoo checks that keep running from pylint (see the [ODOOLINT] section in
-# .pylintrc-optional) but ruff-odoo also implements them, so the same
-# PYLINT_DISABLE_CHECKS name disables the check from both tools
-PYLINT_TO_RUFF_EXTRA_CHECKS = {
-    "license-allowed": ("ODC8105",),
-    "manifest-required-author": ("ODC8101",),
-}
-
 CFG_SUBFOLDER = ".config"
 TOOLS_ORDER = (
     "prettier_matrix_value",
@@ -192,7 +184,7 @@ def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, 
     ruff_disable_checks = tuple(ruff_disable_checks or ())
     if not use_ruff or not pylint_disable_checks:
         return ruff_disable_checks
-    pylint2ruff = dict(PYLINT_TO_RUFF_EXTRA_CHECKS)
+    pylint2ruff = {}
     for pylintrc_filename in (".pylintrc.jinja", ".pylintrc-optional.jinja"):
         pylintrc_path = pathlib.Path(precommit_config_dir) / pylintrc_filename
         if not pylintrc_path.is_file():

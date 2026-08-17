@@ -10,6 +10,12 @@ py-version={{ py_version }}
 {%- endif %}
 
 [ODOOLINT]
+{% if use_ruff -%}
+# The checks using these options (license-allowed, manifest-required-author and
+# manifest-deprecated-key) are migrated to ruff, so the values actually running are the
+# [lint.odoo] ones of .config/.ruff-optional.toml, kept here in sync for the external scripts
+# replacing this section and for the configuration without ruff
+{% endif -%}
 license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     GPL-3,GPL-3 or any later version,LGPL-3,
     Other OSI approved licence,Other proprietary,
@@ -28,15 +34,6 @@ manifest-deprecated-keys=active,
 disable=all,unknown-option-value
 enable=deprecated-method,
   deprecated-pragma,
-  # license-allowed and manifest-required-author keep running from pylint-odoo even with ruff
-  # enabled since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo, Jarsa)
-  # nor the OPL-1 license (see the [ODOOLINT] section above and .config/.ruff.toml)
-  license-allowed,
-  # manifest-deprecated-key also keeps running from pylint-odoo since the ruff-odoo ODC8103
-  # only reports the "description" key while this one reports all the [ODOOLINT]
-  # "manifest-deprecated-keys" values (active, description and qweb)
-  manifest-deprecated-key,
-  manifest-required-author,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
   useless-parent-delegation
@@ -60,9 +57,12 @@ enable=deprecated-method,
   external-request-timeout,  # ruff ODE8106
   implicit-str-concat,  # ruff ISC001
   invalid-commit,  # ruff ODE8102 (mandatory .ruff.toml)
+  license-allowed,  # ruff ODC8105 (it uses the license-allowed option, see [lint.odoo])
   manifest-author-string,  # ruff ODE8101
   manifest-data-duplicated,  # ruff ODW8125
+  manifest-deprecated-key,  # ruff ODC8103 (autofix .ruff-autofix.toml)
   manifest-maintainers-list,  # ruff ODE8104
+  manifest-required-author,  # ruff ODC8101 (it uses the manifest-required-authors option, see [lint.odoo])
   manifest-required-key,  # ruff ODC8102 (mandatory .ruff.toml)
   manifest-version-format,  # ruff ODC8106
   method-compute,  # ruff ODC8108

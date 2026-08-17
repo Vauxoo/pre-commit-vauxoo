@@ -171,13 +171,13 @@ select = [
     #  - The ones that were optional (attribute-deprecated, sql-injection, the translation-*
     #    family, ...) run from .ruff-optional.toml
     #  - no-search-all was experimental so it runs from .ruff-experimental.toml
-    #  - The autofixable ones (manifest-deprecated-key, unused-logger, header-comments and
-    #    deprecated-self-cr) run from the autofix configuration instead (see .ruff-autofix.toml).
-    #    prefer-env-translation is autofixable too but it was mandatory, so it is also selected
-    #    here to keep reporting it when the autofix hook is not executed
-    #  - manifest-required-author and license-allowed keep running from
-    #    pylint-odoo since ruff-odoo doesn't support yet configuring the Vauxoo authors (Vauxoo,
-    #    Jarsa) nor the OPL-1 license (see the [ODOOLINT] section in .pylintrc-optional)
+    #  - The autofixable ones (unused-logger, header-comments and deprecated-self-cr) run from
+    #    the autofix configuration instead (see .ruff-autofix.toml). prefer-env-translation is
+    #    autofixable too but it was mandatory, so it is also selected here to keep reporting it
+    #    when the autofix hook is not executed
+    #  - manifest-required-author, license-allowed and manifest-deprecated-key were optional in
+    #    pylint-odoo so they run from .ruff-optional.toml, where the [lint.odoo] options keep the
+    #    values the [ODOOLINT] section of .pylintrc-optional configured for them
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
     #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
     #    filters them
