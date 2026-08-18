@@ -22,4 +22,8 @@ per-file-ignores=
     __init__.py:F401
 {%- endif %}
 max-line-length = 119
-jobs = 0
+# flake8 spells its parallel mode "auto", not 0 like pylint does: a numeric 0 is taken
+# literally as "0 jobs", which makes flake8 fall back to run_serial() and check every file
+# in a single process. Its pre-commit hook declares require_serial: true precisely because
+# flake8 is expected to parallelize on its own, so there was nothing else parallelizing it
+jobs = auto

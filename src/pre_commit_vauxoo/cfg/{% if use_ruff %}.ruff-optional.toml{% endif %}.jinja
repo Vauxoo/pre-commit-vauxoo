@@ -20,12 +20,14 @@ select = [
     #  - function-uses-loop-variable, abstract-base-class-without-abstract-method,
     #    raise-without-from-inside-except, zip-without-explicit-strict and the bugbear B036 and B907
     #    keep being disabled (see .flake8-optional comments)
-    #  - The bugbear B906, B908 and B950 are not implemented in ruff so they keep running from flake8
+    #  - The bugbear B040, B042, B906, B908, B910 and B950 are not implemented in ruff so they
+    #    keep running from flake8
     "assert-false",
     "assert-raises-exception",
     "assignment-to-os-environ",
     "batched-without-explicit-strict",
     "class-as-data-structure",
+    "del-attr-with-constant",
     "duplicate-handler-exception",
     "empty-method-without-abstract-decorator",
     "except-with-empty-tuple",
