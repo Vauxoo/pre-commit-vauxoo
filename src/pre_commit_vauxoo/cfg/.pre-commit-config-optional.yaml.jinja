@@ -25,7 +25,11 @@ exclude: |
   )
 default_language_version:
   python: python3
+{%- if use_ruff %}
+  node: "26.7.0"
+{%- else %}
   node: "24.13.0"
+{%- endif %}
 repos:
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}

@@ -25,7 +25,11 @@ exclude: |
   )
 default_language_version:
   python: python3
+{%- if use_ruff %}
+  node: "26.7.0"
+{%- else %}
   node: "24.13.0"
+{%- endif %}
 repos:
 {%- if use_ruff %}
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
@@ -63,7 +67,11 @@ repos:
           - --jobs=3
 {%- endif %}
   - repo: https://github.com/pre-commit/mirrors-eslint
+{%- if use_ruff %}
+    rev: v10.8.1
+{%- else %}
     rev: v9.39.1
+{%- endif %}
     hooks:
       - id: eslint
         name: javascript mandatory checks
