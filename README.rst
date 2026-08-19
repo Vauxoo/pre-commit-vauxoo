@@ -306,3 +306,24 @@ Note, to combine the coverage data from all the tox environments run:
       - ::
 
             PYTEST_ADDOPTS=--cov-append tox
+
+Updating the pylint-odoo and ruff-odoo revs
+-------------------------------------------
+
+pylint-odoo and ruff-odoo release often so their revs in the
+``.pre-commit-config*.yaml.jinja`` templates have their own standalone
+bump2version configuration files::
+
+    bump2version --config-file=.b2v-pylint.cfg patch
+    bump2version --config-file=.b2v-ruff.cfg build
+
+Use ``--new-version`` to jump to an arbitrary release::
+
+    bump2version --config-file=.b2v-pylint.cfg patch --new-version 10.0.11
+    bump2version --config-file=.b2v-ruff.cfg build --new-version 0.16.3.28
+
+Each command updates only its own hook revs (the lines anchored with the
+``{# b2v-pylint #}`` / ``{# b2v-ruff #}`` jinja comments, stripped when the
+templates are rendered), then creates the commit reusing the usual
+``[IMP] cfg: Update <tool> to <version>`` message, without creating tags and
+without touching the package's own ``.bumpversion.cfg``.
