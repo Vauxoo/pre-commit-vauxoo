@@ -33,7 +33,7 @@ default_language_version:
 repos:
 {%- if use_ruff %}
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
-    rev: 0.16.3.27
+    rev: 0.16.3.28{# b2v-ruff #}
     hooks:
       - id: ruff-check
         name: ruff-odoo mandatory checks
@@ -53,7 +53,7 @@ repos:
           - --config=.config/.flake8
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.10
+    rev: v10.0.11{# b2v-pylint #}
 {%- else %}
     rev: v9.3.24
 {%- endif %}
