@@ -212,6 +212,28 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     help="PATHS are the specific filenames to run hooks on separated by commas.",
     **new_extra_kwargs,
 )
+# The scope options are mutually exclusive by sharing the same "scope" destination and
+# they are not configurable by environment variable on purpose: the CI keeps running the
+# whole repository with a bare "pre-commit-vauxoo" command
+@click.option(
+    "--all",
+    "scope",
+    flag_value=pre_commit_vauxoo.SCOPE_ALL,
+    default=True,
+    help="Run the hooks on the whole repository. It is the default one.",
+)
+@click.option(
+    "--last-commit",
+    "scope",
+    flag_value=pre_commit_vauxoo.SCOPE_LAST_COMMIT,
+    help="Run the hooks only on the files added or modified by the last commit (HEAD).",
+)
+@click.option(
+    "--diff",
+    "scope",
+    flag_value=pre_commit_vauxoo.SCOPE_DIFF,
+    help="Run the hooks only on the files with changes not committed yet: staged, unstaged and untracked ones.",
+)
 @click.option(
     "--no-overwrite",
     envvar="PRECOMMIT_NO_OVERWRITE_CONFIG_FILES",
@@ -321,7 +343,7 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     default=False,
     help="Install the pre-commit script"
     "\f\nUsing this option a '.git/hooks/pre-commit' will be created"
-    "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo' before to commit",
+    "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo --diff' before to commit",
     **new_extra_kwargs,
 )
 @click.option(

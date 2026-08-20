@@ -32,6 +32,12 @@ re_pylint_check_ruff_codes = re.compile(
 )
 
 CFG_SUBFOLDER = ".config"
+
+# Scope of files to run the hooks on (--all, --last-commit and --diff)
+SCOPE_ALL = "all"
+SCOPE_LAST_COMMIT = "last-commit"
+SCOPE_DIFF = "diff"
+
 TOOLS_ORDER = (
     "prettier_matrix_value",
     "oca_hooks_matrix_value",
@@ -92,6 +98,72 @@ def get_files(path):
     ls_files = subprocess.check_output(["git", "ls-files", "--", path]).decode(sys.stdout.encoding).strip()
     ls_files = ls_files.splitlines()
     return ls_files
+
+
+def git_output(git_args, repo_dirname):
+    """Run a read-only git command from the root of the repository
+
+    Running it from the root makes the output paths relative to it and independent of
+    the current directory, which could even limit the files reported (e.g. "git ls-files")
+
+    The stderr is captured instead of inherited so a failure expected by the caller
+    (e.g. a repository without commits) does not print a confusing git error
+    """
+    output = subprocess.check_output(["git"] + git_args, cwd=repo_dirname, stderr=subprocess.PIPE).decode(
+        sys.stdout.encoding
+    )
+    return [line for line in output.splitlines() if line]
+
+
+def get_last_commit_files(repo_dirname):
+    """Files added or modified by the last commit (HEAD)
+
+    "--root" reports the whole content of an initial commit instead of nothing and
+    "-m --first-parent" makes a merge commit report the changes it merged, instead of
+    the empty list a merge reports by default
+    """
+    return git_output(
+        [
+            "diff-tree",
+            "-r",
+            "-m",
+            "--root",
+            "--first-parent",
+            "--no-commit-id",
+            "--name-only",
+            "--diff-filter=d",
+            "HEAD",
+        ],
+        repo_dirname,
+    )
+
+
+def get_diff_files(repo_dirname):
+    """Files with changes not committed yet: staged, unstaged and untracked
+
+    "git diff HEAD" reports the tracked files changed no matter if they were added to
+    the index or not, so only the untracked files need the extra "git ls-files" call
+    """
+    files = git_output(["diff", "--name-only", "--diff-filter=d", "HEAD"], repo_dirname)
+    files += git_output(["ls-files", "--others", "--exclude-standard"], repo_dirname)
+    return files
+
+
+def get_scope_files(scope, repo_dirname):
+    """Files to run the hooks on for the given scope, relative to the root of the repository
+
+    The deleted files are excluded ("--diff-filter=d" and the untracked files always exist)
+    since a file that is gone can not be checked at all
+    """
+    get_files_meth = {SCOPE_LAST_COMMIT: get_last_commit_files, SCOPE_DIFF: get_diff_files}[scope]
+    try:
+        files = get_files_meth(repo_dirname)
+    except subprocess.CalledProcessError as git_error:
+        # e.g. a repository without commits at all, so there is no HEAD to compare with
+        _logger.warning("Unable to get the files for '--%s'. Is it a repository without commits?", scope)
+        _logger.debug("git error: %s", (git_error.stderr or b"").decode(sys.stdout.encoding).strip())
+        return []
+    return sorted(set(files))
 
 
 def git_cwd():
@@ -367,6 +439,7 @@ def resolve_console_script(script_name):
 # There are a lot of if validations in this method. It is expected for now.
 def main(  # ruff: ignore[complex-structure]
     paths,
+    scope,
     no_overwrite,
     exclude_autofix,
     exclude_lint,
@@ -440,7 +513,36 @@ def main(  # ruff: ignore[complex-structure]
 
     status = 0
     cmd = ["pre-commit", "run", "--color=always"]
-    if cwd != ".":
+    custom_paths = bool(paths) and paths != (".",)
+    if custom_paths and scope != SCOPE_ALL:
+        _logger.warning(
+            "Conflicting parameters: '--%s' is ignored since that '-p/--paths' has precedence over it",
+            scope,
+        )
+        scope = SCOPE_ALL
+    if scope != SCOPE_ALL:
+        # The scope has precedence over the current directory so it always checks the
+        # files of the whole repository even if the command is invoked from a subdirectory
+        if cwd != ".":
+            _logger.warning(
+                "Running '--%s' for the whole repository even if the current directory is '%s'",
+                scope,
+                pathlib.Path(cwd).name,
+            )
+        scope_files = get_scope_files(scope, repo_dirname)
+        if not scope_files:
+            _logger.warning("There are no files to check for '--%s'. Nothing to do.", scope)
+            if do_exit:
+                sys.exit(0)
+            return
+        _logger.info("Running only for the %d file(s) of '--%s'", len(scope_files), scope)
+        # The absolute path is required to be independent of the current directory and
+        # it is normalized since that git always reports the files separated by "/"
+        cmd.extend([
+            "--files",
+            *(os.path.normpath(os.path.join(repo_dirname, scope_file)) for scope_file in scope_files),
+        ])
+    elif cwd != ".":
         if paths:
             _logger.warning(
                 "Ignored path configured '%s'. Use 'cd %s' and run the same command again to use configured path",
@@ -452,7 +554,7 @@ def main(  # ruff: ignore[complex-structure]
         if not files:
             raise UserWarning("Not files detected in current path %s" % cwd)
         cmd.extend(["--files"] + files)
-    elif paths and paths != (".",):
+    elif custom_paths:
         _logger.info("Running only for INCLUDE_LINT=%s", paths)
         included_files = []
         for included_path in paths:

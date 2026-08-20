@@ -92,6 +92,14 @@ The autofixes are disabled by default you can use the following option to enable
 
   pre-commit-vauxoo -t all
 
+By default the hooks run on the whole repository (``--all``), which is what the CI does.
+While developing you usually only need to check what you are working on, so use one of
+the following options to get a faster result:
+
+    pre-commit-vauxoo --diff  # only the changes not committed yet (staged, unstaged and untracked)
+
+    pre-commit-vauxoo --last-commit  # only the files added or modified by the last commit
+
 Full --help command result:
 
 ::
@@ -105,6 +113,13 @@ Full --help command result:
     -p, --paths PATH CSV            PATHS are the specific filenames to run
                                     hooks on separated by commas.  [env var:
                                     INCLUDE_LINT; default: .]
+    --all                           Run the hooks on the whole repository. It
+                                    is the default one.
+    --last-commit                   Run the hooks only on the files added or
+                                    modified by the last commit (HEAD).
+    --diff                          Run the hooks only on the files with
+                                    changes not committed yet: staged,
+                                    unstaged and untracked ones.
     --no-overwrite                  Overwrite configuration files.
 
                                     *If True, existing configuration files into
@@ -175,7 +190,7 @@ Full --help command result:
                                     will be created
 
                                     Now your command 'git commit' will run 'pre-
-                                    commit-vauxoo' before to commit
+                                    commit-vauxoo --diff' before to commit
     --version                       Show the version of this package
     --odoo-version TEXT             Odoo version used for the repository.
 

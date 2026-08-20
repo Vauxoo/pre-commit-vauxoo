@@ -19,7 +19,9 @@ if [ "$TRAVIS" != true ] && [ -z ${NOLINT+x} ]; then
 fi
 
 if [ -x "__PRE_COMMIT_VAUXOO_BIN__" ]; then
-    "__PRE_COMMIT_VAUXOO_BIN__"
+    # Only the changes about to be committed are checked ("--diff") instead of the whole
+    # repository, so that "git commit" is not slowed down by files nobody is working on
+    "__PRE_COMMIT_VAUXOO_BIN__" --diff
     EXIT_CODE=$?
     if [ $EXIT_CODE -ne 0 ]; then
         echo ""
