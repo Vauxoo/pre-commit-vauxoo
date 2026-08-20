@@ -343,7 +343,7 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     default=False,
     help="Install the pre-commit script"
     "\f\nUsing this option a '.git/hooks/pre-commit' will be created"
-    "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo' before to commit",
+    "\f\nNow your command 'git commit' will run 'pre-commit-vauxoo --diff' before to commit",
     **new_extra_kwargs,
 )
 @click.option(

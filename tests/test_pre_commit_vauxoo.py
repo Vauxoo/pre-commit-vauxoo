@@ -281,8 +281,9 @@ class TestPreCommitVauxoo:
         result = self.runner.invoke(main, ["--install"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         assert Path(git_hook_pre_commit).is_file(), "File not created"
-        with Path(git_hook_pre_commit).open() as f_git_hook_pre_commit:
-            assert "pre-commit-vauxoo" in f_git_hook_pre_commit.read(), "File pre-commit not generated correctly"
+        hook_content = Path(git_hook_pre_commit).read_text()
+        assert "pre-commit-vauxoo" in hook_content, "File pre-commit not generated correctly"
+        assert "--diff" in hook_content, "The git hook is not checking only the changes to be committed"
         os.environ["NOLINT"] = "1"
         exit_code = subprocess.call([
             "git",

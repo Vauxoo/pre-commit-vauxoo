@@ -190,7 +190,7 @@ Full --help command result:
                                     will be created
 
                                     Now your command 'git commit' will run 'pre-
-                                    commit-vauxoo' before to commit
+                                    commit-vauxoo --diff' before to commit
     --version                       Show the version of this package
     --odoo-version TEXT             Odoo version used for the repository.
 
