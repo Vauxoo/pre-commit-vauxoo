@@ -26,6 +26,7 @@ from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
 from yaml import Loader, load
 
+from pre_commit_vauxoo import pre_commit_vauxoo
 from pre_commit_vauxoo.cli import main
 from pre_commit_vauxoo.hooks.check_commit_msg import (
     check_commit_messages_since_version,
@@ -975,3 +976,140 @@ class TestPreCommitVauxoo:
         assert manifest_deprecated_keys == linter.config.manifest_deprecated_keys, (
             f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"
         )
+
+    def git_call(self, *args):
+        subprocess.check_call(
+            [
+                "git",
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@vauxoo.com",
+                "-c",
+                "commit.gpgsign=false",
+                *args,
+            ],
+            cwd=self.tmp_dir,
+        )
+
+    def git_commit_all(self, message="[FIX] module_example1: testing"):
+        self.git_call("add", "-A")
+        self.git_call("commit", "-q", "-m", message)
+
+    def write_file(self, relpath, content="# comment\n"):
+        fname = Path(self.tmp_dir) / relpath
+        with fname.open("a", encoding="utf-8") as f_content:
+            f_content.write(content)
+        return relpath
+
+    def invoke_scope(self, monkeypatch, argv):
+        """Invoke the CLI without running the real hooks
+
+        The configuration files and the hooks are not needed to check which files are
+        sent to "pre-commit run", so they are stubbed to keep these tests fast
+        """
+        commands = []
+
+        def stub_subprocess_call(command, *args, **kwargs):
+            commands.append(command)
+            return 0
+
+        monkeypatch.setattr(pre_commit_vauxoo, "subprocess_call", stub_subprocess_call)
+        monkeypatch.setattr(pre_commit_vauxoo, "copy_cfg_files", lambda *args, **kwargs: None)
+        result = self.runner.invoke(main, argv)
+        run_commands = [command for command in commands if command[:2] == ["pre-commit", "run"]]
+        return result, run_commands
+
+    def scope_files(self, run_command):
+        """Files sent to "pre-commit run" relative to the repository or None if it runs '--all'"""
+        if "--files" not in run_command:
+            return None
+        files = run_command[run_command.index("--files") + 1 : run_command.index("-c")]
+        # "as_posix" is required since that windows separates the paths with "\"
+        return sorted(Path(os.path.relpath(fname, self.tmp_dir)).as_posix() for fname in files)
+
+    def test_scope_default_is_all(self, monkeypatch):
+        """Running the command without a scope keeps checking the whole repository"""
+        self.git_commit_all()
+        self.write_file("module_example1/__init__.py")
+        result, run_commands = self.invoke_scope(monkeypatch, [])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            assert "--all" in run_command, "The default scope is not the whole repository"
+            assert self.scope_files(run_command) is None, "The default scope is limiting the files"
+
+    def test_scope_last_commit(self, monkeypatch):
+        """'--last-commit' only checks the files of the last commit"""
+        self.git_commit_all()
+        self.write_file("module_example1/models/models.py")
+        self.git_commit_all("[FIX] module_example1: last commit change")
+        # Changes not committed are not part of the last commit
+        self.write_file("module_warnings1/models/models.py")
+        result, run_commands = self.invoke_scope(monkeypatch, ["--last-commit"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            assert self.scope_files(run_command) == ["module_example1/models/models.py"], (
+                "'--last-commit' is not checking the files of the last commit"
+            )
+
+    def test_scope_diff(self, monkeypatch):
+        """'--diff' checks the staged, unstaged and untracked changes but not the committed ones"""
+        self.git_commit_all()
+        unstaged = self.write_file("module_example1/models/models.py")
+        staged = self.write_file("module_warnings1/models/models.py")
+        self.git_call("add", staged)
+        untracked = self.write_file("module_example1/new_file.py")
+        result, run_commands = self.invoke_scope(monkeypatch, ["--diff"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            assert self.scope_files(run_command) == sorted([unstaged, staged, untracked]), (
+                "'--diff' is not checking the staged, unstaged and untracked changes"
+            )
+
+    def test_scope_diff_without_changes(self, monkeypatch, caplog):
+        """'--diff' without changes does not run the hooks at all"""
+        self.git_commit_all()
+        expected_logs = ["WARNING:pre-commit-vauxoo:There are no files to check for '--diff'. Nothing to do."]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog):
+            result, run_commands = self.invoke_scope(monkeypatch, ["--diff"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert not run_commands, "The hooks were run without files to check"
+
+    def test_scope_paths_precedence(self, monkeypatch, caplog):
+        """'-p/--paths' has precedence over the scope parameters"""
+        self.git_commit_all()
+        self.write_file("module_warnings1/models/models.py")
+        expected_logs = [
+            "WARNING:pre-commit-vauxoo:Conflicting parameters: '--diff' is ignored "
+            "since that '-p/--paths' has precedence over it"
+        ]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog):
+            result, run_commands = self.invoke_scope(monkeypatch, ["--diff", "-p", "module_example1"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            files = self.scope_files(run_command)
+            assert "module_example1/__init__.py" in files, "'-p/--paths' is not checking its own files"
+            assert "module_warnings1/models/models.py" not in files, "'--diff' was not ignored"
+
+    def test_scope_from_subdirectory(self, monkeypatch, caplog):
+        """The scope has precedence over the current directory checking the whole repository"""
+        self.git_commit_all()
+        changed = self.write_file("module_warnings1/models/models.py")
+        self.git_commit_all("[FIX] module_warnings1: last commit change")
+        expected_logs = [
+            "WARNING:pre-commit-vauxoo:Running '--last-commit' for the whole repository "
+            "even if the current directory is 'module_example1'"
+        ]
+        with self.chdir("module_example1"):
+            with self.custom_assert_logs(
+                "pre-commit-vauxoo", level="WARNING", expected_logs=expected_logs, caplog=caplog
+            ):
+                result, run_commands = self.invoke_scope(monkeypatch, ["--last-commit"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            assert self.scope_files(run_command) == [changed], "The current directory has precedence over the scope"
