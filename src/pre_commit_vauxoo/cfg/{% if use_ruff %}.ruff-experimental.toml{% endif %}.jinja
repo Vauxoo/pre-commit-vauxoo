@@ -14,8 +14,9 @@ target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERS
 # manifest-superfluous-key was experimental too but it is autofixable, so it keeps running
 # from .ruff-autofix.toml (removing the superfluous keys is part of the autofixes enabled by
 # the compatibility version 30, see the --compatibility-version option)
+# no-search-all was experimental too and is now mandatory from .ruff.toml: it no longer reports
+# every model, only the ones that grow, so it is actionable enough to block a merge request
 select = [
-    "no-search-all",
     # bandit replacement (same checks previously running from .config/.bandit-experimental.yml,
     # which ran every bandit test except the ones listed in its "skips" option, mirrored in the
     # "ignore" below). ruff numbers its flake8-bandit rules after bandit's own test ids, so
