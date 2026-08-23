@@ -18,8 +18,8 @@ line-ending = "lf"
 #   prefer-env-translation, manifest-superfluous-key, header-comments, deprecated-self-cr,
 #   manifest-data-duplicated and translation-not-lazy
 # The remaining Odoo checks keep the same level they had in pylint-odoo: the mandatory ones from
-# .ruff.toml, the optional ones from .ruff-optional.toml and no-search-all (the only experimental
-# one without an autofix) from .ruff-experimental.toml
+# .ruff.toml and the optional ones from .ruff-optional.toml. no-search-all is the exception: it
+# was experimental in pylint-odoo and now runs as mandatory from .ruff.toml
 # Version-dependent gating (prefer-env-translation only applies for odoo >= 18.0,
 # deprecated-self-cr for odoo >= 19.0 and translation-not-lazy for odoo >= 14.0) is handled
 # by ruff-odoo's internal logic when --odoo-version

@@ -91,8 +91,8 @@ select = [
                                     # from pylint but unnecessary-collection-call handles
                                     # dict()/list()/tuple() with a single check so it runs as optional now)
     # Odoo checks from ruff-odoo that were optional in pylint-odoo, so they keep running as
-    # optional (the mandatory ones are selected from .ruff.toml and no-search-all, the only
-    # experimental one, from .ruff-experimental.toml)
+    # optional (the mandatory ones are selected from .ruff.toml, which also runs no-search-all
+    # even though it was experimental in pylint-odoo)
     #  - The autofixable ones (attribute-string-redundant, manifest-data-duplicated,
     #    manifest-deprecated-key, translation-not-lazy and use-vim-comment) are autofixed from
     #    .ruff-autofix.toml, they are also selected here to keep reporting them when the autofix

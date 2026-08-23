@@ -175,7 +175,10 @@ select = [
     # that were mandatory in pylint-odoo are selected here:
     #  - The ones that were optional (attribute-deprecated, sql-injection, the translation-*
     #    family, ...) run from .ruff-optional.toml
-    #  - no-search-all was experimental so it runs from .ruff-experimental.toml
+    #  - no-search-all was experimental in pylint-odoo and is promoted to mandatory here: since
+    #    ruff-odoo 0.16.3.31 it only reports an unlimited search on the models that actually grow
+    #    (see the no-search-all-models option), which is a real performance bug worth blocking a
+    #    merge request rather than a warning nobody reads
     #  - The autofixable ones (manifest-deprecated-key, unused-logger and header-comments) run
     #    from the autofix configuration instead (see .ruff-autofix.toml).
     #    prefer-env-translation and prefer-env-attribute (deprecated-self-cr) are autofixable too
@@ -202,6 +205,7 @@ select = [
     "manifest-summary-multiline",
     "missing-odoo-file",  # Inert until the odoo-required-files option is set (see [lint.odoo])
     "no-raise-unlink",
+    "no-search-all",
     "no-wizard-in-models",
     "no-write-in-compute",
     "prefer-env-attribute",  # deprecated-self-cr, autofixed from .ruff-autofix.toml, reported
