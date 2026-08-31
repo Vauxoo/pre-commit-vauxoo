@@ -1,0 +1,28 @@
+"""Use cases of the optional flake8-bandit checks, outside any "tests/" path.
+
+Each case must be reported:
+ - before the ruff migration: by "pylint optional checks" or "flake8 + bugbear optional checks"
+ - after the ruff migration: by "ruff optional checks" (see .config/.ruff-optional.toml)
+
+It is separate from resources/module_warnings1/tests/data/ruff_optional_use_cases.py because
+the whole flake8-bandit family is ignored under "**/tests/**", which is where that file lives:
+asserting these cases there would assert nothing. The rest of the optional use cases stay in
+that file, which has to sit under "tests/data/" so the autofixes do not rewrite them before
+the linters report them.
+
+It is copied as a ".py" file into the temporary repository by test_ruff_use_cases.
+It is stored as ".txt" (instead of living in "resources/") to avoid breaking the
+tests expecting the mandatory checks passing for the resources modules and to
+avoid the linters of this own project reporting it.
+"""
+
+
+def except_pass_use_case(value):
+    # except-pass (pylint-odoo) -> try-except-pass (ruff flake8-bandit S110), which is selected
+    # for the handler it reports and not for its security value, so it is worth proving it still
+    # runs outside "tests/"
+    try:
+        value = int(value)
+    except ValueError:
+        pass
+    return value

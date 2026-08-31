@@ -289,6 +289,14 @@ max-public-methods = 200
 max-returns = 6
 
 [lint.per-file-ignores]
+"**/tests/**" = [
+    # Same as the "exclude_dirs: tests" every .config/.bandit-*.yml used to carry, and as the
+    # ignore the optional and experimental configurations already apply: a hardcoded credential,
+    # an exec() or an eval() inside a test is not deployed code, so it is not an attack surface.
+    # The prefix covers the flake8-bandit rules selected here by name (exec-builtin S102,
+    # suspicious-eval-usage S307) and anything added to the family later.
+    "S",
+]
 "__init__.py" = [
     "unused-import",  # imported but unused is legal in odoo __init__.py files
 ]
