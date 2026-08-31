@@ -60,9 +60,9 @@ select = [
     #  - assert and suspicious-non-cryptographic-random-usage come from the experimental
     #    configuration: an assert is dropped by "python -O" and a random built on the Mersenne
     #    Twister is fine for anything that is not a secret, so both are worth a look but neither
-    #    should fail the build only when the developer opts into the experimental hook. The
-    #    "exclude_dirs: tests" of the old bandit configuration is not reproduced for them: Odoo
-    #    tests are unittest, they assert through self.assertX() and not the assert statement
+    #    should fail the build only when the developer opts into the experimental hook. Both are
+    #    ignored under tests/ like the rest of the family (see [lint.per-file-ignores]), which
+    #    reproduces the "exclude_dirs: tests" of the old bandit configuration
     "assert",  # B101 assert_used
     "suspicious-non-cryptographic-random-usage",  # B311 random
     "unsafe-markup-use",  # B704 markupsafe_markup_xss
@@ -214,5 +214,9 @@ manifest-required-authors = [
 
 [lint.per-file-ignores]
 "**/tests/**" = [
-    "unsafe-markup-use",  # Same as the "exclude_dirs: tests" of the old .bandit-optional.yml
+    # Same as the "exclude_dirs: tests" of the old .bandit-optional.yml, widened from
+    # unsafe-markup-use to the whole flake8-bandit family: test code is never deployed, so none
+    # of these are an attack surface there. Covers assert (S101), try-except-pass (S110),
+    # suspicious-non-cryptographic-random-usage (S311) and unsafe-markup-use (S704).
+    "S",
 ]
