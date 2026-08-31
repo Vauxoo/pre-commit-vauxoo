@@ -138,6 +138,10 @@ ignore = [
     "subprocess-run-without-check",  # Forcing "check=False" could masking the original intention
     "surrounding-whitespace",  # Big diff for only docstring
     "TC",  # (Type Checking) We are not using typing entirely yet
+    "translation-positional-used",  # Disabled at every level (see the .ruff.toml ignore for the
+                                    # reason). It is the only one of those with an autofix, so the
+                                    # "ALL" above would keep rewriting the translation terms even
+                                    # though no level reports it
     "triple-single-quotes",  # Reported from the optional configuration (bad-docstring-quotes)
     "true-false-comparison",  # "var != True" is different than "not var"
     "type-alias-without-annotation",  # We are not using typing entirely yet

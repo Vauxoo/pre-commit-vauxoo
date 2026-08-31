@@ -244,7 +244,8 @@ ignore = [
     #    a real TypeError) is kept selected above
     #  - translation-positional-used: we always write English thinking in Spanish, a term that
     #    does not fit the other language is noticed right away and the cases actually needing
-    #    the positional form are rare
+    #    the positional form are rare. It is the only one of the three with an autofix, so it is
+    #    also named in the .ruff-autofix.toml ignore (that configuration selects "ALL")
     "ambiguous-variable-name",
     "invalid-envvar-default",
     "translation-positional-used",
