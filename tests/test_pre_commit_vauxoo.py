@@ -779,9 +779,6 @@ class TestPreCommitVauxoo:
     # everywhere and the IDE fonts do tell "1" and "l" apart
     RUFF_OPTIONAL_USE_CASES_EXPECTED = [
         (["(print-used)"], "print"),
-        # pylint-odoo reported the "except: pass" handler as except-pass, ruff reports it as the
-        # flake8-bandit try-except-pass (the ruff-odoo except-pass is deprecated in favor of it)
-        (["(except-pass)"], "try-except-pass"),
         (["(implicit-str-concat)"], "single-line-implicit-string-concatenation"),
         (["(redundant-u-string-prefix)"], "unicode-kind-prefix"),
         (["(use-implicit-booleaness-not-comparison-to-string)"], "compare-to-empty-string"),
@@ -791,6 +788,14 @@ class TestPreCommitVauxoo:
         (["B011"], "assert-false"),
         (["(bad-docstring-quotes)"], "triple-single-quotes"),
         (["(use-dict-literal)"], "unnecessary-collection-call"),
+    ]
+    # The whole flake8-bandit family is ignored under "**/tests/**", so its use cases can not be
+    # asserted from the file above -- that one has to live in "tests/data/" to stay out of the
+    # autofixes. They get their own fixture at the repository root instead.
+    RUFF_OPTIONAL_BANDIT_USE_CASES_EXPECTED = [
+        # pylint-odoo reported the "except: pass" handler as except-pass, ruff reports it as the
+        # flake8-bandit try-except-pass (the ruff-odoo except-pass is deprecated in favor of it)
+        (["(except-pass)"], "try-except-pass"),
     ]
 
     def run_precommit_hooks(self, hook_ids, config_file, filename):
@@ -817,6 +822,10 @@ class TestPreCommitVauxoo:
         mandatory_cases_fname = "ruff_mandatory_use_cases.py"
         mandatory_cases_src = TEST_PATH / "data_ruff" / "ruff_mandatory_use_cases.txt"
         shutil.copy(mandatory_cases_src, Path(self.tmp_dir) / mandatory_cases_fname)
+        # Same reasoning for the bandit cases, which additionally can not sit under "tests/"
+        optional_bandit_cases_fname = "ruff_optional_bandit_use_cases.py"
+        optional_bandit_cases_src = TEST_PATH / "data_ruff" / "ruff_optional_bandit_use_cases.txt"
+        shutil.copy(optional_bandit_cases_src, Path(self.tmp_dir) / optional_bandit_cases_fname)
         subprocess.check_call(["git", "add", "-A"])
         optional_cases_fname = posixpath.join("module_warnings1", "tests", "data", "ruff_optional_use_cases.py")
         for expected_use_cases, config_file, old_hook_ids, fname in [
@@ -831,6 +840,12 @@ class TestPreCommitVauxoo:
                 ".pre-commit-config-optional.yaml",
                 ["flake8", "pylint_odoo"],
                 optional_cases_fname,
+            ),
+            (
+                self.RUFF_OPTIONAL_BANDIT_USE_CASES_EXPECTED,
+                ".pre-commit-config-optional.yaml",
+                ["flake8", "pylint_odoo"],
+                optional_bandit_cases_fname,
             ),
         ]:
             hook_ids = ["ruff-check"] if use_ruff else old_hook_ids
