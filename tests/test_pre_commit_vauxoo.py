@@ -505,7 +505,11 @@ class TestPreCommitVauxoo:
         if not shutil.which("semgrep"):
             pytest.skip("semgrep is not installed")
         self.runner.invoke(main, ["--only-cp-cfg"])
-        fixture = Path(__file__).resolve().parent / "data_semgrep" / "odoo_bare_determinant_use_cases.py"
+        # Kept as .txt and copied for the same reason the ruff use cases are: a file
+        # whose determinants are undefined names on purpose can not sit in this
+        # repository as python, pytest would import it and the linters would report it
+        fixture = Path(self.tmp_dir) / "odoo_bare_determinant_use_cases.py"
+        shutil.copy(TEST_PATH / "data_semgrep" / "odoo_bare_determinant_use_cases.txt", fixture)
         result = subprocess.run(
             [
                 shutil.which("semgrep"),
