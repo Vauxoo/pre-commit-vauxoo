@@ -25,21 +25,8 @@ exclude: |
   )
 default_language_version:
   python: python3
-{%- if use_ruff %}
-  node: "26.7.0"
-{%- else %}
   node: "24.13.0"
-{%- endif %}
 repos:
-{%- if use_ruff %}
-  - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
-    rev: 0.16.3.33{# b2v-ruff #}
-    hooks:
-      - id: ruff-check
-        name: ruff-odoo mandatory checks
-        args:
-          - --config=.config/.ruff.toml
-{%- endif %}
   - repo: https://github.com/PyCQA/flake8
 {%- if flake8_matrix_value >= 20 %}
     rev: 7.3.0
@@ -67,11 +54,7 @@ repos:
           - --jobs=3
 {%- endif %}
   - repo: https://github.com/pre-commit/mirrors-eslint
-{%- if use_ruff %}
-    rev: v10.8.1
-{%- else %}
     rev: v9.39.1
-{%- endif %}
     hooks:
       - id: eslint
         name: javascript mandatory checks
@@ -110,7 +93,5 @@ repos:
         exclude: /README\.rst$|^docs/.*\.rst$
       - id: check-symlinks
       - id: check-xml
-{%- if not use_ruff %}
       # Migrated to ruff: forgotten-debug-statement (T100 from .config/.ruff.toml)
       - id: debug-statements
-{%- endif %}

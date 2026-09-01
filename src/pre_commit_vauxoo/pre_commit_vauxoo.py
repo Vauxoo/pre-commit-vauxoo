@@ -34,6 +34,13 @@ re_pylint_check_ruff_codes = re.compile(
 CFG_SUBFOLDER = ".config"
 
 # Scope of files to run the hooks on (--all, --last-commit and --diff)
+# The templates that depend on ruff live in a folder whose name is the condition
+# itself, so copier renders the matching one and skips the other subtree entirely.
+# It keeps the plain names on the files, which is what has to be opened and edited.
+CFG_RUFF_SUBFOLDER = "{% if use_ruff %}ruff{% endif %}"
+CFG_NO_RUFF_SUBFOLDER = "{% if not use_ruff %}no_ruff{% endif %}"
+CFG_RENDERED_SUBFOLDERS = ("ruff", "no_ruff")
+
 SCOPE_ALL = "all"
 SCOPE_LAST_COMMIT = "last-commit"
 SCOPE_LAST_COMMITS = "last-commits"
@@ -439,8 +446,14 @@ def extend_ruff_checks_from_pylint(precommit_config_dir, pylint_disable_checks, 
     if not use_ruff or not pylint_disable_checks:
         return ruff_disable_checks
     pylint2ruff = {}
-    for pylintrc_filename in (".pylintrc.jinja", ".pylintrc-optional.jinja"):
-        pylintrc_path = pathlib.Path(precommit_config_dir) / pylintrc_filename
+    # Both folders are read: a check migrated to ruff is annotated where it is still
+    # listed for pylint, which for the optional ones is the no_ruff template only
+    pylintrc_paths = (
+        pathlib.Path(precommit_config_dir) / subfolder / pylintrc_filename
+        for subfolder in (CFG_RUFF_SUBFOLDER, CFG_NO_RUFF_SUBFOLDER)
+        for pylintrc_filename in (".pylintrc.jinja", ".pylintrc-optional.jinja")
+    )
+    for pylintrc_path in pylintrc_paths:
         if not pylintrc_path.is_file():
             continue
         for check_match in re_pylint_check_ruff_codes.finditer(pylintrc_path.read_text(encoding="utf-8")):
@@ -544,6 +557,16 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
         overwrite=not no_overwrite,
         quiet=True,
     )
+
+    # copier renders the folder whose condition matched as a subfolder of the
+    # destination, so its files have to be moved up to where every tool expects them
+    for rendered_subfolder in CFG_RENDERED_SUBFOLDERS:
+        subfolder_path = pathlib.Path(cfg_dir) / rendered_subfolder
+        if not subfolder_path.is_dir():
+            continue
+        for cfg_file in subfolder_path.iterdir():
+            shutil.move(str(cfg_file), os.path.join(cfg_dir, cfg_file.name))
+        subfolder_path.rmdir()
 
     # .editorconfig must live at the repo root because prettier (and most
     # editors) always search for it there with no CLI flag to override the
