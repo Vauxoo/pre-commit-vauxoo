@@ -1,0 +1,597 @@
+[MAIN]
+ignore=CVS,.git,scenarios,LICENSE,*.md
+persistent=yes
+# This extension are not used for this configuration file but are useful to process disable comments based on these ones
+load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
+extension-pkg-whitelist=lxml
+{% if odoo_version -%}
+valid-odoo-version={{ odoo_version }}
+{%- endif %}
+{% if py_version -%}
+py-version={{ py_version }}
+{%- endif %}
+
+
+[ODOOLINT]
+manifest-required-authors=Vauxoo,
+   Odoo Community Association (OCA),
+   Jarsa,
+# External scripts odoo_lint replace
+
+[MESSAGES CONTROL]
+enable=all
+disable=abstract-method,
+   access-member-before-definition,
+   arguments-differ,
+   arguments-renamed,
+   assignment-from-no-return,
+   assignment-from-none,
+   attribute-defined-outside-init,
+   bad-docstring-quotes,
+   broad-exception-caught,
+   broad-exception-raised,
+   c-extension-no-member,
+   cell-var-from-loop,
+   consider-using-dict-items,
+   consider-using-f-string,
+   consider-using-ternary,
+   consider-using-generator,
+   cyclic-import,
+   deprecated-pragma,
+   deprecated-method,
+   docstring-first-line-empty,
+   duplicate-code,
+   file-ignored,
+   fixme,
+   import-error,
+   import-self,
+   implicit-str-concat,
+   inconsistent-return-statements,
+   keyword-arg-before-vararg,
+   line-too-long,
+   locally-disabled,
+   missing-module-docstring,
+   missing-class-docstring,
+   missing-function-docstring,
+   no-member,
+   no-name-in-module,
+   no-value-for-parameter,
+   odoo-exception-warning,
+   protected-access,
+   raise-missing-from,
+   redundant-u-string-prefix,
+   self-cls-assignment,
+   suppressed-message,
+   too-complex,
+   too-few-public-methods,
+   too-many-boolean-expressions,
+   too-many-branches,
+   too-many-function-args,
+   too-many-instance-attributes,
+   too-many-positional-arguments,
+   too-many-statements,
+   try-except-raise,
+   unexpected-keyword-arg,
+   ungrouped-imports,
+   unspecified-encoding,
+   unsubscriptable-object,
+   unsupported-binary-operation,
+   unused-argument,
+   unused-private-member,
+   use-dict-literal,
+   use-implicit-booleaness-not-comparison-to-string,
+   use-implicit-booleaness-not-comparison-to-zero,
+   useless-option-value,
+   unknown-option-value,
+   use-symbolic-message-instead,
+   useless-suppression,
+   wrong-import-order,
+   wrong-import-position,
+   # Disabled here because enabled from Experimental
+   manifest-superfluous-key,
+   no-search-all,
+   # odoolint disable all to be enabled from optional
+   # Comment to enable
+   attribute-deprecated,
+   attribute-string-redundant,
+   bad-builtin-groupby,
+   context-overridden,
+   development-status-allowed,
+   deprecated-odoo-model-method,
+   except-pass,
+   external-request-timeout,
+   # invalid-commit,
+   license-allowed,
+   no-wizard-in-models,
+   manifest-author-string,
+   manifest-data-duplicated,
+   manifest-deprecated-key,
+   manifest-maintainers-list,
+   manifest-required-author,
+   manifest-version-format,
+   method-compute,
+   method-inverse,
+   method-required-super,
+   method-search,
+   missing-readme,
+   missing-return,
+   odoo-addons-relative-import,
+   print-used,
+   renamed-field-parameter,
+   resource-not-exist,
+   sql-injection,
+   # test-folder-imported,
+   translation-contains-variable,
+   translation-field,
+   translation-positional-used,
+   translation-required,
+   translation-not-lazy,
+   translation-format-interpolation,
+   translation-format-truncated,
+   translation-fstring-interpolation,
+   translation-too-few-args,
+   translation-too-many-args,
+   translation-unsupported-format,
+   use-vim-comment,
+   website-manifest-key-not-valid-uri,
+   # Checks migrated to ruff (see .config/.ruff.toml)
+   # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks,
+   # except the ones annotated with the configuration file running them (e.g. use-list-literal,
+   # which a single ruff rule reports together with the optional use-dict-literal)
+   anomalous-backslash-in-string,  # ruff W605
+   assert-on-string-literal,  # ruff PLW0129
+   assert-on-tuple,  # ruff F631
+   assigning-non-slot,  # ruff PLE0237
+   await-outside-async,  # ruff PLE1142
+   bad-classmethod-argument,  # ruff N804
+   bad-format-character,  # ruff PLE1300
+   bad-format-string,  # ruff F521
+   bad-indentation,  # ruff E111
+   bad-open-mode,  # ruff PLW1501
+   bad-staticmethod-argument,  # ruff PLW0211
+   bad-str-strip-call,  # ruff PLE1310
+   bad-string-format-type,  # ruff PLE1307
+   bare-except,  # ruff E722
+   bidirectional-unicode,  # ruff PLE2502
+   binary-op-exception,  # ruff PLW0711
+   category-allowed,  # ruff ODC8114
+   category-allowed-app,  # ruff OAPP001
+   chained-comparison,  # ruff PLR1716
+   comparison-of-constants,  # ruff PLR0133
+   comparison-with-itself,  # ruff PLR0124
+   condition-evals-to-constant,  # ruff SIM220,SIM221,SIM222,SIM223
+   consider-iterating-dictionary,  # ruff SIM118
+   consider-merging-classes-inherited,  # ruff ODR8180
+   consider-merging-isinstance,  # ruff SIM101
+   consider-swap-variables,  # ruff PLR1712
+   consider-using-dict-comprehension,  # ruff C402,C404
+   consider-using-from-import,  # ruff PLR0402
+   consider-using-get,  # ruff SIM401
+   consider-using-in,  # ruff PLR1714
+   consider-using-max-builtin,  # ruff PLR1730
+   consider-using-min-builtin,  # ruff PLR1730
+   consider-using-set-comprehension,  # ruff C401,C403
+   consider-using-sys-exit,  # ruff PLR1722
+   continue-in-finally,  # ruff PLE0116
+   dangerous-default-value,  # ruff B006
+   deprecated-inselect-operator,  # ruff ODE8149
+   deprecated-name-get,  # ruff ODE8146
+   deprecated-self-cr,  # ruff ODW8165 (renamed to prefer-env-attribute in ruff-odoo)
+   dict-iter-missing-items,  # ruff PLE1141
+   duplicate-argument-name,  # always-on ruff syntax error
+   duplicate-bases,  # ruff PLE0241
+   duplicate-except,  # ruff B025
+   duplicate-key,  # ruff F601,F602
+   duplicate-value,  # ruff B033
+   empty-docstring,  # ruff D419
+   eval-used,  # ruff S307
+   exec-used,  # ruff S102
+   expression-not-assigned,  # ruff B018
+   f-string-without-interpolation,  # ruff F541
+   forgotten-debug-statement,  # ruff T100
+   format-combined-specification,  # ruff F525
+   format-needs-mapping,  # ruff F502
+   global-at-module-level,  # ruff PLW0604
+   global-statement,  # ruff PLW0603
+   global-variable-not-assigned,  # ruff PLW0602
+   import-outside-toplevel,  # ruff PLC0415
+   inheritable-method-lambda,  # ruff ODE8148
+   inheritable-method-string,  # ruff ODE8147
+   init-is-generator,  # ruff PLE0100
+   invalid-all-format,  # ruff PLE0605
+   invalid-all-object,  # ruff PLE0604
+   invalid-bool-returned,  # ruff PLE0304
+   invalid-bytes-returned,  # ruff PLE0308
+   invalid-character-backspace,  # ruff PLE2510
+   invalid-character-esc,  # ruff PLE2513
+   invalid-character-nul,  # ruff PLE2514
+   invalid-character-sub,  # ruff PLE2512
+   invalid-character-zero-width-space,  # ruff PLE2515
+   invalid-commit,  # ruff ODE8102
+   invalid-email,  # ruff ODR8181
+   invalid-envvar-default,  # ruff PLW1508
+   invalid-envvar-value,  # ruff PLE1507
+   invalid-hash-returned,  # ruff PLE0309
+   invalid-index-returned,  # ruff PLE0305
+   invalid-length-returned,  # ruff PLE0303
+   invalid-str-returned,  # ruff PLE0307
+   literal-comparison,  # ruff F632
+   logging-format-interpolation,  # ruff G001
+   logging-fstring-interpolation,  # ruff G004
+   logging-not-lazy,  # ruff G002,G003
+   logging-too-few-args,  # ruff PLE1206
+   logging-too-many-args,  # ruff PLE1205
+   lost-exception,  # ruff B012
+   manifest-behind-migrations,  # ruff ODE8145
+   manifest-external-assets,  # ruff ODW8162
+   manifest-required-key,  # ruff ODC8102
+   manifest-required-key-app,  # ruff OAPP003
+   manifest-summary-multiline,  # ruff ODC8120
+   method-cache-max-size-none,  # ruff B019
+   misplaced-bare-raise,  # ruff PLE0704
+   misplaced-future,  # ruff F404
+   missing-final-newline,  # ruff W292
+   missing-format-argument-key,  # ruff F524
+   missing-format-string-key,  # ruff F505
+   missing-odoo-file,  # ruff ODC8115
+   missing-odoo-file-app,  # ruff OAPP002
+   mixed-format-string,  # ruff F506
+   modified-iterating-set,  # ruff PLE4703
+   multiple-imports,  # ruff E401
+   multiple-statements,  # ruff E701,E702 (and flake8 E704)
+   named-expr-without-context,  # ruff PLW0131
+   nan-comparison,  # ruff PLW0177
+   nested-min-max,  # ruff PLW3301
+   no-classmethod-decorator,  # ruff PLR0202
+   no-else-break,  # ruff RET508
+   no-else-continue,  # ruff RET507
+   no-else-raise,  # ruff RET506
+   no-else-return,  # ruff RET505
+   no-raise-unlink,  # ruff ODE8140
+   no-self-argument,  # ruff N805
+   no-staticmethod-decorator,  # ruff PLR0203
+   no-write-in-compute,  # ruff ODE8135
+   non-ascii-module-import,  # ruff PLC2403
+   non-ascii-name,  # ruff PLC2401
+   nonexistent-operator,  # ruff B002
+   nonlocal-and-global,  # ruff PLE0115
+   nonlocal-without-binding,  # ruff PLE0117
+   not-in-loop,  # ruff F701,F702
+   notimplemented-raised,  # ruff F901
+   pointless-exception-statement,  # ruff PLW0133
+   pointless-statement,  # ruff B018 (the same rule reports expression-not-assigned)
+   potential-index-error,  # ruff PLE0643
+   prefer-env-translation,  # ruff ODW8161 (also autofixed from .ruff-autofix.toml)
+   prohibited-method-override,  # ruff ODW8107
+   property-with-parameters,  # ruff PLR0206
+   redeclared-assigned-name,  # ruff PLW0128
+   redefined-argument-from-local,  # ruff PLR1704
+   redefined-builtin,  # ruff A001,A002,A004
+   redefined-slots-in-subclass,  # ruff PLW0244
+   repeated-keyword,  # ruff PLE1132
+   return-in-init,  # ruff PLE0101
+   return-outside-function,  # ruff F706
+   self-assigning-variable,  # ruff PLW0127
+   shallow-copy-environ,  # ruff PLW1507
+   simplifiable-if-expression,  # ruff SIM210,SIM211
+   simplifiable-if-statement,  # ruff SIM103
+   single-string-used-for-slots,  # ruff PLC0205
+   singledispatch-method,  # ruff PLE1519
+   singledispatchmethod-function,  # ruff PLE1520
+   singleton-comparison,  # ruff E711,E712
+   stop-iteration-return,  # ruff PLR1708
+   subprocess-popen-preexec-fn,  # ruff PLW1509
+   subprocess-run-check,  # ruff PLW1510
+   super-method-mismatch,  # ruff ODW8164
+   super-with-arguments,  # ruff UP008
+   super-without-brackets,  # ruff PLW0245
+   syntax-error,  # always-on ruff syntax error (it is not a selectable rule, ruff E999 was removed)
+   test-folder-imported,  # ruff ODE8130
+   too-few-format-args,  # ruff F507
+   too-many-arguments,  # ruff PLR0913
+   too-many-format-args,  # ruff F507,F523
+   too-many-locals,  # ruff PLR0914
+   too-many-nested-blocks,  # ruff PLR1702
+   too-many-public-methods,  # ruff PLR0904
+   too-many-return-statements,  # ruff PLR0911
+   too-many-star-expressions,  # ruff F622
+   trailing-comma-tuple,  # ruff COM818
+   trailing-newlines,  # ruff W391
+   trailing-whitespace,  # ruff W291
+   translation-injection,  # ruff ODE8151
+   truncated-format-string,  # ruff F501
+   typevar-double-variance,  # ruff PLC0131
+   typevar-name-incorrect-variance,  # ruff PLC0105
+   typevar-name-mismatch,  # ruff PLC0132
+   undefined-all-variable,  # ruff F822
+   undefined-variable,  # ruff F821
+   unexpected-special-method-signature,  # ruff PLE0302
+   unidiomatic-typecheck,  # ruff E721
+   unnecessary-comprehension,  # ruff C416
+   unnecessary-dict-index-lookup,  # ruff PLR1733
+   unnecessary-direct-lambda-call,  # ruff PLC3002
+   unnecessary-dunder-call,  # ruff PLC2801
+   unnecessary-lambda,  # ruff PLW0108
+   unnecessary-lambda-assignment,  # ruff E731
+   unnecessary-list-index-lookup,  # ruff PLR1736
+   unnecessary-ellipsis,  # ruff PIE790
+   unnecessary-negation,  # ruff SIM208
+   unnecessary-pass,  # ruff PIE790
+   unnecessary-semicolon,  # ruff E702,E703
+   unused-format-string-argument,  # ruff F522
+   unused-format-string-key,  # ruff F504
+   unused-import,  # ruff F401
+   unused-variable,  # ruff F841
+   use-a-generator,  # ruff C419
+   use-implicit-booleaness-not-len,  # ruff PLC1802
+   use-list-literal,  # ruff C408 (moved to the optional level with use-dict-literal)
+   use-maxsplit-arg,  # ruff PLC0207
+   use-sequence-for-iteration,  # ruff PLC0208
+   use-yield-from,  # ruff UP028
+   used-prior-global-declaration,  # ruff PLE0118
+   useless-else-on-loop,  # ruff PLW0120
+   useless-import-alias,  # ruff PLC0414
+   useless-object-inheritance,  # ruff UP004
+   useless-return,  # ruff PLR1711
+   useless-with-lock,  # ruff PLW2101
+   wildcard-import,  # ruff F403
+   yield-inside-async-function,  # ruff PLE1700
+   yield-outside-function  # ruff F704
+
+# odoolint disabled because this checks is available just in changed modules in PR conf.
+# import-error Because odoo use incompatible sys-modules https://bitbucket.org/logilab/pylint/issues/616/modules-renamed-with-sysmodules-are-unable
+# wrong-import-order: Disabled here but enabled in pr-conf
+# unsubscriptable-object: TODO: Enabled after fix https://github.com/PyCQA/pylint/issues/811
+# access-member-before-definition: Disable because odoo use decorator to asign variables
+# too-complex: Disabled here but enabled in pr-conf
+# bad-docstring-quotes: Disabled here but enabled in pr-conf
+# docstring-first-line-empty: Disabled here but enabled in pr-conf
+# consider-using-ternary: Disabled because I'm not sure of use even this way (and waiting PyCQA/pylint#1239)
+# inconsistent-return-statements: Disabled because all methods returns "None" by default if is not defined
+# wrong-import-order: Disabled because this check requires a full installed environment, and MQT is not installing requirements for lints
+# self-cls-assignment: Odoo uses this valid sentence self = self.with_context(...)
+# try-except-raise: Valid case when you want to raise a exception but not another one.
+# raise-missing-from: We are not using this style right now
+# consider-using-f-string: We don't like force to use f-string (yet)
+# unspecified-encoding: utf-8 is the default and the used for us
+# c-extension-no-member: We are not installing all the packages so can't be inspected
+# import-self: It is raising error for "from . import models" and it is used a lot
+# bad-option-value: Raises error when a check doesn't exists but what about multi-compatibility
+# arguments-renamed: It is raising weird errors
+# consider-using-dict-items: It is only a style but not big deal
+# cyclic-import: Raises error when 2 files use "from . import models" and it is used a lot
+# unused-private-member: We can define _methods unused in the same class but inheriting
+# keyword-arg-before-vararg: Disabled because it raises error for `def method(self, kw1, *args, **kwargs)` but we like using kw1 as the first one even if it is not set as `kw1=something`
+# ungrouped-imports: We uses a lot "from odoo import fields;from odoo.tools import ..." so it is a valid case for us
+# duplicate-code: Enable after fix https://github.com/PyCQA/pylint/issues/214
+# assignment-from-no-return: pylint doesn't have the full context of all modules even we could return the same
+# useless-option-value: Raises error when a check doesn't exists but what about multi-compatibility
+
+#***Enabled and how to fix***
+#E1103 - maybe-no-member
+#     Instance of 'bool' has no 'name' member
+#     Fix changing "var=False" by "var=None" in assignment.
+#E1601 - print sentence detect
+#     You can remove print sentence or if really needs it replace by a
+#     logger.info() in odoo.
+#     Or if is a python module (not odoo) use sys.stdout directly:
+#        print "My Old Print"
+#        sys.stdout.write("My New Print\n")
+#F0401 - http://pylint-messages.wikidot.com/messages:f0401
+#   Fix adding odoo to path before run pylint
+#   PYTHONPATH=${PYTHONPATH}:tu_odoo_path pylint command...
+#   other case of this problem should be:
+#   add from openerp.addons.MYMODULE import ANYONE
+#R0801 - Sometimes is because you are using a bad coding in header file
+#        http://stackoverflow.com/questions/12209430/pylint-raising-r0801-for-coding-declaration-lines
+#        NOTE pylint: disable don't work in this cases.
+#        If you need force to use a duplicate code, then you can create a small change into two files.
+#        The ideal fix is don't use duplicate code, better re-use code.
+#W0102 - dangerous-default-value.
+   #Not use
+   #def fc(param0, param1=[], param2={}):
+   #You can use:
+   #def fc(param0, param1=None, param2=None):
+   #    if param1 is None:
+   #        param1 = []
+   #    if params2 is None:
+   #        param2 = {}
+   #More info here: https://doc.odoo.com/contribute/15_guidelines/coding_guidelines_framework/#the-infamous-context
+#W0141 - Bad-builtin. Used builtin function 'file', can be fixed using the sentence "with open(fname) as fjob: fobj.read()", the "fobj.close()" sentence is not needed.
+         # This problem can be fixed "translating" your code using builtin function
+         # to list comprehension equivalent code, here's an example:
+         # > map(str, my_sequence) gives this error in pylint
+         # > [str(item) for item in my_sequence] is the equivalent code and doesn't report an error with pylint
+#W0142 - star-args. method(**my_dict) replace with method(my_dict). If use string.format check this link: http://stackoverflow.com/a/5952429/3753497
+#W0403 - http://programmers.stackexchange.com/questions/159503/whats-wrong-with-relative-imports-in-python
+       # You can use auto-script from https://github.com/Vauxoo/pylint-conf/blob/master/fix_unused_imports/replace_import.py to remove all relative import
+       # Resumen: from . import mylocalfolder
+#W0611 - Unused import. Fixing remove this unused import. Or run "autoflake --remove-all-unused-imports -ri . && bzr revert ./*/__init__.py ./*/*/__init__.py ./*/*/*/__init__.py" TODO: exclude __init__.py
+#W0612 - unused-variable. You can fix it deleting variable.  Or run "autoflake --remove-unused-variables -ri . && bzr revert ./*/__init__.py ./*/*/__init__.py ./*/*/*/__init__.py" TODO: exclude __init__.py
+#W0621 - redefining name %r from outer scope (line %s) Used when a variable’s name hide a name defined in the outer scope.
+         #  you use a variable with name of some class. don't use same names for variables and classes. Example:
+         # class account_invoice_tax(self):
+         #     account_invoice_tax = "text"  #  Name of variable same that class
+         # Fix:
+         # class account_invoice_tax(self):
+         #     account_invoice_tax_var = "text"
+         # If this variable is internal of odoo/openerp and you can't change it then you should use a disable pylint message in this line.
+         #   e.g. def method_function(self, cr, uid, ids, fields...)  # pylint: disable=W0621
+         #   fields is a variable reserved of methods by odoo/openerp and is a class name reserved by odoo/openerp too.
+         #
+         # For new api you can fix it using fields_list instead fields. See the example in: https://github.com/odoo/odoo/blob/8.0/openerp/models.py#L1284-L1295
+         # e.g.
+         # @api.model
+         # def default_get(self, fields_list):
+         #     """ default_get(fields) -> default_values
+         #
+         #     Return default values for the fields in ``fields_list``. Default
+         #     values are determined by the context, user defaults, and the model
+         #     itself.
+         #
+         #     :param fields_list: a list of field names
+         #     :return: a dictionary mapping each field name to its corresponding
+         #         default value, if it has one.
+         #
+         #     """
+#W0622 - Redefining built-in 'id', can be fixed using a variable name
+         # unreserved system like "ids".
+         #
+         # If this variable is internal of odoo/openerp and you can't change
+         # it then you should use a disable pylint message in this line.
+         #
+         #  e.g. def odoo_method(self, cr, uid, id, context=None)  # pylint: disable=W0621
+         #
+         # There are some cases when you can avoid the pylint disable, is
+         # better avoid the error than disable then. One case is when making
+         # openerp import.
+         #
+         #  e.g. from openerp.exceptions import Warning, ValuationError
+         #
+         # The last example generate a Redefining built-in 'Warning' message.
+         # You can avoid this error importing like this:
+         #
+         #  e.g. from openerp import exceptions
+         #
+         # And then when you want to call Warning or Valuation call them like
+         # this:
+         #
+         #      e.g. raise exceptions.Warning,
+         #      e.g. raise exceptions.ValuationError
+         #
+#W0703 - Catching too general exception. Change "except" by "except ImportError" or "except ClassError". if you need any exception then use "except BaseException, e" or "except BaseException"
+#W1201 - logging-not-lazy Specify string format args as loggin funct parameters.
+         # Fix:
+         #   Before:
+         #     _logger.warning('Msg with a param %s' % param1)
+         #   After:
+         #     _logger.warning('Msg with a param %s', param1)
+#W1401 - Anomalous-backslash-in-string. You can fix using a prefix 'r'. Example before and after, from re.match("[^@]+\.[^@]+", string) to re.match(r"[^@]+\.[^@]+", string)
+#W1504 - unidiomatic-typecheck. You can prefer use instance function.
+         # Fix:
+         #  Before: type(myvar) is list
+         #  After: isinstance(myvar, list)
+#C0303 - Trailing whitespace http://pylint-messages.wikidot.com/messages:c0303. Remove final spaces before of newline. Many editor has a auto-remove this spaces or autopep8 remove it too.
+#C0411 - wrong-import-order. You can fix it executing: `pip install isort && isort your_file.py`
+#C1001 (old-style-class)] Old-style class defined
+#   You can just use the new-style class instead. More info here: - http://stackoverflow.com/questions/54867/old-style-and-new-style-classes-in-python
+#   Fix changing "class amount_to_text:" by "class amount_to_text(object):" .
+#W0640 - ("Cell variable defined in loop"). You must not define a local function inside a loop. You can either extract the local function outside the loop into a varaible and then use this variable inside the loop or modify the logic to do not use a local function using another tools like orm methods https://bitbucket.org/logilab/pylint/issue/271/spurious-warning-w0640-issued-for-loop
+# R1260 - too-complex: To fix it use the following rules https://github.com/FreeCodeCamp/FreeCodeCamp/wiki/The-Return-Early-Pattern
+
+#*** How to fix pylint-odoo***
+# sql-injection - Fix with the following guideline https://github.com/OCA/maintainer-tools/blob/master/CONTRIBUTING.md#no-sql-injection
+# invalid-commit - Fix with the following guideline https://github.com/OCA/maintainer-tools/blob/master/CONTRIBUTING.md#never-commit-the-transaction
+
+#***Disabled and why***
+#E0611 (no-name-in-module). Because we don't have a PYTHONPATH to odoo in all cases.
+#E1101 (no-member) - make a error with this sentence: product_obj = self.pool['product.product']
+#E1120 (no-value-for-parameter) - Methods from new api make this false negative.
+#E1121 (too-many-function-args) - too-many-function-args. This is because you are changing args of an method.
+#        You can fix it using exactly same args from original method into inherit method.
+#        Into Odoo-8.0 this is a little hardly with decorators. This forces you to use the new api, but your code work fine with old api yet.
+#        TODO: Enabling when we have time to migrate all our modules.
+#E1123 (unexpected-keyword-arg) Show error with context.
+#W0201 (attribute-defined-outside-init) - Attribute self.field defined outside __init__. New v8 api use fields with self.field without __init__ constructor into _inherit class.
+#W0123 - eval-used, You can fix it with `ast.literal_eval`, view example https://bitbucket.org/logilab/pylint/pull-request/95/add-new-warning-eval-used/diff
+#        If you get error `ValueError: malformed string` then you can use:
+#          `from openerp.tools.safe_eval import safe_eval`
+#          `code_variable = 6`
+#          `safe_eval('var_eval * 2', {'var_eval': code_variable})` <- 12
+#W0212 (protected-access) - Odoo use many underscore methods
+#W0221 (arguments-differ) - Odoo 8.0 use decorator and rewrite original function and make this false error.
+#W0223 (abstract-method) - Odoo use abstract method without overriden.
+#W0511 (fixme) - Used when a warning note as FIXME or TODO is detected. This is not a error.
+#W0613 (unused-argument) odoo use many unused argument. Example cr, uid, name o super method.
+#C0111 (missing-*-docstring) - Too much work. WIP
+#C0301 (line-too-long) - Enabled from flake8
+#R0201 (no-self-use) - Method could be a function http://pylint-messages.wikidot.com/messages:r0201. odoo use many method without decorator.
+#R0902 (too-many-instance-attributes) - Odoo use many initial attributes into __init__ of class myclass: myAttr1
+#R0903 (too-few-public-methods) - odoo use many public methods in classes
+#R0912 - Too many branches. Odoo use many method with many branches.
+#I0011 (locally-disabled) - Add a fail of ignore added, but this isn't a error. NOTE: There is a bug with this disable: https://bitbucket.org/logilab/pylint/issue/340/pylint-disable-c0302-does-not-work
+#W0110 - Deprecated-lambda.
+      # Filter on lambda could be replaced by comprehension list
+      # [element for element in list1 if element not in list2]
+#C0103 - Invalid-name
+      # Used when a name doesn't fit the naming convention associated to its type (constant, variable, class…).
+      # This message belongs to the basic checker.
+      # You can to check regex from "[BASIC]" section of this pylint-conf to verify valid names
+#W1202 - Use % formatting in logging functions and pass the % parameters as arguments
+      # When is used .format to concatenate strings or when is used "% (param)"
+      # Example dict: _logger.info('Cron Job will compute {length} products'.format(length=total))
+      #            or _logger.info('Cron Job will compute %(length)s products'% ({'length': total}))
+      # Solve with: _logger.info('Cron Job will compute %(length)s products', {'length': total})
+      # Example tuple:  _logger.info('Cron Job will compute {0} products'.format(total,))
+      #              or _logger.info('Cron Job will compute %s products' % (total,)))
+      # Solve with: _logger.info('Cron Job will compute %s products', (total,))
+# cell-var-from-loop - With new api is very useful `for var in rows: self.filtered(lambda value: value.attribute.id == var.id)` but pylint don't like it because lambda method will be stored the last "value" of the loop in all lambda methods.
+      # for more information see the following example bad case: https://gist.github.com/moylop260/ec534248e35ab193a84501b8fd96b1fd
+
+#R0915 (too-many-statements) - TODO: Enable if mccabe isn't detect this cases... Can be fixed split method in more mini-function. More info here: http://doc.openerp.co.id/contribute/15_guidelines/coding_guidelines_framework.html#keep-your-methods-short-simple-when-possible
+
+[REPORTS]
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
+# msg-template={module}:{line}: [{msg_id}({symbol})]
+output-format=colorized
+reports=no
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+score=no
+
+[VARIABLES]
+init-import=no
+dummy-variables-rgx=_|dummy|e|checks|fast_suite
+additional-builtins=
+
+[TYPECHECK]
+ignored-classes=SQLObject
+generated-members=REQUEST,acl_users,aq_parent
+
+[BASIC]
+no-docstring-rgx=__.*__
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__)|(_logger))$
+#class-rgx=[A-Z_][a-zA-Z0-9]+$
+class-rgx=([a-z_][a-z0-9_]{2,59})|([A-Z_][a-zA-Z0-9]{2,59})$
+function-rgx=[a-z_][a-z0-9_]{2,59}$
+
+# Adding all unitest valid methods
+method-rgx=([a-z_][a-z0-9_]{2,59}|addTypeEqualityFunc|addCleanup|setUp|setUpClass|tearDownClass|tearDown|countTestCases|defaultTestResult|shortDescription|skipTest|runTest|test\_.*)$
+
+attr-rgx=[a-z_][a-z0-9_]{2,59}$
+argument-rgx=([a-z_][a-z0-9_]{2,59}$)
+variable-rgx=[a-z_][a-z0-9_]{1,59}$
+inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
+good-names=_,cr,uid,id,ids,_logger,o,e,i,k,v,checks,fast_suite,maxDiff
+bad-names=
+
+[IMPORTS]
+deprecated-modules=regsub,TERMIOS,Bastion,rexec,pdb,pudb,ipdb,bs4{%- if odoo_version and odoo_version|float >= 20 %},pytz{%- endif %}
+
+[DESIGN]
+max-args=200
+max-locals=200
+max-returns=6
+max-branches=25
+max-statements=200
+max-parents=7
+max-attributes=7
+min-public-methods=2
+max-public-methods=200
+
+[CLASSES]
+defining-attr-methods=__init__,__new__,setUp
+
+[FORMAT]
+max-line-length=119
+max-module-lines=10000
+indent-string='    '
+expected-line-ending-format=LF
+
+[SIMILARITIES]
+min-similarity-lines=14
+ignore-comments=yes
+ignore-docstrings=yes
+
+[MISCELLANEOUS]
+notes=FIXME,TODO

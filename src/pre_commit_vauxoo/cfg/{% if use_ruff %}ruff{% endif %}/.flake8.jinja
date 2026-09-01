@@ -1,0 +1,13 @@
+[flake8]
+# The pyflakes (F) and most of the pycodestyle (E,W) checks were migrated to ruff (.config/.ruff.toml)
+# Only the continuation-line indentation rules (E12x/E13x) and E704 keep running here
+# since ruff does not implement them https://github.com/astral-sh/ruff/issues/2402
+select = E12,E13,E704
+# E123,E133 keep being ignored (same as before the ruff migration)
+ignore = E123,E133
+max-line-length = 119
+# flake8 spells its parallel mode "auto", not 0 like pylint does: a numeric 0 is taken
+# literally as "0 jobs", which makes flake8 fall back to run_serial() and check every file
+# in a single process. Its pre-commit hook declares require_serial: true precisely because
+# flake8 is expected to parallelize on its own, so there was nothing else parallelizing it
+jobs = auto

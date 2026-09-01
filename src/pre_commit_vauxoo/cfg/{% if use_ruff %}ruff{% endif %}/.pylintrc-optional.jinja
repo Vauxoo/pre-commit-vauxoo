@@ -1,0 +1,75 @@
+[MAIN]
+ignore=CVS,.git,scenarios,.bzr
+persistent=yes
+load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
+{% if odoo_version -%}
+valid-odoo-version={{ odoo_version }}
+{%- endif %}
+{% if py_version -%}
+py-version={{ py_version }}
+{%- endif %}
+
+[ODOOLINT]
+# The checks using these options (license-allowed, manifest-required-author and
+# manifest-deprecated-key) are migrated to ruff, so the values actually running are the
+# [lint.odoo] ones of .config/.ruff-optional.toml, kept here in sync for the external scripts
+# replacing this section and for the configuration without ruff
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
+    GPL-3,GPL-3 or any later version,LGPL-3,
+    Other OSI approved licence,Other proprietary,
+    OEEL-1, OPL-1,
+manifest-required-authors=Vauxoo,
+  Odoo Community Association (OCA),
+  Jarsa,
+manifest-deprecated-keys=active,
+  description,
+  {% if odoo_version and odoo_version|float >= 16.0 -%}
+  qweb,
+  {%- endif %}
+# External scripts odoo_lint replace
+
+[MESSAGES CONTROL]
+disable=all,unknown-option-value
+enable=deprecated-method,
+  deprecated-pragma,
+  use-implicit-booleaness-not-comparison-to-zero,
+  use-symbolic-message-instead,
+  useless-parent-delegation
+
+[REPORTS]
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
+output-format=colorized
+reports=no
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+score=no
+
+[FORMAT]
+indent-string='    '
+expected-line-ending-format=LF
+
+[BASIC]
+class-rgx=[A-Z_][a-zA-Z0-9]{2,59}
+module-rgx=.*
+const-rgx=.*
+function-rgx=.*
+method-rgx=.*
+attr-rgx=.*
+argument-rgx=.*
+variable-rgx=.*
+inlinevar-rgx=.*
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+
+[MISCELLANEOUS]
+notes=FIXME,TODO
+
+
+[DESIGN]
+# McCabe complexity cyclomatic threshold for too-complex check
+#  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
+#   - The figure of 10 had received substantial corroborating evidence,
+#     but that in some circumstances it may be appropriate to relax the restriction
+#     and permit modules with a complexity as high as 15
+max-complexity=15

@@ -91,6 +91,10 @@ docs/_build/
 bandit*.yaml
 doc8.ini
 pyproject.toml
+# Those patterns match the copies a run leaves in a project, not the templates
+# this package ships. Without this exception a new template under cfg/ is skipped
+# by "git add" without a word, and only CI notices it is missing.
+!src/pre_commit_vauxoo/cfg/**
 
 # Auto-generated
 ChangeLog

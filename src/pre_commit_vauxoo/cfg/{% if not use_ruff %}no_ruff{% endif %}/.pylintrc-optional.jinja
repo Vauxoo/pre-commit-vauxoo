@@ -1,0 +1,126 @@
+[MAIN]
+ignore=CVS,.git,scenarios,.bzr
+persistent=yes
+load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
+{% if odoo_version -%}
+valid-odoo-version={{ odoo_version }}
+{%- endif %}
+{% if py_version -%}
+py-version={{ py_version }}
+{%- endif %}
+
+[ODOOLINT]
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
+    GPL-3,GPL-3 or any later version,LGPL-3,
+    Other OSI approved licence,Other proprietary,
+    OEEL-1, OPL-1,
+manifest-required-authors=Vauxoo,
+  Odoo Community Association (OCA),
+  Jarsa,
+manifest-deprecated-keys=active,
+  description,
+  {% if odoo_version and odoo_version|float >= 16.0 -%}
+  qweb,
+  {%- endif %}
+# External scripts odoo_lint replace
+
+[MESSAGES CONTROL]
+disable=all,unknown-option-value
+enable=deprecated-method,
+  deprecated-pragma,
+  use-implicit-booleaness-not-comparison-to-zero,
+  use-symbolic-message-instead,
+  useless-parent-delegation,
+  # The following checks are migrated to ruff when it is enabled
+  # They keep the same optional level running from .config/.ruff-optional.toml, except the ones
+  # annotated as "mandatory .ruff.toml": those were also enabled by the "enable=all" of
+  # .config/.pylintrc so they keep the mandatory level
+  # The autofixable ones are also fixed from .config/.ruff-autofix.toml (annotated as "autofix")
+  attribute-deprecated,  # ruff ODW8105
+  attribute-string-redundant,  # ruff ODW8113 (autofix .ruff-autofix.toml)
+  bad-builtin-groupby,  # ruff ODW8155
+  bad-docstring-quotes,  # ruff D300
+  consider-merging-classes-inherited,  # ruff ODR8180 (mandatory .ruff.toml)
+  consider-using-generator,  # ruff C419 with preview (mandatory .ruff.toml)
+  context-overridden,  # ruff ODW8121
+  deprecated-odoo-model-method,  # ruff ODW8160 (ODE8146 for name_get is mandatory .ruff.toml)
+  docstring-first-line-empty,  # ruff D212
+  eval-used,  # ruff S307 (mandatory .ruff.toml)
+  except-pass,  # ruff S110 (the ruff-odoo ODW8138 is deprecated in favor of it)
+  external-request-timeout,  # ruff ODE8106
+  implicit-str-concat,  # ruff ISC001
+  invalid-commit,  # ruff ODE8102 (mandatory .ruff.toml)
+  license-allowed,  # ruff ODC8105 (it uses the license-allowed option, see [lint.odoo])
+  manifest-author-string,  # ruff ODE8101
+  manifest-data-duplicated,  # ruff ODW8125
+  manifest-deprecated-key,  # ruff ODC8103 (autofix .ruff-autofix.toml)
+  manifest-maintainers-list,  # ruff ODE8104
+  manifest-required-author,  # ruff ODC8101 (it uses the manifest-required-authors option, see [lint.odoo])
+  manifest-required-key,  # ruff ODC8102 (mandatory .ruff.toml)
+  manifest-version-format,  # ruff ODC8106
+  method-compute,  # ruff ODC8108
+  method-inverse,  # ruff ODC8110
+  method-required-super,  # ruff ODW8106
+  method-search,  # ruff ODC8109
+  missing-readme,  # ruff ODC8112
+  missing-return,  # ruff ODW8110
+  odoo-addons-relative-import,  # ruff ODW8150
+  odoo-exception-warning,  # ruff ODR8101
+  print-used,  # ruff T201
+  redundant-u-string-prefix,  # ruff UP025
+  renamed-field-parameter,  # ruff ODW8111
+  resource-not-exist,  # ruff ODF8101
+  sql-injection,  # ruff ODE8103
+  too-complex,  # ruff C901
+  translation-contains-variable,  # ruff ODW8115
+  translation-field,  # ruff ODW8103
+  translation-format-interpolation,  # ruff ODW8302
+  translation-format-truncated,  # ruff ODE8301
+  translation-fstring-interpolation,  # ruff ODW8303
+  translation-not-lazy,  # ruff ODW8301
+  translation-required,  # ruff ODC8107
+  translation-too-few-args,  # ruff ODE8306
+  translation-too-many-args,  # ruff ODE8305
+  translation-unsupported-format,  # ruff ODE8300
+  use-dict-literal,  # ruff C408
+  use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
+  use-vim-comment,  # ruff ODW8202 (autofix .ruff-autofix.toml)
+  website-manifest-key-not-valid-uri  # ruff ODW8114
+
+[REPORTS]
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
+output-format=colorized
+reports=no
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+score=no
+
+[FORMAT]
+indent-string='    '
+expected-line-ending-format=LF
+
+[BASIC]
+class-rgx=[A-Z_][a-zA-Z0-9]{2,59}
+module-rgx=.*
+const-rgx=.*
+function-rgx=.*
+method-rgx=.*
+attr-rgx=.*
+argument-rgx=.*
+variable-rgx=.*
+inlinevar-rgx=.*
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+
+[MISCELLANEOUS]
+notes=FIXME,TODO
+
+
+[DESIGN]
+# McCabe complexity cyclomatic threshold for too-complex check
+#  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
+#   - The figure of 10 had received substantial corroborating evidence,
+#     but that in some circumstances it may be appropriate to relax the restriction
+#     and permit modules with a complexity as high as 15
+max-complexity=15
