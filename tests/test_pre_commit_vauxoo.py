@@ -529,9 +529,7 @@ class TestPreCommitVauxoo:
         assert "[BAD] module_example1: invalid tag" in capsys.readouterr().out
 
         # The last commit scope only looks at HEAD, which is a valid one
-        assert check_commit_messages_since_version(
-            repo_root=self.tmp_dir, version="18.0", scope=SCOPE_LAST_COMMIT
-        )
+        assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="18.0", scope=SCOPE_LAST_COMMIT)
 
     def test_commit_msg_hook_is_in_optional_config(self):
         self.runner.invoke(main, ["--only-cp-cfg"])

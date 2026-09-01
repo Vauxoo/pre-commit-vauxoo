@@ -142,6 +142,84 @@ def get_last_commit_files(repo_dirname):
     )
 
 
+def git_ref_exists(ref_name, cwd=None):
+    return not subprocess.call(["git", "show-ref", "--verify", "--quiet", ref_name], cwd=cwd)
+
+
+def git_rev_exists(revision, cwd=None):
+    """Whether a revision is resolvable, for the ones "show-ref --verify" can not check
+
+    "HEAD~1" is not a ref, so it needs "rev-parse" instead: it does not exist on a
+    repository whose only commit is the root one.
+    """
+    return not subprocess.call(
+        ["git", "rev-parse", "--verify", "--quiet", revision],
+        cwd=cwd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def get_git_remotes_with_urls(cwd=None):
+    remote_names = subprocess.check_output(["git", "remote"], cwd=cwd).decode(sys.stdout.encoding).splitlines()
+    remotes = {}
+    for remote_name in remote_names:
+        remote_url = (
+            subprocess
+            .check_output(["git", "config", "--get", f"remote.{remote_name}.url"], cwd=cwd)
+            .decode(sys.stdout.encoding)
+            .strip()
+        )
+        remotes[remote_name] = remote_url
+    return remotes
+
+
+def resolve_commit_message_base_ref(version, scope=None, cwd=None):
+    """The revision the commits to validate are counted from
+
+    Two questions are answered here, and both are asked by the file scopes too:
+
+    * "--last-commit" only added or modified files in HEAD, so only the message of
+      HEAD is validated, which is the "HEAD~1..HEAD" range.
+    * every other scope compares against the stable branch named by VERSION. It is
+      looked up as "<remote>/<VERSION>" on the remotes whose URL does not contain
+      "dev" -- preferring "origin" -- because the dev fork is where the branch being
+      validated lives, and its copy of stable is the stale one. Only when no remote
+      has it does the local branch "<VERSION>" answer instead.
+    """
+    if scope is None:
+        scope = os.environ.get(SCOPE_ENVVAR, "").strip()
+    if scope == SCOPE_LAST_COMMIT:
+        if git_rev_exists("HEAD~1", cwd=cwd):
+            return "HEAD~1"
+        print("HEAD has no parent, falling back to the stable branch for commit message validation")
+
+    if not version:
+        return ""
+
+    remote_candidates = []
+    for remote_name, remote_url in get_git_remotes_with_urls(cwd=cwd).items():
+        if "dev" in remote_url.lower():
+            print(f"Skipping remote {remote_name} because its URL contains 'dev': {remote_url}")
+            continue
+        remote_ref = f"refs/remotes/{remote_name}/{version}"
+        if git_ref_exists(remote_ref, cwd=cwd):
+            remote_candidates.append((remote_name != "origin", remote_name, f"{remote_name}/{version}", remote_url))
+
+    if remote_candidates:
+        _, _remote_name, base_ref, remote_url = min(remote_candidates)
+        print(f"Using stable remote ref {base_ref} from {remote_url}")
+        return base_ref
+
+    local_ref = f"refs/heads/{version}"
+    if git_ref_exists(local_ref, cwd=cwd):
+        print(f"Using local stable ref {version} for commit message validation")
+        return version
+
+    print(f"Skipping commit message validation because stable ref {version} was not found")
+    return ""
+
+
 def get_last_commits_files(repo_dirname):
     """Files added or modified by every commit since the stable branch named by VERSION
 
@@ -152,10 +230,6 @@ def get_last_commits_files(repo_dirname):
     The three dot range reports what HEAD introduced since it forked from stable, so
     commits pushed to stable in the meantime are not reported as belonging here.
     """
-    # Imported inside the function because the hook imports get_repo from this module,
-    # so a module level import would be circular
-    from pre_commit_vauxoo.hooks.check_commit_msg import resolve_commit_message_base_ref
-
     version = os.environ.get("VERSION", "").strip()
     base_ref = resolve_commit_message_base_ref(version, scope=SCOPE_LAST_COMMITS, cwd=repo_dirname)
     if not base_ref:
