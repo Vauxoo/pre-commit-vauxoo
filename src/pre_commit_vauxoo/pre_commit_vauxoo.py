@@ -36,7 +36,11 @@ CFG_SUBFOLDER = ".config"
 # Scope of files to run the hooks on (--all, --last-commit and --diff)
 SCOPE_ALL = "all"
 SCOPE_LAST_COMMIT = "last-commit"
+SCOPE_LAST_COMMITS = "last-commits"
 SCOPE_DIFF = "diff"
+# Exported to the hooks: the commit message one declares "always_run: true", so the
+# scope is the only way it can validate the same commits the file hooks check
+SCOPE_ENVVAR = "PRECOMMIT_SCOPE"
 
 TOOLS_ORDER = (
     "prettier_matrix_value",
@@ -138,6 +142,27 @@ def get_last_commit_files(repo_dirname):
     )
 
 
+def get_last_commits_files(repo_dirname):
+    """Files added or modified by every commit since the stable branch named by VERSION
+
+    The base revision is resolved by the same helper the commit message hook uses, so
+    both halves of the check always cover the same commits: the stable branch as the
+    non-dev remote has it, or the local branch when no remote does.
+
+    The three dot range reports what HEAD introduced since it forked from stable, so
+    commits pushed to stable in the meantime are not reported as belonging here.
+    """
+    # Imported inside the function because the hook imports get_repo from this module,
+    # so a module level import would be circular
+    from pre_commit_vauxoo.hooks.check_commit_msg import resolve_commit_message_base_ref
+
+    version = os.environ.get("VERSION", "").strip()
+    base_ref = resolve_commit_message_base_ref(version, scope=SCOPE_LAST_COMMITS, cwd=repo_dirname)
+    if not base_ref:
+        return []
+    return git_output(["diff", "--name-only", "--diff-filter=d", f"{base_ref}...HEAD"], repo_dirname)
+
+
 def get_diff_files(repo_dirname):
     """Files with changes not committed yet: staged, unstaged and untracked
 
@@ -155,7 +180,11 @@ def get_scope_files(scope, repo_dirname):
     The deleted files are excluded ("--diff-filter=d" and the untracked files always exist)
     since a file that is gone can not be checked at all
     """
-    get_files_meth = {SCOPE_LAST_COMMIT: get_last_commit_files, SCOPE_DIFF: get_diff_files}[scope]
+    get_files_meth = {
+        SCOPE_LAST_COMMIT: get_last_commit_files,
+        SCOPE_LAST_COMMITS: get_last_commits_files,
+        SCOPE_DIFF: get_diff_files,
+    }[scope]
     try:
         files = get_files_meth(repo_dirname)
     except subprocess.CalledProcessError as git_error:
@@ -520,6 +549,9 @@ def main(  # ruff: ignore[complex-structure]
             scope,
         )
         scope = SCOPE_ALL
+    # The commit message hook declares "always_run: true", so this is what tells it to
+    # validate the messages of the very commits whose files are being checked
+    os.environ[SCOPE_ENVVAR] = scope
     if scope != SCOPE_ALL:
         # The scope has precedence over the current directory so it always checks the
         # files of the whole repository even if the command is invoked from a subdirectory

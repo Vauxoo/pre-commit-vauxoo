@@ -229,6 +229,13 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     help="Run the hooks only on the files added or modified by the last commit (HEAD).",
 )
 @click.option(
+    "--last-commits",
+    "scope",
+    flag_value=pre_commit_vauxoo.SCOPE_LAST_COMMITS,
+    help="Run the hooks only on the files added or modified since the stable branch named by VERSION, "
+    "and validate the message of every commit in that range.",
+)
+@click.option(
     "--diff",
     "scope",
     flag_value=pre_commit_vauxoo.SCOPE_DIFF,

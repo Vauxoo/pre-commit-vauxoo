@@ -35,7 +35,13 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
-from pre_commit_vauxoo.pre_commit_vauxoo import CFG_SUBFOLDER, parse_matrix_compatibility
+from pre_commit_vauxoo.pre_commit_vauxoo import (
+    CFG_SUBFOLDER,
+    SCOPE_LAST_COMMIT,
+    SCOPE_LAST_COMMITS,
+    get_scope_files,
+    parse_matrix_compatibility,
+)
 
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "src" / "pre_commit_vauxoo" / "cfg"
@@ -464,6 +470,68 @@ class TestPreCommitVauxoo:
         invalid_commits = get_invalid_commit_messages("18.0", self.tmp_dir)
         assert len(invalid_commits) == 1
         assert invalid_commits[0]["subject"] == "[BAD] custom_file.txt: invalid tag"
+
+    def commit(self, message, allow_empty=True):
+        cmd = [
+            "git",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@vauxoo.com",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            message,
+        ]
+        if allow_empty:
+            cmd.insert(-2, "--allow-empty")
+        subprocess.check_call(cmd)
+
+    def test_resolve_commit_message_base_ref_last_commit_scope(self):
+        self.commit("[FIX] module_example1: initial baseline")
+        self.commit("[FIX] module_example1: second one")
+        subprocess.check_call(["git", "branch", "18.0"])
+
+        assert resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMIT) == "HEAD~1"
+
+    def test_resolve_commit_message_base_ref_last_commit_scope_without_parent(self):
+        self.commit("[FIX] module_example1: initial baseline")
+        subprocess.check_call(["git", "branch", "18.0"])
+
+        # The root commit has no parent, so the stable branch answers instead
+        assert resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMIT) == "18.0"
+
+    def test_last_commits_scope_reports_every_file_since_stable(self):
+        self.commit("[FIX] module_example1: initial baseline")
+        subprocess.check_call(["git", "branch", "18.0"])
+        for name in ("first.txt", "second.txt"):
+            Path(os.path.join(self.tmp_dir, name)).write_text("content\n", encoding="utf-8")
+            subprocess.check_call(["git", "add", name])
+            self.commit(f"[ADD] {name}: new file", allow_empty=False)
+        os.environ["VERSION"] = "18.0"
+
+        assert get_scope_files(SCOPE_LAST_COMMITS, self.tmp_dir) == ["first.txt", "second.txt"]
+        # The last commit alone only reports its own file
+        assert get_scope_files(SCOPE_LAST_COMMIT, self.tmp_dir) == ["second.txt"]
+
+    def test_last_commits_scope_validates_every_commit_message(self, capsys):
+        self.commit("[FIX] module_example1: initial baseline")
+        subprocess.check_call(["git", "branch", "18.0"])
+        self.commit("[BAD] module_example1: invalid tag")
+        self.commit("[FIX] module_example1: valid one")
+
+        # capsys and not redirect_stdout: a StringIO leaves sys.stdout.encoding as None
+        # and the git output decoding of the hook fails on it
+        assert not check_commit_messages_since_version(
+            repo_root=self.tmp_dir, version="18.0", scope=SCOPE_LAST_COMMITS
+        )
+        assert "[BAD] module_example1: invalid tag" in capsys.readouterr().out
+
+        # The last commit scope only looks at HEAD, which is a valid one
+        assert check_commit_messages_since_version(
+            repo_root=self.tmp_dir, version="18.0", scope=SCOPE_LAST_COMMIT
+        )
 
     def test_commit_msg_hook_is_in_optional_config(self):
         self.runner.invoke(main, ["--only-cp-cfg"])

@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 
-from pre_commit_vauxoo.pre_commit_vauxoo import get_repo
+from pre_commit_vauxoo.pre_commit_vauxoo import SCOPE_ENVVAR, SCOPE_LAST_COMMIT, get_repo
 
 ALLOWED_TAGS = {
     "ADD": "adding new modules or new major features",
@@ -123,17 +123,31 @@ def check_commit_msg_file(commit_msg_file, repo_root=None):
     return True
 
 
-def git_ref_exists(ref_name):
-    return not subprocess.call(["git", "show-ref", "--verify", "--quiet", ref_name])
+def git_ref_exists(ref_name, cwd=None):
+    return not subprocess.call(["git", "show-ref", "--verify", "--quiet", ref_name], cwd=cwd)
 
 
-def get_git_remotes_with_urls():
-    remote_names = subprocess.check_output(["git", "remote"]).decode(sys.stdout.encoding).splitlines()
+def git_rev_exists(revision, cwd=None):
+    """Whether a revision is resolvable, for the ones "show-ref --verify" can not check
+
+    "HEAD~1" is not a ref, so it needs "rev-parse" instead: it does not exist on a
+    repository whose only commit is the root one.
+    """
+    return not subprocess.call(
+        ["git", "rev-parse", "--verify", "--quiet", revision],
+        cwd=cwd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def get_git_remotes_with_urls(cwd=None):
+    remote_names = subprocess.check_output(["git", "remote"], cwd=cwd).decode(sys.stdout.encoding).splitlines()
     remotes = {}
     for remote_name in remote_names:
         remote_url = (
             subprocess
-            .check_output(["git", "config", "--get", f"remote.{remote_name}.url"])
+            .check_output(["git", "config", "--get", f"remote.{remote_name}.url"], cwd=cwd)
             .decode(sys.stdout.encoding)
             .strip()
         )
@@ -141,17 +155,36 @@ def get_git_remotes_with_urls():
     return remotes
 
 
-def resolve_commit_message_base_ref(version):
+def resolve_commit_message_base_ref(version, scope=None, cwd=None):
+    """The revision the commits to validate are counted from
+
+    Two questions are answered here, and both are asked by the file scopes too:
+
+    * "--last-commit" only added or modified files in HEAD, so only the message of
+      HEAD is validated, which is the "HEAD~1..HEAD" range.
+    * every other scope compares against the stable branch named by VERSION. It is
+      looked up as "<remote>/<VERSION>" on the remotes whose URL does not contain
+      "dev" -- preferring "origin" -- because the dev fork is where the branch being
+      validated lives, and its copy of stable is the stale one. Only when no remote
+      has it does the local branch "<VERSION>" answer instead.
+    """
+    if scope is None:
+        scope = os.environ.get(SCOPE_ENVVAR, "").strip()
+    if scope == SCOPE_LAST_COMMIT:
+        if git_rev_exists("HEAD~1", cwd=cwd):
+            return "HEAD~1"
+        print("HEAD has no parent, falling back to the stable branch for commit message validation")
+
     if not version:
         return ""
 
     remote_candidates = []
-    for remote_name, remote_url in get_git_remotes_with_urls().items():
+    for remote_name, remote_url in get_git_remotes_with_urls(cwd=cwd).items():
         if "dev" in remote_url.lower():
             print(f"Skipping remote {remote_name} because its URL contains 'dev': {remote_url}")
             continue
         remote_ref = f"refs/remotes/{remote_name}/{version}"
-        if git_ref_exists(remote_ref):
+        if git_ref_exists(remote_ref, cwd=cwd):
             remote_candidates.append((remote_name != "origin", remote_name, f"{remote_name}/{version}", remote_url))
 
     if remote_candidates:
@@ -160,7 +193,7 @@ def resolve_commit_message_base_ref(version):
         return base_ref
 
     local_ref = f"refs/heads/{version}"
-    if git_ref_exists(local_ref):
+    if git_ref_exists(local_ref, cwd=cwd):
         print(f"Using local stable ref {version} for commit message validation")
         return version
 
@@ -186,17 +219,19 @@ def get_invalid_commit_messages(base_ref, repo_root):
     return invalid_commits
 
 
-def check_commit_messages_since_version(repo_root=None, version=None):
+def check_commit_messages_since_version(repo_root=None, version=None, scope=None):
     if repo_root is None:
         repo_root = get_repo()
     if version is None:
         version = os.environ.get("VERSION", "").strip()
+    if scope is None:
+        scope = os.environ.get(SCOPE_ENVVAR, "").strip()
 
-    if not version:
+    if not version and scope != SCOPE_LAST_COMMIT:
         print("Skipping commit message validation because VERSION was not defined")
         return True
 
-    base_ref = resolve_commit_message_base_ref(version)
+    base_ref = resolve_commit_message_base_ref(version, scope=scope)
     if not base_ref:
         return True
 
