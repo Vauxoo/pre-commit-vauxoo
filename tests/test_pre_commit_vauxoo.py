@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import posixpath
@@ -474,6 +475,67 @@ class TestPreCommitVauxoo:
         assert "vx-check-commit-msg" not in mandatory_content
         assert "vx-check-commit-msg" not in optional_content
         assert "vx-check-commit-log" in optional_content
+
+    def test_semgrep_hook_follows_the_ruff_switch(self):
+        """It belongs to the same tier as the other checks migrated to ruff"""
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        optional_content = (cfg_subfolder / ".pre-commit-config-optional.yaml").read_text(encoding="utf-8")
+        mandatory_content = (cfg_subfolder / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+        use_ruff = (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            >= 30
+        )
+
+        assert "vx-semgrep-odoo" not in mandatory_content, "It is experimental, it can not gate a build"
+        assert ("vx-semgrep-odoo" in optional_content) is use_ruff
+        # The rule is copied whatever the tier, only the hook reading it is conditional
+        assert (cfg_subfolder / ".semgrep-experimental.yml").is_file()
+
+    def test_semgrep_reports_the_bare_determinants(self):
+        """The fixture is the calibration of the rule, so run it
+
+        Every annotation of it names the rule that has to report the line, and the
+        cases annotated "ok" are the exclusions the calibration depends on: the string
+        form, None, False, the True sentinel of Odoo 19 and the lambda form, whose MRO
+        lookup happens inside the body, on the record.
+        """
+        if not shutil.which("semgrep"):
+            pytest.skip("semgrep is not installed")
+        self.runner.invoke(main, ["--only-cp-cfg"])
+        fixture = Path(__file__).resolve().parent / "data_semgrep" / "odoo_bare_determinant_use_cases.py"
+        result = subprocess.run(
+            [
+                shutil.which("semgrep"),
+                "--json",
+                "--quiet",
+                "--metrics=off",
+                "--no-rewrite-rule-ids",
+                "--config",
+                str(Path(self.tmp_dir) / CFG_SUBFOLDER / ".semgrep-experimental.yml"),
+                str(fixture),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        reported = sorted(
+            (finding["check_id"], finding["start"]["line"]) for finding in json.loads(result.stdout)["results"]
+        )
+        expected = sorted(
+            (f"odoo-bare-determinant-{rule}", line)
+            for rule, line in (
+                ("inverse", 8),
+                ("search", 10),
+                ("group_expand", 12),
+                ("compute", 14),
+                ("inverse", 19),
+                ("compute", 23),
+            )
+        )
+        assert reported == expected
 
     def test_check_commit_messages_since_version_passes_without_version(self):
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True

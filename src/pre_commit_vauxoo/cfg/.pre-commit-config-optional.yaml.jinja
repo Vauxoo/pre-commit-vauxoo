@@ -148,6 +148,23 @@ repos:
         args:
           - --config=.config/.ruff-experimental.toml
           - --exit-zero
+  - repo: local
+    hooks:
+      - id: vx-semgrep-odoo
+        name: semgrep-odoo EXPERIMENTAL checks (Won't affect CI status)!
+        description: >-
+          Report compute=, inverse=, search= and group_expand= wired as a bare reference
+          instead of a string. determine() calls a callable directly and skips the MRO,
+          so an override of that method in another module never runs unless the module
+          also redeclares the field.
+        entry: vx-semgrep-odoo
+        language: python
+        # The marker keeps the environment installable where semgrep is not: it needs
+        # python 3.10 and does not publish a wheel for every platform. An install that
+        # fails takes the whole run with it, so the entry point skips instead
+        additional_dependencies: ["semgrep==1.176.0; python_version >= '3.10'"]
+        types: [python]
+        verbose: True  # it exits zero, so its output only shows when verbose
 {%- endif %}
 {%- if not use_ruff %}
   # Both experimental checks are migrated to ruff so this hook is replaced by the
