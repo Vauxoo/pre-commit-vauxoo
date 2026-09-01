@@ -559,13 +559,17 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
     )
 
     # copier renders the folder whose condition matched as a subfolder of the
-    # destination, so its files have to be moved up to where every tool expects them
+    # destination, so its files have to be moved up to where every tool expects them.
+    # Written over the destination instead of renamed onto it: a rename swaps the
+    # inode, and whoever kept the previous file open across a second run -- copier
+    # itself rewrites in place -- would go on reading the content of the first one.
     for rendered_subfolder in CFG_RENDERED_SUBFOLDERS:
         subfolder_path = pathlib.Path(cfg_dir) / rendered_subfolder
         if not subfolder_path.is_dir():
             continue
         for cfg_file in subfolder_path.iterdir():
-            shutil.move(str(cfg_file), os.path.join(cfg_dir, cfg_file.name))
+            pathlib.Path(cfg_dir, cfg_file.name).write_bytes(cfg_file.read_bytes())
+            cfg_file.unlink()
         subfolder_path.rmdir()
 
     # .editorconfig must live at the repo root because prettier (and most
