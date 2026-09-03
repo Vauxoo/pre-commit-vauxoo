@@ -8,6 +8,10 @@ line-length = 119
 # (selecting rules by name requires preview mode)
 preview = true
 target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
+{%- if additional_builtins %}
+# Names injected at runtime, from LINT_ADDITIONAL_BUILTINS
+builtins = {{ additional_builtins | list | tojson }}
+{%- endif %}
 
 [lint]
 select = [

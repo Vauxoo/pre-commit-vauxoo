@@ -306,6 +306,17 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     **new_extra_kwargs,
 )
 @click.option(
+    "--additional-builtins",
+    type=CSVStringParamType(),
+    callback=merge_tuples,
+    envvar="LINT_ADDITIONAL_BUILTINS",
+    help="Names to treat as builtins, separated by commas."
+    "\f\nUse it for code that is not run as a module, so the linters stop reporting the names "
+    "injected at runtime as undefined, e.g. records, env, etc. in an Odoo server action."
+    "\f\nThis parameter is related to 'pylint', 'flake8' and 'ruff' hooks",
+    **new_extra_kwargs,
+)
+@click.option(
     "--skip-string-normalization",
     "-S",
     envvar="BLACK_SKIP_STRING_NORMALIZATION",

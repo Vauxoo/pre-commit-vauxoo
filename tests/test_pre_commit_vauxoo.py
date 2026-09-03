@@ -237,6 +237,34 @@ class TestPreCommitVauxoo:
         f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
         assert "import-error," in f_content, "import-error was not disabled"
 
+    def test_additional_builtins(self, caplog):
+        """The names in LINT_ADDITIONAL_BUILTINS must reach pylint and flake8 so they
+        stop being reported as undefined"""
+        os.environ["LINT_ADDITIONAL_BUILTINS"] = "env,records"
+        result = self.runner.invoke(main, ["--only-cp-cfg"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        cfg_dir = Path(self.tmp_dir) / CFG_SUBFOLDER
+        assert "additional-builtins=env,records" in (cfg_dir / ".pylintrc").read_text()
+        for flake8_cfg in [".flake8", ".flake8-optional"]:
+            assert "builtins = env,records" in (cfg_dir / flake8_cfg).read_text(), flake8_cfg
+
+    def test_additional_builtins_ruff(self, caplog):
+        """The names in LINT_ADDITIONAL_BUILTINS must also reach ruff"""
+        if (
+            parse_matrix_compatibility(os.environ.get("LINT_COMPATIBILITY_VERSION"), verbose=False)[
+                "black_autoflake_matrix_value"
+            ]
+            < 30
+        ):
+            pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
+        os.environ["LINT_ADDITIONAL_BUILTINS"] = "env,records"
+        result = self.runner.invoke(main, ["--only-cp-cfg"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        cfg_dir = Path(self.tmp_dir) / CFG_SUBFOLDER
+        for ruff_cfg in [".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"]:
+            with (cfg_dir / ruff_cfg).open("rb") as f_ruff_toml:
+                assert tomllib.load(f_ruff_toml)["builtins"] == ["env", "records"], ruff_cfg
+
     def test_exclude_autofix(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/,module_warnings1/"

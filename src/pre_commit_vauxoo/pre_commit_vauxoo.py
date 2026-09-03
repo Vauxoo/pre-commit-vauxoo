@@ -292,6 +292,7 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
     pylint_disable_checks,
     oca_hooks_disable_checks,
     ruff_disable_checks,
+    additional_builtins,
     exclude_autofix,
     skip_string_normalization,
     odoo_version,
@@ -346,6 +347,7 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
         "py_version": py_version,
         "pylint_disable_checks": pylint_disable_checks,
         "ruff_disable_checks": ruff_disable_checks,
+        "additional_builtins": additional_builtins,
         "skip_string_normalization": skip_string_normalization,
         **matrix_compatibility,
         "use_ruff": use_ruff,
@@ -382,6 +384,8 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
         _logger.info("Disabling oca hooks checks (OCA_HOOKS_DISABLE_CHECKS): %s", oca_hooks_disable_checks)
     if ruff_disable_checks:
         _logger.info("Disabling ruff checks (RUFF_DISABLE_CHECKS): %s", ruff_disable_checks)
+    if additional_builtins:
+        _logger.info("Treating as builtins (LINT_ADDITIONAL_BUILTINS): %s", additional_builtins)
     if skip_string_normalization:
         _logger.info("Skip string normalization")
     if odoo_version:
@@ -446,6 +450,7 @@ def main(  # ruff: ignore[complex-structure]
     pylint_disable_checks,
     oca_hooks_disable_checks,
     ruff_disable_checks,
+    additional_builtins,
     precommit_hooks_type,
     fail_optional,
     install,
@@ -488,6 +493,7 @@ def main(  # ruff: ignore[complex-structure]
         pylint_disable_checks,
         oca_hooks_disable_checks,
         ruff_disable_checks,
+        additional_builtins,
         exclude_autofix,
         skip_string_normalization,
         odoo_version,
