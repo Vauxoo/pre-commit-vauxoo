@@ -155,6 +155,18 @@ Full --help command result:
                                     commas.  [env var: OCA_HOOKS_DISABLE_CHECKS]
     --ruff-disable-checks TEXT CSV  Ruff checks to disable, separated by commas.
                                     [env var: RUFF_DISABLE_CHECKS]
+    --additional-builtins TEXT CSV  Names to treat as builtins, separated by
+                                    commas.
+
+                                    Use it for code that is not run as a module,
+                                    so the linters stop reporting the names
+                                    injected at runtime as undefined, e.g.
+                                    records, env, etc. in an Odoo server
+                                    action.
+
+                                    This parameter is related to 'pylint',
+                                    'flake8' and 'ruff' hooks
+                                    [env var: LINT_ADDITIONAL_BUILTINS]
     -S, --skip-string-normalization
                                     If '-t fix' is enabled, don't normalize
                                     string quotes or prefixes '' -> ""
