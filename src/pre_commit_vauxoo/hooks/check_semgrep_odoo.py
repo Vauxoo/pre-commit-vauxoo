@@ -47,7 +47,7 @@ def main(argv=None):
         )
         return 0
 
-    return subprocess.call([
+    command = [
         semgrep,
         # No --error on purpose: a finding is reported and the build is left alone,
         # the same way the experimental ruff checks run with --exit-zero
@@ -58,8 +58,27 @@ def main(argv=None):
         "--no-rewrite-rule-ids",
         "--config",
         str(config),
-        *paths,
-    ])
+    ]
+    # Given a terminal, semgrep prints its banner even under --quiet, and pre-commit
+    # runs the hook once per batch of files, so a single run printed it four times.
+    # The pipes below take the terminal away; --force-color asks for the colour back,
+    # since it is the piping that turned it off.
+    if sys.stdout.isatty():
+        command.append("--force-color")
+    command.extend(paths)
+
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    sys.stdout.write(result.stdout)
+    sys.stderr.write(
+        "".join(
+            line
+            for line in result.stderr.splitlines(keepends=True)
+            # semgrep fails to install a segfault handler on macOS and says so on
+            # every run. It is noise from its runtime, not a result of the scan
+            if not line.startswith(("Failed to register segfault", "Failed to register unwind"))
+        )
+    )
+    return result.returncode
 
 
 if __name__ == "__main__":
