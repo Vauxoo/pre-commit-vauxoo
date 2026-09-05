@@ -228,6 +228,20 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     flag_value=pre_commit_vauxoo.SCOPE_LAST_COMMIT,
     help="Run the hooks only on the files added or modified by the last commit (HEAD).",
 )
+# Takes an optional value, so "--last-commits" infers the stable branch and
+# "--last-commits=stb/18.0" states it. The inferred answer is reported before the run;
+# CI should pass the value, where guessing is the wrong thing to do at all.
+@click.option(
+    "--last-commits",
+    "last_commits",
+    is_flag=False,
+    flag_value="",
+    default=None,
+    metavar="[REMOTE/BRANCH]",
+    help="Run the hooks only on the files added or modified since REMOTE/BRANCH, and validate the message "
+    "of every commit in that range. Without a value the stable branch is inferred from the remote that is "
+    "not a dev fork, on the branch named by VERSION.",
+)
 @click.option(
     "--diff",
     "scope",

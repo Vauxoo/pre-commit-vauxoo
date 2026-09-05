@@ -100,6 +100,16 @@ the following options to get a faster result:
 
     pre-commit-vauxoo --last-commit  # only the files added or modified by the last commit
 
+    pre-commit-vauxoo --last-commits  # only the files added or modified since the stable branch
+
+The stable branch is the one named by the ``VERSION`` variable, e.g. ``18.0``. It is
+looked up as ``<remote>/<VERSION>`` on the remotes whose URL does not contain ``dev``,
+preferring ``origin``, and only as the local branch ``<VERSION>`` when no remote has it:
+the dev fork is where the branch being checked lives, so its copy of stable is the stale
+one. That same revision is what says how many commits are yours, so ``--last-commits``
+also validates the message of each one of them, and ``--last-commit`` validates the
+message of ``HEAD`` alone.
+
 Full --help command result:
 
 ::
@@ -117,6 +127,10 @@ Full --help command result:
                                     is the default one.
     --last-commit                   Run the hooks only on the files added or
                                     modified by the last commit (HEAD).
+    --last-commits                  Run the hooks only on the files added or
+                                    modified since the stable branch named by
+                                    VERSION, and validate the message of every
+                                    commit in that range.
     --diff                          Run the hooks only on the files with
                                     changes not committed yet: staged,
                                     unstaged and untracked ones.
