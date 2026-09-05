@@ -162,10 +162,13 @@ def get_files(path):
     A path with a merge conflict is listed once per stage of the index (the common
     ancestor, "ours" and "theirs"), so "git ls-files" reports it three times and the
     hooks would check the very same file three times
+
+    "-z" is what makes the names usable: without it git quotes anything outside ASCII
+    and escapes it in octal, so "modulo_ñ.py" comes back as "modulo_\\303\\261.py",
+    quotes included, and the hooks are handed a path that does not exist
     """
-    ls_files = subprocess.check_output(["git", "ls-files", "--", path]).decode(sys.stdout.encoding).strip()
-    ls_files = ls_files.splitlines()
-    return sorted(set(ls_files))
+    ls_files = subprocess.check_output(["git", "ls-files", "-z", "--", path]).decode("utf-8")
+    return sorted({name for name in ls_files.split("\0") if name})
 
 
 def git_output(git_args, repo_dirname):
