@@ -157,9 +157,15 @@ def get_repo():
 
 
 def get_files(path):
+    """Tracked files of the given path, sorted and without duplicates
+
+    A path with a merge conflict is listed once per stage of the index (the common
+    ancestor, "ours" and "theirs"), so "git ls-files" reports it three times and the
+    hooks would check the very same file three times
+    """
     ls_files = subprocess.check_output(["git", "ls-files", "--", path]).decode(sys.stdout.encoding).strip()
     ls_files = ls_files.splitlines()
-    return ls_files
+    return sorted(set(ls_files))
 
 
 def git_output(git_args, repo_dirname):
@@ -1089,7 +1095,14 @@ def main(  # ruff: ignore[complex-structure]
             included_files += get_files(included_path) or (included_path,)
         cmd.extend(["--files"] + included_files)
     else:
-        cmd.append("--all")
+        # The files are listed here instead of running "pre-commit run --all-files" since
+        # that resolves them with "git ls-files --deduplicate", an option added in git
+        # 2.31 that makes the whole run fail on an older git (e.g. Ubuntu 20.04 ships
+        # git 2.25) with: error: unknown option `deduplicate'
+        all_files = get_files(repo_dirname)
+        if not all_files:
+            raise UserWarning("Not files detected in repository %s" % repo_dirname)
+        cmd.extend(["--files"] + all_files)
     all_status = {}
 
     if "fix" in precommit_hooks_type:
