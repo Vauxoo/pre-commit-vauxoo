@@ -1,6 +1,7 @@
 click<=8.1.8
 copier
 jinja2
+packaging
 pathspec<1.0.0  # To avoid the deprecation warning from gitwildmatch in pre-commit
 pgsanity
 pre-commit

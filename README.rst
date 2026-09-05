@@ -83,6 +83,15 @@ Or using virtualenv
 
 You can confirm your environment running `pre-commit-vauxoo --version`
 
+Every run checks once a day if a newer version was released on PyPI and prints a yellow
+warning when the installed one is outdated. The answer is cached in the pre-commit cache
+directory (``PRE_COMMIT_HOME``, ``~/.cache/pre-commit`` by default) so pypi.org is queried
+at most once every 24 hours. Set ``PRE_COMMIT_VAUXOO_SKIP_VERSION_CHECK=1`` to disable it.
+
+The warning suggests the command that updates the installation printing the warning: the
+interpreter currently running instead of a bare ``python``, plus ``--user`` when the package
+lives in the per-user site-packages and ``sudo`` when its directory is not writable.
+
 Usage
 =====
 
