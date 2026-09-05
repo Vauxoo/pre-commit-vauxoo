@@ -217,16 +217,53 @@ def ask_for_stable_ref(version, cwd=None):
     """
     remotes = get_git_remotes_with_urls(cwd=cwd)
     listed = ", ".join(f"{name} ({url})" for name, url in remotes.items()) or "none"
-    if not sys.stdin.isatty():
-        raise UserWarning(
-            "Every remote configured is a dev fork, so the stable branch can not be "
-            "inferred, and there is no terminal to ask. Pass it explicitly with "
-            "--last-commits=REMOTE/BRANCH. Remotes: %s" % listed
-        )
-    print(f"Every remote configured is a dev fork, so the stable branch can not be inferred.")
+    unanswerable = UserWarning(
+        "Every remote configured is a dev fork, so the stable branch can not be "
+        "inferred, and there is nobody to ask. Pass it explicitly with "
+        "--last-commits=REMOTE/BRANCH. Remotes: %s" % listed
+    )
+    if sys.stdin is None or not sys.stdin.isatty():
+        raise unanswerable
+    print("Every remote configured is a dev fork, so the stable branch can not be inferred.")
     print(f"Remotes: {listed}")
-    answer = input(f"Which remote/branch should the commits be counted from? [<remote>/{version}] ").strip()
-    return answer
+    try:
+        return input(f"Which remote/branch should the commits be counted from? [<remote>/{version}] ").strip()
+    except EOFError:
+        # A terminal that answers nothing, which is every runner that fakes one
+        raise unanswerable from None
+
+
+def infer_stable_ref(version, cwd=None):
+    """Where the stable branch is, when nobody said
+
+    Kept apart from the resolution above so each one answers a single question, and
+    neither grows the pile of exits the repository's own checks refuse.
+    """
+    remotes = get_git_remotes_with_urls(cwd=cwd)
+    skipped = [name for name, url in remotes.items() if "dev" in url.lower()]
+    candidates = stable_remote_candidates(version, cwd=cwd)
+    if candidates:
+        _rank, _remote_name, base_ref, remote_url = candidates[0]
+        detail = f" (skipping the dev fork{'s' if len(skipped) > 1 else ''} {', '.join(skipped)})" if skipped else ""
+        print(f"Counting commits from {base_ref}, inferred from {remote_url}{detail}")
+        return base_ref
+
+    if git_ref_exists(f"refs/heads/{version}", cwd=cwd):
+        print(f"Counting commits from the local branch {version}")
+        return version
+
+    # Only when every remote is a dev fork is there nothing left to infer from. A
+    # checkout holding a single remote that simply lacks the branch -- which is what
+    # CI clones look like -- keeps skipping quietly, the way it always did
+    if remotes and len(skipped) == len(remotes):
+        answer = ask_for_stable_ref(version, cwd=cwd)
+        if not git_rev_exists(answer, cwd=cwd):
+            raise UserWarning(f"The base revision {answer} does not exist")
+        print(f"Counting commits from {answer}")
+        return answer
+
+    print(f"Skipping commit message validation because stable ref {version} was not found")
+    return ""
 
 
 def resolve_commit_message_base_ref(version, scope=None, cwd=None):
@@ -238,9 +275,8 @@ def resolve_commit_message_base_ref(version, scope=None, cwd=None):
       guessing is the wrong thing to do at all.
     * "--last-commit" only added or modified files in HEAD, so only the message of
       HEAD is validated, which is the "HEAD~1..HEAD" range.
-    * Otherwise the stable branch is inferred: "<remote>/<VERSION>" on the best remote
-      that is not a dev fork, and the choice is reported before the hooks run. When
-      every remote is a dev fork there is nothing to infer from, so it is asked.
+    * Otherwise the stable branch is inferred, and the choice is reported before the
+      hooks run, because it decides what gets checked.
     """
     if scope is None:
         scope = os.environ.get(SCOPE_ENVVAR, "").strip()
@@ -260,29 +296,7 @@ def resolve_commit_message_base_ref(version, scope=None, cwd=None):
     if not version:
         return ""
 
-    candidates = stable_remote_candidates(version, cwd=cwd)
-    if candidates:
-        _rank, _remote_name, base_ref, remote_url = candidates[0]
-        skipped = [name for name, url in get_git_remotes_with_urls(cwd=cwd).items() if "dev" in url.lower()]
-        detail = f" (skipping the dev fork{'s' if len(skipped) > 1 else ''} {', '.join(skipped)})" if skipped else ""
-        print(f"Counting commits from {base_ref}, inferred from {remote_url}{detail}")
-        return base_ref
-
-    local_ref = f"refs/heads/{version}"
-    if git_ref_exists(local_ref, cwd=cwd):
-        print(f"Counting commits from the local branch {version}")
-        return version
-
-    if get_git_remotes_with_urls(cwd=cwd):
-        answer = ask_for_stable_ref(version, cwd=cwd)
-        if answer and git_rev_exists(answer, cwd=cwd):
-            print(f"Counting commits from {answer}")
-            return answer
-        if answer:
-            raise UserWarning(f"The base revision {answer} does not exist")
-
-    print(f"Skipping commit message validation because stable ref {version} was not found")
-    return ""
+    return infer_stable_ref(version, cwd=cwd)
 
 
 def get_last_commits_files(repo_dirname):
