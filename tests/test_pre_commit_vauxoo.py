@@ -824,6 +824,9 @@ class TestPreCommitVauxoo:
         # pylint-odoo reported the "except: pass" handler as except-pass, ruff reports it as the
         # flake8-bandit try-except-pass (the ruff-odoo except-pass is deprecated in favor of it)
         (["(except-pass)"], "try-except-pass"),
+        # sql-injection is ignored under "tests/" and "migrations/" too, so it can not be
+        # asserted from the optional use cases either
+        (["(sql-injection)"], "sql-injection"),
     ]
 
     def run_precommit_hooks(self, hook_ids, config_file, filename):
@@ -894,9 +897,8 @@ class TestPreCommitVauxoo:
                         )
 
     # Every security check selected by any of the three ruff configurations: the whole
-    # flake8-bandit family, which the "[lint.per-file-ignores]" sections ignore inside
-    # "migrations/" the same way they ignore it inside "tests/", plus the ruff-odoo
-    # sql-injection, which is ignored there and only there
+    # flake8-bandit family plus the ruff-odoo sql-injection, all of them ignored inside
+    # "migrations/" the same way they are ignored inside "tests/"
     RUFF_MIGRATIONS_SECURITY_CHECKS = [
         "assert",
         "exec-builtin",

@@ -223,8 +223,8 @@ manifest-required-authors = [
     # there. It notably drops assert (S101), which a migration script uses to state what the
     # database must look like before it goes on.
     "S",
-    # Same reasoning, and it is the noisiest one there: a migration script builds its SQL from
-    # the table and column names it is upgrading, which no request ever reaches
+    # Same reasoning, and it is the noisiest one there. A migration script builds its SQL
+    # from the table and column names it is upgrading, which no request ever reaches
     "sql-injection",
 ]
 "**/tests/**" = [
@@ -233,4 +233,7 @@ manifest-required-authors = [
     # of these are an attack surface there. Covers assert (S101), try-except-pass (S110),
     # suspicious-non-cryptographic-random-usage (S311) and unsafe-markup-use (S704).
     "S",
+    # It is not part of the "S" prefix but it is a security check like the rest, and a test
+    # builds its SQL from the data it just created rather than from a request
+    "sql-injection",
 ]
