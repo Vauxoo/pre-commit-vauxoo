@@ -1259,16 +1259,72 @@ class TestPreCommitVauxoo:
         # "as_posix" is required since that windows separates the paths with "\"
         return sorted(Path(os.path.relpath(fname, self.tmp_dir)).as_posix() for fname in files)
 
+    def tracked_files(self):
+        """Files tracked by the repository, sorted and without duplicates"""
+        output = subprocess.check_output(["git", "ls-files"], cwd=self.tmp_dir).decode()
+        return sorted(set(output.splitlines()))
+
+    def test_get_files_keeps_names_outside_ascii(self):
+        """git quotes those names unless asked not to, and a quoted name does not exist
+
+        Without "-z", "modulo_ñ.py" comes back as the literal '"modulo_\\303\\261.py"',
+        quotes included, so every hook is handed a path that is not there and reports
+        nothing about the file.
+        """
+        self.git_commit_all()
+        special = Path(self.tmp_dir) / "module_example1" / "modulo_ñ.py"
+        special.write_text("# coding: utf-8\n", encoding="utf-8")
+        subprocess.check_call(["git", "add", str(special)])
+
+        files = pre_commit_vauxoo.get_files(os.path.join(self.tmp_dir, "module_example1"))
+
+        assert "module_example1/modulo_ñ.py" in files
+        assert not [name for name in files if "\\" in name or name.startswith('"')]
+
     def test_scope_default_is_all(self, monkeypatch):
-        """Running the command without a scope keeps checking the whole repository"""
+        """Running the command without a scope keeps checking the whole repository
+
+        The files are listed here instead of running "pre-commit run --all-files" since
+        that one resolves them with "git ls-files --deduplicate", an option only
+        available since git 2.31
+        """
         self.git_commit_all()
         self.write_file("module_example1/__init__.py")
         result, run_commands = self.invoke_scope(monkeypatch, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         assert run_commands, "The hooks were not run"
         for run_command in run_commands:
-            assert "--all" in run_command, "The default scope is not the whole repository"
-            assert self.scope_files(run_command) is None, "The default scope is limiting the files"
+            assert "--all" not in run_command, "'--all-files' needs a git newer than the one of Ubuntu 20.04"
+            assert self.scope_files(run_command) == self.tracked_files(), (
+                "The default scope is not checking the whole repository"
+            )
+
+    def test_scope_default_is_all_with_a_merge_conflict(self, monkeypatch):
+        """A file with a merge conflict is checked once, not once per stage of the index
+
+        "git ls-files" reports a conflicted path three times, one per stage of the index
+        (the common ancestor, "ours" and "theirs"), which is what the "--deduplicate"
+        option of git 2.31 suppresses
+        """
+        self.git_commit_all()
+        conflicted = "module_example1/__init__.py"
+        self.git_call("switch", "-q", "-c", "conflicting")
+        self.write_file(conflicted, "# theirs\n")
+        self.git_commit_all("[FIX] module_example1: theirs")
+        self.git_call("switch", "-q", "-")
+        self.write_file(conflicted, "# ours\n")
+        self.git_commit_all("[FIX] module_example1: ours")
+        with pytest.raises(subprocess.CalledProcessError):
+            self.git_call("merge", "-q", "conflicting")
+        stages = subprocess.check_output(["git", "ls-files", "--", conflicted], cwd=self.tmp_dir).decode()
+        assert stages.splitlines().count(conflicted) == 3, "The conflict did not duplicate the file in the index"
+        result, run_commands = self.invoke_scope(monkeypatch, [])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert run_commands, "The hooks were not run"
+        for run_command in run_commands:
+            assert self.scope_files(run_command).count(conflicted) == 1, (
+                "The conflicted file is checked once per stage"
+            )
 
     def test_scope_last_commit(self, monkeypatch):
         """'--last-commit' only checks the files of the last commit"""
