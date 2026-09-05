@@ -1,11 +1,12 @@
-"""Use cases of the optional flake8-bandit checks, outside any "tests/" path.
+"""Use cases of the optional security checks, outside any "tests/" path.
 
 Each case must be reported:
  - before the ruff migration: by "pylint optional checks" or "flake8 + bugbear optional checks"
  - after the ruff migration: by "ruff optional checks" (see .config/.ruff-optional.toml)
 
 It is separate from resources/module_warnings1/tests/data/ruff_optional_use_cases.py because
-the whole flake8-bandit family is ignored under "**/tests/**", which is where that file lives:
+the whole flake8-bandit family and sql-injection are ignored under "**/tests/**", which is
+where that file lives:
 asserting these cases there would assert nothing. The rest of the optional use cases stay in
 that file, which has to sit under "tests/data/" so the autofixes do not rewrite them before
 the linters report them.
@@ -26,3 +27,10 @@ def except_pass_use_case(value):
     except ValueError:
         pass
     return value
+
+
+def sql_injection_use_case(cr, table):
+    # sql-injection is not a flake8-bandit check but it is ignored under "tests/" and
+    # "migrations/" for the same reason, so it needs a use case outside both to keep proving
+    # that it still runs everywhere else
+    cr.execute("SELECT id FROM %s" % table)

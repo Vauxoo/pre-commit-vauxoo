@@ -824,6 +824,9 @@ class TestPreCommitVauxoo:
         # pylint-odoo reported the "except: pass" handler as except-pass, ruff reports it as the
         # flake8-bandit try-except-pass (the ruff-odoo except-pass is deprecated in favor of it)
         (["(except-pass)"], "try-except-pass"),
+        # sql-injection is ignored under "tests/" and "migrations/" too, so it can not be
+        # asserted from the optional use cases either
+        (["(sql-injection)"], "sql-injection"),
     ]
 
     def run_precommit_hooks(self, hook_ids, config_file, filename):
@@ -892,6 +895,52 @@ class TestPreCommitVauxoo:
                             fname,
                             output,
                         )
+
+    # Every security check selected by any of the three ruff configurations: the whole
+    # flake8-bandit family plus the ruff-odoo sql-injection, all of them ignored inside
+    # "migrations/" the same way they are ignored inside "tests/"
+    RUFF_MIGRATIONS_SECURITY_CHECKS = [
+        "assert",
+        "exec-builtin",
+        "hardcoded-password-string",
+        "sql-injection",
+        "suspicious-eval-usage",
+        "suspicious-non-cryptographic-random-usage",
+        "try-except-pass",
+        "unsafe-markup-use",
+    ]
+
+    def test_ruff_migrations_security_ignored(self, caplog):
+        """The security checks must not be reported inside a "migrations/" path: those
+        scripts run once, on a database being upgraded, from a controlled environment"""
+        self.skip_if_no_ruff()
+        result = self.runner.invoke(main, ["--only-cp-cfg"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        fname = posixpath.join("module_example1", "migrations", "16.0.1.0.0", "pre-migration.py")
+        migration_script = Path(self.tmp_dir) / fname
+        migration_script.parent.mkdir(parents=True)
+        shutil.copy(TEST_PATH / "data_ruff" / "ruff_migrations_security_use_cases.txt", migration_script)
+        subprocess.check_call(["git", "add", "-A"])
+        # The optional configuration carries the EXPERIMENTAL hook under the same "ruff-check"
+        # id, so both are run and asserted from the optional configuration. Its hook name is
+        # the marker proving the second one ran, since the checks it selects on top of the
+        # optional ones are exactly the ones expected to stay silent here
+        for config_file, linted_marker, hook_marker in [
+            (".pre-commit-config.yaml", "none-comparison", "ruff-odoo mandatory checks"),
+            (".pre-commit-config-optional.yaml", "print", "EXPERIMENTAL"),
+        ]:
+            output = self.run_precommit_hooks(["ruff-check"], config_file, fname)
+            assert hook_marker in output, "The '%s' hook did not run for %s\n%s" % (hook_marker, fname, output)
+            assert "%s:" % linted_marker in output, (
+                "'%s' was not reported for %s, so the file was not linted at all and the checks "
+                "below would not be asserted\n%s" % (linted_marker, fname, output)
+            )
+            for check in self.RUFF_MIGRATIONS_SECURITY_CHECKS:
+                assert "%s:" % check not in output, "'%s' was reported inside migrations/ for %s\n%s" % (
+                    check,
+                    fname,
+                    output,
+                )
 
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
