@@ -1,0 +1,47 @@
+"""Use cases of the security checks selected at any level, inside a "migrations/" path.
+
+None of them may be reported: a migration script runs once, on a database being upgraded, from
+a controlled environment, and no deployed code path ever imports it, so the whole
+flake8-bandit family is ignored under "**/migrations/**" by the three ruff configurations
+(see their "[lint.per-file-ignores]" sections), the same way it is ignored under
+"**/tests/**", and the ruff-odoo sql-injection is ignored there too.
+
+The "none-comparison" and "print" cases are not security checks: they are here to prove the
+file was linted at all, so the assertions on the checks above can not pass just because the
+file was skipped.
+
+It is copied into "module_example1/migrations/16.0.1.0.0/pre-migration.py" of the temporary
+repository by test_ruff_migrations_security_ignored. It is stored as ".txt" (instead of living
+in "resources/") to keep the mandatory checks of the resources modules passing and to avoid
+the linters of this own project reporting it.
+"""
+
+import random
+
+from markupsafe import Markup
+
+
+def migrate(cr, version):
+    # assert (S101): a migration script states what the database must look like before it goes
+    # on, and it is never run with "python -O"
+    assert version, "This script only runs on an upgrade"
+    # suspicious-eval-usage (S307) and exec-builtin (S102), both mandatory outside migrations/
+    column = eval("'company_id'")
+    exec("cr.execute('SELECT 1')")
+    # try-except-pass (S110), and sql-injection on the query built from the column name
+    try:
+        cr.execute("ALTER TABLE res_partner ADD COLUMN %s integer" % column)
+    except ValueError:
+        pass
+    # suspicious-non-cryptographic-random-usage (S311)
+    cr.execute("UPDATE res_partner SET %s = %s" % (column, random.random()))
+    # unsafe-markup-use (S704)
+    label = Markup("<span>%s</span>" % version)
+    # hardcoded-password-string (S105), selected only by the experimental configuration,
+    # which takes the whole "S" family
+    password = "upgrade"
+    cr.execute("ALTER ROLE odoo PASSWORD %s", (password,))
+    # none-comparison (E711) and print (print-used): not security checks, they must still be
+    # reported inside migrations/
+    if label == None:
+        print(label)

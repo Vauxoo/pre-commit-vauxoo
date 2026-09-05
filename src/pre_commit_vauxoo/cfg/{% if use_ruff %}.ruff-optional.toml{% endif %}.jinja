@@ -217,6 +217,16 @@ manifest-required-authors = [
 ]
 
 [lint.per-file-ignores]
+"**/migrations/**" = [
+    # Migration scripts run once, on a database being upgraded, from a controlled environment,
+    # and no deployed code path ever imports them, so none of these are an attack surface
+    # there. It notably drops assert (S101), which a migration script uses to state what the
+    # database must look like before it goes on.
+    "S",
+    # Same reasoning, and it is the noisiest one there: a migration script builds its SQL from
+    # the table and column names it is upgrading, which no request ever reaches
+    "sql-injection",
+]
 "**/tests/**" = [
     # Same as the "exclude_dirs: tests" of the old .bandit-optional.yml, widened from
     # unsafe-markup-use to the whole flake8-bandit family: test code is never deployed, so none

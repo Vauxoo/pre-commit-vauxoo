@@ -66,6 +66,10 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
+"**/migrations/**" = [
+    "S",  # Migration scripts run once, from a controlled environment, so they are not an
+          # attack surface (same reasoning as the "tests/" ignore below)
+]
 "**/tests/**" = [
     "S",  # Same as the "exclude_dirs: tests" of the old .bandit-experimental.yml
 ]

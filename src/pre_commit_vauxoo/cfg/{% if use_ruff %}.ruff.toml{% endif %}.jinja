@@ -294,6 +294,12 @@ max-public-methods = 200
 max-returns = 6
 
 [lint.per-file-ignores]
+"**/migrations/**" = [
+    # Migration scripts run once, on a database being upgraded, from a controlled environment,
+    # and no deployed code path ever imports them, so they are not an attack surface either.
+    # Same prefix and same reasoning as the "tests/" ignore below.
+    "S",
+]
 "**/tests/**" = [
     # Same as the "exclude_dirs: tests" every .config/.bandit-*.yml used to carry, and as the
     # ignore the optional and experimental configurations already apply: a hardcoded credential,
