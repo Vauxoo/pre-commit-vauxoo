@@ -18,3 +18,7 @@ max-line-length = 119
 # in a single process. Its pre-commit hook declares require_serial: true precisely because
 # flake8 is expected to parallelize on its own, so there was nothing else parallelizing it
 jobs = auto
+{%- if additional_builtins %}
+# Names injected at runtime, from LINT_ADDITIONAL_BUILTINS
+builtins = {{ additional_builtins | join(",") }}
+{%- endif %}
