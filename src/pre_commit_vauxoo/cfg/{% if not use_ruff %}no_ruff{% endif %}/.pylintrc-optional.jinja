@@ -10,12 +10,6 @@ py-version={{ py_version }}
 {%- endif %}
 
 [ODOOLINT]
-{% if use_ruff -%}
-# The checks using these options (license-allowed, manifest-required-author and
-# manifest-deprecated-key) are migrated to ruff, so the values actually running are the
-# [lint.odoo] ones of .config/.ruff-optional.toml, kept here in sync for the external scripts
-# replacing this section and for the configuration without ruff
-{% endif -%}
 license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
     GPL-3,GPL-3 or any later version,LGPL-3,
     Other OSI approved licence,Other proprietary,
@@ -36,8 +30,7 @@ enable=deprecated-method,
   deprecated-pragma,
   use-implicit-booleaness-not-comparison-to-zero,
   use-symbolic-message-instead,
-  useless-parent-delegation
-  {%- if not use_ruff %},
+  useless-parent-delegation,
   # The following checks are migrated to ruff when it is enabled
   # They keep the same optional level running from .config/.ruff-optional.toml, except the ones
   # annotated as "mandatory .ruff.toml": those were also enabled by the "enable=all" of
@@ -93,7 +86,6 @@ enable=deprecated-method,
   use-implicit-booleaness-not-comparison-to-string,  # ruff PLC1901
   use-vim-comment,  # ruff ODW8202 (autofix .ruff-autofix.toml)
   website-manifest-key-not-valid-uri  # ruff ODW8114
-  {%- endif %}
 
 [REPORTS]
 msg-template={path}:{line}:{column}: ({symbol}) {msg}

@@ -392,6 +392,28 @@ Note, to combine the coverage data from all the tox environments run:
 
             PYTEST_ADDOPTS=--cov-append tox
 
+Layout of the configuration templates
+-------------------------------------
+
+The templates live in ``src/pre_commit_vauxoo/cfg/``. The ones that do not depend
+on ruff sit at its root, and the ones that do live in one of two folders whose
+name *is* the condition::
+
+    src/pre_commit_vauxoo/cfg/
+        .oca_hooks.cfg.jinja                    # same with and without ruff
+        {% if use_ruff %}ruff{% endif %}/       # rendered only with ruff enabled
+        {% if not use_ruff %}no_ruff{% endif %}/
+
+copier renders the folder whose condition matched and skips the other subtree
+entirely; ``copy_cfg_files`` then moves its files up into ``.config/``, so the
+result is the same flat folder as always.
+
+The condition is only allowed there. A template must not test ``use_ruff`` in its
+content, and a file name must not carry a jinja expression: a file called
+``{% if use_ruff %}.ruff.toml{% endif %}.jinja`` can not be opened, completed or
+grepped like the rest of the repository. The two variants of a file are two real
+files, and a check migrated to ruff is simply absent from the ``no_ruff`` one.
+
 Updating the pylint-odoo and ruff-odoo revs
 -------------------------------------------
 

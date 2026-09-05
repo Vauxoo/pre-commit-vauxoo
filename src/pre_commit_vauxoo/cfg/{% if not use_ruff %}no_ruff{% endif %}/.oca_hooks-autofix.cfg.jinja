@@ -1,14 +1,12 @@
 [MESSAGES_CONTROL]
 enable=po-pretty-format,
 {%- if oca_hooks_matrix_value >= 20 %}
-{%- if not use_ruff %}
     {# Migrated to ruff-odoo ODW8113, ODC8116, ODW8161, ODW8501 and ODC8501 rules #}
     field-string-redundant,
     manifest-superfluous-key,
     prefer-env-translation,
     unused-logger,
     use-header-comments,
-{%- endif %}
     prefer-readme-rst,
     xml-deprecated-qweb-directive-15,
     xml-field-bool-without-eval,

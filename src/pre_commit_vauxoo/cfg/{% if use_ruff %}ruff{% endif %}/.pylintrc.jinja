@@ -21,9 +21,6 @@ manifest-required-authors=Vauxoo,
 [MESSAGES CONTROL]
 enable=all
 disable=abstract-method,
-   {% if not is_project_for_apps and not use_ruff -%}
-   category-allowed-app,manifest-required-key-app,missing-odoo-file-app,  # Checks for modules with price (odoo.com/apps).
-   {%- endif %}
    access-member-before-definition,
    arguments-differ,
    arguments-renamed,
@@ -136,8 +133,7 @@ disable=abstract-method,
    translation-too-many-args,
    translation-unsupported-format,
    use-vim-comment,
-   website-manifest-key-not-valid-uri
-   {%- if use_ruff %},
+   website-manifest-key-not-valid-uri,
    # Checks migrated to ruff (see .config/.ruff.toml)
    # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks,
    # except the ones annotated with the configuration file running them (e.g. use-list-literal,
@@ -341,7 +337,6 @@ disable=abstract-method,
    wildcard-import,  # ruff F403
    yield-inside-async-function,  # ruff PLE1700
    yield-outside-function  # ruff F704
-   {%- endif %}
 
 # odoolint disabled because this checks is available just in changed modules in PR conf.
 # import-error Because odoo use incompatible sys-modules https://bitbucket.org/logilab/pylint/issues/616/modules-renamed-with-sysmodules-are-unable

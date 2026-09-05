@@ -1,0 +1,16 @@
+[MESSAGES_CONTROL]
+enable=po-pretty-format,
+{%- if oca_hooks_matrix_value >= 20 %}
+    prefer-readme-rst,
+    xml-deprecated-qweb-directive-15,
+    xml-field-bool-without-eval,
+    xml-field-numeric-without-eval,
+    xml-header-missing,
+    xml-header-wrong,
+    xml-id-position-first,
+    xml-redundant-module-name,
+    xml-tag-position,
+{%- endif %}
+{%- if oca_hooks_disable_checks %}
+disable={{ ",\n    ".join(oca_hooks_disable_checks) }},
+{%- endif %}

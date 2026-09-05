@@ -25,11 +25,7 @@ exclude: |
   )
 default_language_version:
   python: python3
-{%- if use_ruff %}
   node: "26.7.0"
-{%- else %}
-  node: "24.13.0"
-{%- endif %}
 repos:
   - repo: https://github.com/OCA/pylint-odoo
 {%- if pylint_matrix_value >= 20 %}
@@ -75,7 +71,6 @@ repos:
         language: python
         pass_filenames: false
         always_run: true
-{%- if use_ruff %}
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
     rev: 0.16.3.33{# b2v-ruff #}
     hooks:
@@ -83,7 +78,6 @@ repos:
         name: ruff-odoo optional checks
         args:
           - --config=.config/.ruff-optional.toml
-{%- endif %}
   - repo: https://github.com/PyCQA/flake8
 {%- if flake8_matrix_value >= 20 %}
     rev: 7.3.0
@@ -100,45 +94,6 @@ repos:
 {%- endif %}
         args:
           - --config=.config/.flake8-optional
-{%- if not use_ruff %}
-  # B704 (markupsafe_markup_xss) is the only check enabled here and it is migrated to the ruff
-  # unsafe-markup-use (S704) selected from .config/.ruff-optional.toml, which reproduces both
-  # the "markupsafe_xss allowed_calls" and the "exclude_dirs: tests" options of that file
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.4
-    hooks:
-      - id: bandit
-        name: bandit optional
-        verbose: True
-        args:
-          # The YAML format is used instead of the INI one since it is the only
-          # one supporting per-plugin options, e.g. "markupsafe_xss"
-          - --configfile=.config/.bandit-optional.yml
-          - --format=custom
-          - "--msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})"
-          - --quiet
-        # reduce the INFO logger
-        require_serial: true
-{%- endif %}
-{%- if not use_ruff %}
-  # Every check enabled here has a ruff S rule, so this hook is replaced by the ruff-odoo
-  # EXPERIMENTAL one below (see .config/.ruff-experimental.toml)
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.4
-    hooks:
-      - id: bandit
-        name: bandit EXPERIMENTAL (Won't affect CI status)!
-        verbose: True
-        args:
-          - --exit-zero
-          - --configfile=.config/.bandit-experimental.yml
-          - --format=custom
-          - "--msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})"
-          - --quiet
-        # reduce the INFO logger
-        require_serial: true
-{%- endif %}
-{%- if use_ruff %}
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
     rev: 0.16.3.33{# b2v-ruff #}
     hooks:
@@ -148,24 +103,3 @@ repos:
         args:
           - --config=.config/.ruff-experimental.toml
           - --exit-zero
-{%- endif %}
-{%- if not use_ruff %}
-  # Both experimental checks are migrated to ruff so this hook is replaced by the
-  # ruff-odoo EXPERIMENTAL one above (see .config/.ruff-experimental.toml)
-  - repo: https://github.com/OCA/pylint-odoo
-{%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.11{# b2v-pylint #}
-{%- else %}
-    rev: v9.3.24
-{%- endif %}
-    hooks:
-      - id: pylint_odoo
-        name: pylint EXPERIMENTAL checks (Won't affect CI status)!
-        verbose: True  # exit-zero needs verbose
-        args:
-          - --rcfile=.config/.pylintrc-experimental
-          - --exit-zero
-{%- if pylint_matrix_value >= 20 %}
-          - --jobs=3
-{%- endif %}
-{%- endif %}

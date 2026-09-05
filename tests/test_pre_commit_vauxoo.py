@@ -36,6 +36,8 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     validate_commit_message_header,
 )
 from pre_commit_vauxoo.pre_commit_vauxoo import (
+    CFG_NO_RUFF_SUBFOLDER,
+    CFG_RUFF_SUBFOLDER,
     CFG_SUBFOLDER,
     SCOPE_LAST_COMMIT,
     SCOPE_LAST_COMMITS,
@@ -135,8 +137,8 @@ def fixture_ruff_py_target_use_case(request):
     return request.param
 
 
-def render_template(odoo_version: str, template_name: str) -> str:
-    env = Environment(loader=FileSystemLoader(str(TEMPLATE_PATH)))
+def render_template(odoo_version: str, template_name: str, subfolder: str = "") -> str:
+    env = Environment(loader=FileSystemLoader(str(TEMPLATE_PATH / subfolder)))
     template = env.get_template(template_name)
     return template.render(odoo_version=odoo_version)
 
@@ -1174,7 +1176,9 @@ class TestPreCommitVauxoo:
         ],
     )
     def test_pylint_cfg(self, version, manifest_deprecated_keys, tmp_path):
-        cfg_content = render_template(version, ".pylintrc-optional.jinja")
+        # The no_ruff template is the one this checks: with ruff enabled the check is
+        # reported by ruff instead, so its pylint counterpart is no longer enabled
+        cfg_content = render_template(version, ".pylintrc-optional.jinja", CFG_NO_RUFF_SUBFOLDER)
         cfg_file = tmp_path / ".pylintrc-optional"
         cfg_file.write_text(cfg_content, encoding="utf-8")
 
@@ -1185,6 +1189,24 @@ class TestPreCommitVauxoo:
         assert manifest_deprecated_keys == linter.config.manifest_deprecated_keys, (
             f"{version} should be manifest-deprecated-keys={','.join(manifest_deprecated_keys)}"
         )
+
+    def test_cfg_templates_do_not_encode_use_ruff(self):
+        """The two folders are the only place the ruff condition may live
+
+        A file name carrying a jinja expression can not be opened, completed or grepped
+        the way any other file in the repository is, and a use_ruff left inside a
+        template would contradict the folder it sits in.
+        """
+        assert (TEMPLATE_PATH / CFG_RUFF_SUBFOLDER).is_dir()
+        assert (TEMPLATE_PATH / CFG_NO_RUFF_SUBFOLDER).is_dir()
+        for template_path in TEMPLATE_PATH.rglob("*"):
+            if template_path.is_dir():
+                continue
+            assert "{%" not in template_path.name, f"{template_path} has a jinja expression in its name"
+            if template_path.suffix == ".jinja":
+                assert "use_ruff" not in template_path.read_text(encoding="utf-8"), (
+                    f"{template_path} still checks use_ruff, which its folder already decides"
+                )
 
     def git_call(self, *args):
         subprocess.check_call(
