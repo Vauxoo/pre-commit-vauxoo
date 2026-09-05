@@ -488,6 +488,54 @@ class TestPreCommitVauxoo:
             cmd.insert(-2, "--allow-empty")
         subprocess.check_call(cmd)
 
+    def add_remote(self, name, url, version="18.0"):
+        subprocess.check_call(["git", "remote", "add", name, url])
+        subprocess.check_call(["git", "update-ref", f"refs/remotes/{name}/{version}", "HEAD"])
+
+    def test_base_ref_given_explicitly_wins(self, capsys):
+        """What CI passes, because inferring is the wrong thing to do there"""
+        self.commit("[FIX] module_example1: initial baseline")
+        self.add_remote("stb", "git@example.com:vauxoo/project.git")
+        os.environ[pre_commit_vauxoo.BASE_REF_ENVVAR] = "stb/18.0"
+
+        assert resolve_commit_message_base_ref("19.0", scope=SCOPE_LAST_COMMITS) == "stb/18.0"
+        # Reported before the run, not after: it decides what gets checked
+        assert "given explicitly" in capsys.readouterr().out
+
+    def test_base_ref_given_explicitly_must_exist(self):
+        self.commit("[FIX] module_example1: initial baseline")
+        os.environ[pre_commit_vauxoo.BASE_REF_ENVVAR] = "stb/does-not-exist"
+
+        with pytest.raises(UserWarning, match="does not exist"):
+            resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS)
+
+    def test_stable_remote_beats_the_vauxoo_namespace(self, capsys):
+        """A vauxoo URL is not proof of stable: ircodoo keeps its own at ircanada"""
+        self.commit("[FIX] module_example1: initial baseline")
+        self.add_remote("stb", "git@example.com:ircanada/project.git")
+        self.add_remote("nhomar", "git@git.vauxoo.com:vauxoo/project.git")
+        self.add_remote("dev", "git@example.com:vauxoo-dev/project.git")
+
+        assert resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS) == "stb/18.0"
+        assert "skipping the dev fork dev" in capsys.readouterr().out
+
+    def test_vauxoo_namespace_beats_any_other_remote(self):
+        """Without a stb remote the namespace decides, so oca never wins by name"""
+        self.commit("[FIX] module_example1: initial baseline")
+        self.add_remote("oca", "git@example.com:OCA/project.git")
+        self.add_remote("vauxoo", "git@example.com:Vauxoo/project.git")
+
+        assert resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS) == "vauxoo/18.0"
+
+    def test_only_dev_remotes_refuses_without_a_terminal(self):
+        """It would ask, but CI has nobody to answer and must not hang on a prompt"""
+        self.commit("[FIX] module_example1: initial baseline")
+        self.add_remote("dev", "git@example.com:vauxoo-dev/project.git")
+        self.add_remote("other", "git@example.com:someone-dev/project.git")
+
+        with pytest.raises(UserWarning, match="--last-commits=REMOTE/BRANCH"):
+            resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS)
+
     def test_resolve_commit_message_base_ref_last_commit_scope(self):
         self.commit("[FIX] module_example1: initial baseline")
         self.commit("[FIX] module_example1: second one")

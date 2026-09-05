@@ -41,6 +41,15 @@ SCOPE_DIFF = "diff"
 # Exported to the hooks: the commit message one declares "always_run: true", so the
 # scope is the only way it can validate the same commits the file hooks check
 SCOPE_ENVVAR = "PRECOMMIT_SCOPE"
+# The base revision "--last-commits" was given explicitly, if it was. Exported so
+# the commit message hook counts from the same place the file scope does
+BASE_REF_ENVVAR = "PRECOMMIT_BASE_REF"
+# Where the stable branch lives, when nobody says. A remote named "stb" is the
+# convention across the repositories that have one and it has never been wrong,
+# including where the URL alone points elsewhere: ircodoo keeps its stable at
+# ircanada/ircodoo while a vauxoo/ircodoo mirror is also configured
+STABLE_REMOTE_NAME = "stb"
+STABLE_URL_NAMESPACE = "vauxoo/"
 
 TOOLS_ORDER = (
     "prettier_matrix_value",
@@ -174,21 +183,75 @@ def get_git_remotes_with_urls(cwd=None):
     return remotes
 
 
+def stable_remote_candidates(version, cwd=None):
+    """The remotes that could hold the stable branch, best first
+
+    A dev fork is skipped: it is where the branch being validated lives, so its copy
+    of stable is the stale one. What is left is ordered by how reliably it names the
+    stable: the "stb" remote first, then the vauxoo namespace, then "origin", and only
+    then alphabetically, so the answer never depends on the order git happens to list.
+    """
+    candidates = []
+    for remote_name, remote_url in get_git_remotes_with_urls(cwd=cwd).items():
+        if "dev" in remote_url.lower():
+            continue
+        if not git_ref_exists(f"refs/remotes/{remote_name}/{version}", cwd=cwd):
+            continue
+        if remote_name == STABLE_REMOTE_NAME:
+            rank = 0
+        elif STABLE_URL_NAMESPACE in remote_url.lower():
+            rank = 1
+        elif remote_name == "origin":
+            rank = 2
+        else:
+            rank = 3
+        candidates.append((rank, remote_name, f"{remote_name}/{version}", remote_url))
+    return sorted(candidates)
+
+
+def ask_for_stable_ref(version, cwd=None):
+    """Every remote is a dev fork, so the answer has to come from whoever is running
+
+    Only asked interactively. A run with no terminal -- CI is the reason this option
+    exists -- gets told what to pass instead of hanging on a prompt nobody will answer.
+    """
+    remotes = get_git_remotes_with_urls(cwd=cwd)
+    listed = ", ".join(f"{name} ({url})" for name, url in remotes.items()) or "none"
+    if not sys.stdin.isatty():
+        raise UserWarning(
+            "Every remote configured is a dev fork, so the stable branch can not be "
+            "inferred, and there is no terminal to ask. Pass it explicitly with "
+            "--last-commits=REMOTE/BRANCH. Remotes: %s" % listed
+        )
+    print(f"Every remote configured is a dev fork, so the stable branch can not be inferred.")
+    print(f"Remotes: {listed}")
+    answer = input(f"Which remote/branch should the commits be counted from? [<remote>/{version}] ").strip()
+    return answer
+
+
 def resolve_commit_message_base_ref(version, scope=None, cwd=None):
     """The revision the commits to validate are counted from
 
-    Two questions are answered here, and both are asked by the file scopes too:
+    The file scopes ask this too, so both halves always cover the same commits.
 
+    * An explicit "--last-commits=REMOTE/BRANCH" wins, and is the answer for CI, where
+      guessing is the wrong thing to do at all.
     * "--last-commit" only added or modified files in HEAD, so only the message of
       HEAD is validated, which is the "HEAD~1..HEAD" range.
-    * every other scope compares against the stable branch named by VERSION. It is
-      looked up as "<remote>/<VERSION>" on the remotes whose URL does not contain
-      "dev" -- preferring "origin" -- because the dev fork is where the branch being
-      validated lives, and its copy of stable is the stale one. Only when no remote
-      has it does the local branch "<VERSION>" answer instead.
+    * Otherwise the stable branch is inferred: "<remote>/<VERSION>" on the best remote
+      that is not a dev fork, and the choice is reported before the hooks run. When
+      every remote is a dev fork there is nothing to infer from, so it is asked.
     """
     if scope is None:
         scope = os.environ.get(SCOPE_ENVVAR, "").strip()
+
+    explicit = os.environ.get(BASE_REF_ENVVAR, "").strip()
+    if explicit and scope != SCOPE_LAST_COMMIT:
+        if not git_rev_exists(explicit, cwd=cwd):
+            raise UserWarning(f"The base revision {explicit} given to --last-commits does not exist")
+        print(f"Counting commits from {explicit}, given explicitly")
+        return explicit
+
     if scope == SCOPE_LAST_COMMIT:
         if git_rev_exists("HEAD~1", cwd=cwd):
             return "HEAD~1"
@@ -197,24 +260,26 @@ def resolve_commit_message_base_ref(version, scope=None, cwd=None):
     if not version:
         return ""
 
-    remote_candidates = []
-    for remote_name, remote_url in get_git_remotes_with_urls(cwd=cwd).items():
-        if "dev" in remote_url.lower():
-            print(f"Skipping remote {remote_name} because its URL contains 'dev': {remote_url}")
-            continue
-        remote_ref = f"refs/remotes/{remote_name}/{version}"
-        if git_ref_exists(remote_ref, cwd=cwd):
-            remote_candidates.append((remote_name != "origin", remote_name, f"{remote_name}/{version}", remote_url))
-
-    if remote_candidates:
-        _, _remote_name, base_ref, remote_url = min(remote_candidates)
-        print(f"Using stable remote ref {base_ref} from {remote_url}")
+    candidates = stable_remote_candidates(version, cwd=cwd)
+    if candidates:
+        _rank, _remote_name, base_ref, remote_url = candidates[0]
+        skipped = [name for name, url in get_git_remotes_with_urls(cwd=cwd).items() if "dev" in url.lower()]
+        detail = f" (skipping the dev fork{'s' if len(skipped) > 1 else ''} {', '.join(skipped)})" if skipped else ""
+        print(f"Counting commits from {base_ref}, inferred from {remote_url}{detail}")
         return base_ref
 
     local_ref = f"refs/heads/{version}"
     if git_ref_exists(local_ref, cwd=cwd):
-        print(f"Using local stable ref {version} for commit message validation")
+        print(f"Counting commits from the local branch {version}")
         return version
+
+    if get_git_remotes_with_urls(cwd=cwd):
+        answer = ask_for_stable_ref(version, cwd=cwd)
+        if answer and git_rev_exists(answer, cwd=cwd):
+            print(f"Counting commits from {answer}")
+            return answer
+        if answer:
+            raise UserWarning(f"The base revision {answer} does not exist")
 
     print(f"Skipping commit message validation because stable ref {version} was not found")
     return ""
@@ -543,6 +608,7 @@ def resolve_console_script(script_name):
 def main(  # ruff: ignore[complex-structure]
     paths,
     scope,
+    last_commits,
     no_overwrite,
     exclude_autofix,
     exclude_lint,
@@ -623,6 +689,11 @@ def main(  # ruff: ignore[complex-structure]
             scope,
         )
         scope = SCOPE_ALL
+    # "--last-commits" carries its own scope, and its value when it was given one
+    if last_commits is not None:
+        scope = SCOPE_LAST_COMMITS
+        if last_commits:
+            os.environ[BASE_REF_ENVVAR] = last_commits
     # The commit message hook declares "always_run: true", so this is what tells it to
     # validate the messages of the very commits whose files are being checked
     os.environ[SCOPE_ENVVAR] = scope
