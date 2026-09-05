@@ -5,3 +5,4 @@ packaging
 pathspec<1.0.0  # To avoid the deprecation warning from gitwildmatch in pre-commit
 pgsanity
 pre-commit
+pyyaml  # To read the hooks of the autofix configuration file (--autofixes-commit-by-module)
