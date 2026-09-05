@@ -13,7 +13,7 @@ import sys
 
 import copier
 
-from . import __version__, logging_colored
+from . import __version__, logging_colored, version_check
 
 _logger = logging.getLogger("pre-commit-vauxoo")
 
@@ -861,6 +861,7 @@ def main(  # ruff: ignore[complex-structure]
         _logger.info("~" * 67)
 
     print_summary(all_status)
+    warn_outdated_version()
     if do_exit:
         sys.exit(status)
 
@@ -882,6 +883,14 @@ def print_summary(all_status):
 
 def show_version():
     _logger.info("Version\npre-commit-vauxoo %s\nPython %s", __version__, sys.version)
+    warn_outdated_version()
+
+
+def warn_outdated_version():
+    """Print a yellow warning when a newer version was released on PyPI"""
+    outdated_msg = version_check.outdated_version_message()
+    if outdated_msg:
+        _logger.warning(logging_colored.colorized_msg(outdated_msg, logging.WARNING))
 
 
 if __name__ == "__main__":

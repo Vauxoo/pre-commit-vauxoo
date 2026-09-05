@@ -26,7 +26,7 @@ from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
 from yaml import Loader, load
 
-from pre_commit_vauxoo import pre_commit_vauxoo
+from pre_commit_vauxoo import logging_colored, pre_commit_vauxoo, version_check
 from pre_commit_vauxoo.cli import main
 from pre_commit_vauxoo.hooks.check_commit_msg import (
     check_commit_messages_since_version,
@@ -156,6 +156,8 @@ class TestPreCommitVauxoo:
         self.create_dummy_repo(self.src_path, self.tmp_dir)
         self.maxDiff = None
         os.environ["EXCLUDE_AUTOFIX"] = "module_autofix1/"
+        # No test should reach pypi.org, the version check has its own tests
+        os.environ[version_check.SKIP_ENVVAR] = "1"
 
     def create_dummy_repo(self, src_path, dest_path):
         copy_tree(src_path, dest_path)
@@ -1320,3 +1322,162 @@ class TestPreCommitVauxoo:
         assert run_commands, "The hooks were not run"
         for run_command in run_commands:
             assert self.scope_files(run_command) == [changed], "The current directory has precedence over the scope"
+
+
+class TestVersionCheck:
+    """Checks for the daily 'a newer version was released' warning"""
+
+    # Any timestamp older than the interval, so an empty cache is always stale
+    NOW = 2_000_000.0
+
+    @pytest.fixture(autouse=True)
+    def cache_in_tmp_path(self, tmp_path, monkeypatch):
+        """Isolate the check from the real cache, the real environment and the network"""
+        monkeypatch.delenv(version_check.SKIP_ENVVAR, raising=False)
+        self.cache_path = tmp_path / "cache" / version_check.CACHE_FILENAME
+        monkeypatch.setattr(version_check, "get_cache_path", lambda: str(self.cache_path))
+        self.fetched = []
+
+    def fake_fetch(self, monkeypatch, latest_version):
+        def _fetch():
+            self.fetched.append(latest_version)
+            if isinstance(latest_version, Exception):
+                raise latest_version
+            return latest_version
+
+        monkeypatch.setattr(version_check, "fetch_latest_version", _fetch)
+
+    def test_latest_valid_version_skips_the_invalid_ones(self):
+        releases = {
+            "8.3.19": [{"filename": "valid.tar.gz"}],
+            "8.4.0rc1": [{"filename": "prerelease.tar.gz"}],
+            "8.5.0.dev1": [{"filename": "devrelease.tar.gz"}],
+            "8.6.0": [{"filename": "yanked.tar.gz", "yanked": True}],
+            "8.7.0": [],
+            "not-a-version": [{"filename": "invalid.tar.gz"}],
+            "2020.13.32-nope": [{"filename": "invalid.tar.gz"}],
+        }
+        assert version_check.latest_valid_version(releases) == "8.3.19"
+
+    def test_latest_valid_version_orders_by_pep440_not_alphabetically(self):
+        releases = {version: [{"filename": "any.tar.gz"}] for version in ("8.3.9", "8.3.10", "8.3.2")}
+        assert version_check.latest_valid_version(releases) == "8.3.10"
+
+    def test_latest_valid_version_without_any_valid_release(self):
+        assert version_check.latest_valid_version({"1.0rc1": [{"filename": "any.tar.gz"}]}) is None
+        assert version_check.latest_valid_version({}) is None
+
+    def test_pypi_is_queried_once_a_day(self, monkeypatch):
+        self.fake_fetch(monkeypatch, "9.0.0")
+        assert version_check.get_latest_version(now=self.NOW) == "9.0.0"
+        # Within the interval the cached value is reused without touching the network
+        assert version_check.get_latest_version(now=self.NOW + version_check.CHECK_INTERVAL - 1) == "9.0.0"
+        assert self.fetched == ["9.0.0"], "pypi.org was queried more than once in the same day"
+        # Once the interval elapsed it is queried again
+        self.fake_fetch(monkeypatch, "9.1.0")
+        assert version_check.get_latest_version(now=self.NOW + version_check.CHECK_INTERVAL) == "9.1.0"
+
+    def test_a_failed_query_keeps_the_cached_value_and_waits_a_day(self, monkeypatch):
+        self.fake_fetch(monkeypatch, "9.0.0")
+        version_check.get_latest_version(now=self.NOW)
+        self.fetched.clear()
+        self.fake_fetch(monkeypatch, OSError("no network"))
+        now = self.NOW + version_check.CHECK_INTERVAL
+        assert version_check.get_latest_version(now=now) == "9.0.0", "The known version was lost"
+        assert version_check.get_latest_version(now=now + 1) == "9.0.0"
+        assert len(self.fetched) == 1, "The failed query was retried before the interval elapsed"
+
+    def test_a_corrupted_cache_is_ignored(self, monkeypatch):
+        self.cache_path.parent.mkdir(parents=True)
+        self.cache_path.write_text("}{ not json")
+        self.fake_fetch(monkeypatch, "9.0.0")
+        assert version_check.get_latest_version(now=self.NOW) == "9.0.0"
+
+    def test_the_check_is_skipped_by_environment_variable(self, monkeypatch):
+        monkeypatch.setenv(version_check.SKIP_ENVVAR, "1")
+        self.fake_fetch(monkeypatch, "9.0.0")
+        assert version_check.get_latest_version(now=self.NOW) is None
+        assert not self.fetched, "pypi.org was queried with the check disabled"
+
+    def test_message_when_outdated(self, monkeypatch):
+        monkeypatch.setattr(version_check, "get_latest_version", lambda: "999.0.0")
+        monkeypatch.setattr(version_check, "get_update_command", lambda: "PYTHON -m pip install -U pkg")
+        message = version_check.outdated_version_message()
+        assert "999.0.0" in message and "outdated" in message
+        assert "PYTHON -m pip install -U pkg" in message, "The update command was not suggested"
+
+    def test_update_command_uses_the_running_interpreter(self, monkeypatch):
+        """A bare 'python' would update a different installation than the one warning"""
+        monkeypatch.setattr(version_check, "IS_WINDOWS", False)
+        monkeypatch.setattr(version_check, "get_python_executable", lambda: "/opt/python3.14/bin/python3.14")
+        monkeypatch.setattr(version_check, "is_user_install", lambda: False)
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: True)
+        assert version_check.get_update_command() == (
+            "/opt/python3.14/bin/python3.14 -m pip install -U pre-commit-vauxoo"
+        )
+
+    def test_update_command_quotes_an_interpreter_with_spaces(self, monkeypatch):
+        monkeypatch.setattr(version_check, "IS_WINDOWS", False)
+        monkeypatch.setattr(version_check, "get_python_executable", lambda: "/Users/x/my venv/bin/python")
+        monkeypatch.setattr(version_check, "is_user_install", lambda: False)
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: True)
+        assert version_check.get_update_command().startswith("'/Users/x/my venv/bin/python' -m pip")
+
+    def test_update_command_quotes_a_windows_interpreter_with_double_quotes(self, monkeypatch):
+        """cmd does not understand the single quotes shlex would add to a windows path"""
+        monkeypatch.setattr(version_check, "IS_WINDOWS", True)
+        assert version_check.quote_executable(r"C:\Python312\python.exe") == r"C:\Python312\python.exe"
+        assert version_check.quote_executable(r"C:\Program Files\Python312\python.exe") == (
+            r'"C:\Program Files\Python312\python.exe"'
+        )
+
+    def test_update_command_adds_user_for_a_user_installation(self, monkeypatch):
+        monkeypatch.setattr(version_check, "IS_WINDOWS", False)
+        monkeypatch.setattr(version_check, "get_python_executable", lambda: "/usr/bin/python3")
+        monkeypatch.setattr(version_check, "is_user_install", lambda: True)
+        assert version_check.get_update_command() == "/usr/bin/python3 -m pip install --user -U pre-commit-vauxoo"
+
+    def test_update_command_adds_sudo_for_a_read_only_installation(self, monkeypatch):
+        monkeypatch.setattr(version_check, "IS_WINDOWS", False)
+        monkeypatch.setattr(version_check, "get_python_executable", lambda: "/usr/bin/python3")
+        monkeypatch.setattr(version_check, "is_user_install", lambda: False)
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: False)
+        monkeypatch.setattr(version_check, "is_writable_install", lambda: False)
+        assert version_check.get_update_command() == "sudo /usr/bin/python3 -m pip install -U pre-commit-vauxoo"
+
+    def test_update_command_has_no_sudo_on_windows(self, monkeypatch):
+        """windows has no sudo, suggesting it would send the user nowhere"""
+        monkeypatch.setattr(version_check, "IS_WINDOWS", True)
+        monkeypatch.setattr(version_check, "get_python_executable", lambda: r"C:\Python312\python.exe")
+        monkeypatch.setattr(version_check, "is_user_install", lambda: False)
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: False)
+        monkeypatch.setattr(version_check, "is_writable_install", lambda: False)
+        assert version_check.get_update_command() == r"C:\Python312\python.exe -m pip install -U pre-commit-vauxoo"
+
+    def test_a_virtualenv_is_never_a_user_installation(self, monkeypatch):
+        """pip rejects --user inside a virtualenv"""
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: True)
+        assert not version_check.is_user_install()
+
+    def test_a_package_in_the_user_site_is_a_user_installation(self, monkeypatch, tmp_path):
+        user_site = tmp_path / "user-site-packages"
+        user_site.mkdir()
+        monkeypatch.setattr(version_check, "in_virtualenv", lambda: False)
+        monkeypatch.setattr(version_check, "get_user_site_dirs", lambda: [str(user_site)])
+        monkeypatch.setattr(version_check, "get_package_dir", lambda: os.path.realpath(str(user_site)))
+        assert version_check.is_user_install()
+        monkeypatch.setattr(version_check, "get_package_dir", lambda: str(tmp_path / "other"))
+        assert not version_check.is_user_install()
+
+    def test_no_message_when_up_to_date(self, monkeypatch):
+        for latest_version in (version_check.__version__, "0.0.1", None, "not-a-version"):
+            monkeypatch.setattr(version_check, "get_latest_version", lambda latest=latest_version: latest)
+            assert not version_check.outdated_version_message(), f"Warned against {latest_version}"
+
+    def test_warning_is_yellow(self, monkeypatch, caplog):
+        monkeypatch.setattr(version_check, "outdated_version_message", lambda: "a newer version is available")
+        with caplog.at_level(logging.WARNING, logger="pre-commit-vauxoo"):
+            pre_commit_vauxoo.warn_outdated_version()
+        messages = [record.getMessage() for record in caplog.records]
+        assert messages == [logging_colored.colorized_msg("a newer version is available", logging.WARNING)]
+        assert "\033[1;33m" in messages[0], "The warning is not yellow"
