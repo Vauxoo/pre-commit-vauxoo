@@ -1323,6 +1323,163 @@ class TestPreCommitVauxoo:
         for run_command in run_commands:
             assert self.scope_files(run_command) == [changed], "The current directory has precedence over the scope"
 
+    def git_config_user(self):
+        """Configure the user of the repository
+
+        The "git commit" of '--autofixes-commit-by-module' runs without the "-c"
+        overrides "git_call" uses, the same way the user runs it
+        """
+        self.git_call("config", "user.name", "Test")
+        self.git_call("config", "user.email", "test@vauxoo.com")
+        self.git_call("config", "commit.gpgsign", "false")
+
+    def git_log_messages(self):
+        """The messages of the commits of the repository, newest first"""
+        output = subprocess.check_output(
+            ["git", "log", "--format=%B%x00"], cwd=self.tmp_dir, stderr=subprocess.DEVNULL
+        ).decode()
+        return [message.strip() for message in output.split("\0") if message.strip()]
+
+    def test_autofixes_commit_by_module(self, caplog):
+        """The autofixes are committed by module, listing the checks that fixed each one"""
+        self.git_config_user()
+        self.git_commit_all("[ADD] module_example1: initial commit")
+        # A trailing whitespace is fixed by the same hook no matter the compatibility version
+        self.write_file("module_warnings1/models/models.py", "# trailing whitespace   \n")
+        self.git_commit_all("[FIX] module_warnings1: trailing whitespace to autofix")
+        result = self.runner.invoke(main, ["-t", "fix", "--autofixes-commit-by-module"])
+        assert result.exit_code == 1, "Exited without reporting the reformat %s" % result.output
+        messages = self.git_log_messages()
+        autofix_headers = {
+            message.splitlines()[0]: message
+            for message in messages
+            if message.splitlines()[0].endswith(pre_commit_vauxoo.AUTOFIX_COMMIT_SUMMARY)
+        }
+        assert autofix_headers, "The autofixes were not committed\n%s" % "\n".join(messages)
+        module_message = next(
+            (message for header, message in autofix_headers.items() if header.startswith("[REF] module_warnings1:")),
+            None,
+        )
+        assert module_message, "The autofixes of 'module_warnings1' were not committed\n%s" % "\n".join(
+            autofix_headers
+        )
+        # Whatever the tool that fixed it was, the message names it and links its documentation
+        assert re.search(r"^- Autofix \[[\w-]+\]\(https://\S+\)$", module_message, re.MULTILINE), (
+            "The autofixes of the module are not linked to their documentation\n%s" % module_message
+        )
+        for header in autofix_headers:
+            assert not validate_commit_message_header(header, repo_root=self.tmp_dir), (
+                "The commit message generated is rejected by the commit message check\n%s" % header
+            )
+        # Everything the hooks changed is committed, only the generated files are left
+        uncommitted_paths = pre_commit_vauxoo.get_autofix_uncommitted_paths(self.tmp_dir)
+        assert not uncommitted_paths, "The autofixes were not committed entirely: %s" % uncommitted_paths
+
+    def test_autofixes_commit_by_module_uncommitted_changes(self, caplog):
+        """'--autofixes-commit-by-module' refuses to run with changes not committed yet"""
+        self.git_config_user()
+        self.git_commit_all("[ADD] module_example1: initial commit")
+        self.write_file("module_warnings1/models/models.py")
+        expected_logs = [
+            "ERROR:pre-commit-vauxoo:'--autofixes-commit-by-module' needs a working tree with no changes "
+            "to know what the autofixes changed.\n"
+            "Commit or stash the following path(s) and run the same command again:\n"
+            "module_warnings1/models/models.py"
+        ]
+        with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
+            result = self.runner.invoke(main, ["-t", "fix", "--autofixes-commit-by-module"])
+        assert result.exit_code == 1, "Exited without error %s - %s" % (result, result.output)
+        assert not self.git_log_messages()[0].endswith("Run autofixes from pre-commit-vauxoo"), (
+            "The autofixes were committed with changes not committed yet"
+        )
+
+    def test_autofix_commit_target(self):
+        """Every changed path is committed for the module it belongs to"""
+        module_path = Path(self.tmp_dir) / "module_example1"
+        hidden_path = Path(self.tmp_dir) / ".github"
+        hidden_path.mkdir(exist_ok=True)
+        (Path(self.tmp_dir) / "README.rst").write_text("readme\n", encoding="utf-8")
+        use_cases = [
+            ("module_example1/models/models.py", "module_example1"),
+            ("module_example1/__manifest__.py", "module_example1"),
+            # A file at the root of the repository is a valid target by itself
+            ("README.rst", "README.rst"),
+            # A hidden folder is not a module and the commit message check rejects it
+            (".github/workflows/test.yml", "various"),
+            # A file an autofix renamed away is not a valid target anymore
+            ("README.md", "various"),
+        ]
+        assert module_path.is_dir(), "The dummy repository has no module to check"
+        for path, expected_target in use_cases:
+            target = pre_commit_vauxoo.autofix_commit_target(path, self.tmp_dir)
+            assert target == expected_target, "'%s' committed for '%s' instead of '%s'" % (
+                path,
+                target,
+                expected_target,
+            )
+
+    def test_parse_ruff_fixes(self):
+        """The rules ruff fixed are read from its '--show-fixes' output"""
+        output = (
+            "Fixed 4 errors:\n"
+            "- module_example1/models/models.py:\n"
+            "    2 × unused-import (F401)\n"
+            "    1 × attribute-string-redundant (ODW8113)\n"
+            "- module_example1/__manifest__.py:\n"
+            "    1 × manifest-superfluous-key (ODC8116)\n"
+            "\nFixed 4 errors.\n"
+        )
+        assert pre_commit_vauxoo.parse_ruff_fixes(output) == {
+            "module_example1/models/models.py": {
+                # An upstream ruff rule is documented in the ruff site
+                "unused-import": "https://docs.astral.sh/ruff/rules/unused-import/",
+                # An Odoo one from ruff-odoo is documented in the fork site
+                "attribute-string-redundant": "https://vauxoo.github.io/ruff-odoo/rules/attribute-string-redundant/",
+            },
+            "module_example1/__manifest__.py": {
+                "manifest-superfluous-key": "https://vauxoo.github.io/ruff-odoo/rules/manifest-superfluous-key/"
+            },
+        }, "The rules ruff fixed were not read from its output"
+
+    def test_parse_oca_checks(self):
+        """The checks the OCA hooks fixed are read from their output
+
+        They report the line and the column only when they know them
+        """
+        output = (
+            "module_example1/views/views.xml:59: xml-redundant-module-name Redundant module name\n"
+            "module_example1/views/views.xml:59:4: xml-tag-position The expected attributes order is\n"
+            "module_example1/__manifest__.py: prefer-readme-rst The README.md file should be README.rst\n"
+            'Use `<menuitem id="menu_root"` instead\n'
+        )
+        assert pre_commit_vauxoo.parse_oca_checks(output) == {
+            "module_example1/views/views.xml": {
+                "xml-redundant-module-name": pre_commit_vauxoo.OCA_HOOKS_DOC_URL,
+                "xml-tag-position": pre_commit_vauxoo.OCA_HOOKS_DOC_URL,
+            },
+            "module_example1/__manifest__.py": {"prefer-readme-rst": pre_commit_vauxoo.OCA_HOOKS_DOC_URL},
+        }, "The checks the OCA hooks reported were not read from their output"
+
+    def test_build_autofix_commit_message(self):
+        """The commit message links every check to its documentation"""
+        message = pre_commit_vauxoo.build_autofix_commit_message(
+            "module_example1",
+            {
+                "unused-import": "https://docs.astral.sh/ruff/rules/unused-import/",
+                # A tool that does not report the check it fixed is linked by itself
+                "ruff-format": "https://docs.astral.sh/ruff/formatter/",
+            },
+        )
+        assert message == (
+            "[REF] module_example1: Run autofixes from pre-commit-vauxoo\n"
+            "\n"
+            "- Autofix [ruff-format](https://docs.astral.sh/ruff/formatter/)\n"
+            "- Autofix [unused-import](https://docs.astral.sh/ruff/rules/unused-import/)\n"
+        ), "Unexpected commit message\n%s" % message
+        assert not validate_commit_message_header(message.splitlines()[0], repo_root=self.tmp_dir), (
+            "The commit message generated is rejected by the commit message check"
+        )
+
 
 class TestVersionCheck:
     """Checks for the daily 'a newer version was released' warning"""

@@ -372,6 +372,21 @@ PRECOMMIT_HOOKS_TYPE = _BASE_HOOK_TYPES + ["all"] + ["-%s" % i for i in _BASE_HO
     **new_extra_kwargs,
 )
 @click.option(
+    "--autofixes-commit-by-module",
+    envvar="PRECOMMIT_AUTOFIXES_COMMIT_BY_MODULE",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Commit the changes made by the autofix hooks, one commit per module"
+    "\f\nIt is the standard way of reviewing a massive reformat: a commit per module, "
+    "titled '[REF] module_name: Run autofixes from pre-commit-vauxoo' and listing the "
+    "checks that fixed it, linked to their documentation"
+    "\f\nIt needs a clean working tree, since the changes not committed yet would be "
+    "committed as if an autofix had made them, and it enables the 'fix' hooks",
+    **new_extra_kwargs,
+)
+@click.option(
     "--version",
     type=click.BOOL,
     is_flag=True,

@@ -119,6 +119,26 @@ one. That same revision is what says how many commits are yours, so ``--last-com
 also validates the message of each one of them, and ``--last-commit`` validates the
 message of ``HEAD`` alone.
 
+A massive reformat is reviewed module by module, so the autofixes can be committed
+that way instead of as a single commit changing the whole repository:
+
+    pre-commit-vauxoo --autofixes-commit-by-module
+
+It needs a working tree with no changes, since it commits what the autofix hooks
+change, and it writes a commit per module naming every check that fixed it:
+
+::
+
+  [REF] module_name: Run autofixes from pre-commit-vauxoo
+
+  - Autofix [attribute-string-redundant](https://vauxoo.github.io/ruff-odoo/rules/attribute-string-redundant/)
+  - Autofix [unused-import](https://docs.astral.sh/ruff/rules/unused-import/)
+  - Autofix [ruff-format](https://docs.astral.sh/ruff/formatter/)
+
+The checks are the ones ruff-odoo and the OCA hooks report, the tools that name what
+they fixed. A tool that only reformats, e.g. the formatters, is named by itself and
+linked to its own documentation.
+
 Full --help command result:
 
 ::
@@ -226,6 +246,21 @@ Full --help command result:
 
                                     Now your command 'git commit' will run 'pre-
                                     commit-vauxoo --diff' before to commit
+    --autofixes-commit-by-module    Commit the changes made by the autofix
+                                    hooks, one commit per module
+
+                                    It is the standard way of reviewing a
+                                    massive reformat: a commit per module,
+                                    titled '[REF] module_name: Run autofixes
+                                    from pre-commit-vauxoo' and listing the
+                                    checks that fixed it, linked to their
+                                    documentation
+
+                                    It needs a clean working tree, since the
+                                    changes not committed yet would be
+                                    committed as if an autofix had made them,
+                                    and it enables the 'fix' hooks  [env var:
+                                    PRECOMMIT_AUTOFIXES_COMMIT_BY_MODULE]
     --version                       Show the version of this package
     --odoo-version TEXT             Odoo version used for the repository.
 

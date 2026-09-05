@@ -12,6 +12,7 @@ import subprocess
 import sys
 
 import copier
+import yaml
 
 from . import __version__, logging_colored, version_check
 
@@ -50,6 +51,47 @@ BASE_REF_ENVVAR = "PRECOMMIT_BASE_REF"
 # ircanada/ircodoo while a vauxoo/ircodoo mirror is also configured
 STABLE_REMOTE_NAME = "stb"
 STABLE_URL_NAMESPACE = "vauxoo/"
+
+# Commit message of "--autofixes-commit-by-module". "REF" is the tag for a change that
+# does not modify the expected behavior and the target is the module the autofixes
+# reformatted, both validated by the commit message check (see hooks/check_commit_msg.py)
+AUTOFIX_COMMIT_TAG = "REF"
+AUTOFIX_COMMIT_SUMMARY = "Run autofixes from pre-commit-vauxoo"
+# Target for the paths that are not a module and the commit message check would reject:
+# the hidden folders and the files an autofix renamed away from the root of the repository
+AUTOFIX_COMMIT_OTHER_TARGET = "various"
+# The configuration files this very command generates, so they are never committed as if
+# an autofix had changed them (see copy_cfg_files)
+GENERATED_CFG_FILES = (".editorconfig", ".isort.cfg")
+
+# Where each autofix hook documents what it fixed, for the tools that report no check at
+# all. Any other hook is documented by the "repo" URL of the pre-commit configuration file
+HOOK_DOC_URLS = {
+    "ruff-format": "https://docs.astral.sh/ruff/formatter/",
+    # It is a "local" hook, so the configuration file has no URL to fall back to
+    "prettier": "https://prettier.io/docs/options",
+}
+# The hooks whose output names the checks they fixed, and where those checks are documented
+OCA_HOOKS_DOC_URL = "https://github.com/OCA/odoo-pre-commit-hooks#checks"
+OCA_HOOK_IDS = ("oca-checks-odoo-module", "oca-checks-odoo-module-fixit", "oca-checks-po")
+RUFF_HOOK_ID = "ruff-check"
+# The Odoo checks of ruff-odoo (ODC, ODE, ODF, ODR, ODW and OAPP codes) are documented in
+# the fork site instead of the upstream ruff one
+RUFF_ODOO_RULE_DOC_URL = "https://vauxoo.github.io/ruff-odoo/rules/%s/"
+RUFF_RULE_DOC_URL = "https://docs.astral.sh/ruff/rules/%s/"
+re_ruff_odoo_code = re.compile(r"^(OD[A-Z]|OAPP)\d+$")
+# Matches the "--show-fixes" output of ruff:
+#   Fixed 3 errors:
+#   - module_name/models/model_name.py:
+#       2 × unused-import (F401)
+re_ruff_fixed_header = re.compile(r"^Fixed \d+ errors?:$")
+re_ruff_fixed_file = re.compile(r"^- (?P<path>.+):$")
+re_ruff_fixed_rule = re.compile(r"^\s+\d+ . (?P<rule>[a-z][\w-]*) \((?P<code>[A-Z]+\d+)\)$")
+# Matches the "path:line:column: check-name message" output of the OCA hooks, where the
+# line and the column are reported only when they are known
+re_oca_check = re.compile(r"^(?P<path>\S+?)(?::\d+){0,2}: (?P<check>[a-z][\w-]*) ")
+# The hooks colorize their output, which is printed as it is but has to be read plain
+re_ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 TOOLS_ORDER = (
     "prettier_matrix_value",
@@ -622,6 +664,250 @@ def resolve_console_script(script_name):
     return shutil.which(script_name) or script_name
 
 
+def git_status(repo_dirname):
+    """The entries of "git status --porcelain" as (index status, worktree status, paths)
+
+    The two status letters are reported separately because they answer different
+    questions: the index one whether the change is already staged and the worktree one
+    whether it is still pending, which is what tells the files a hook has just modified
+    from the ones staged by the hooks that ran before it.
+
+    A rename or a copy carries two paths, since git reports the original one in its own
+    record, so the whole change is committed together (e.g. a "README.md" renamed to
+    "README.rst" by the prefer-readme-rst autofix)
+    """
+    output = subprocess.check_output(
+        ["git", "status", "--porcelain", "-z", "--untracked-files=all"], cwd=repo_dirname
+    ).decode(sys.stdout.encoding)
+    entries = []
+    # "-z" terminates every record instead of separating them, so the last one is empty,
+    # and it is what makes git report the paths verbatim instead of quoting them
+    records = iter(output.split("\0"))
+    for record in records:
+        if len(record) < 4:
+            continue
+        index_status, worktree_status, path = record[0], record[1], record[3:]
+        paths = [path]
+        if index_status in ("R", "C"):
+            paths.append(next(records, ""))
+        entries.append((index_status, worktree_status, [entry_path for entry_path in paths if entry_path]))
+    return entries
+
+
+def get_uncommitted_paths(repo_dirname):
+    """Every path with a change not committed yet: staged, unstaged and untracked ones"""
+    return sorted({path for _index, _worktree, paths in git_status(repo_dirname) for path in paths})
+
+
+def get_worktree_changed_paths(repo_dirname):
+    """The paths changed in the working tree since the last time they were staged"""
+    return sorted({
+        path for _index, worktree_status, paths in git_status(repo_dirname) if worktree_status != " " for path in paths
+    })
+
+
+def is_generated_cfg_path(path):
+    """Whether the path is one of the configuration files this command generates"""
+    return path in GENERATED_CFG_FILES or path.split("/")[0] == CFG_SUBFOLDER
+
+
+def get_autofix_uncommitted_paths(repo_dirname):
+    """The paths that keep "--autofixes-commit-by-module" from running
+
+    It commits by module what the hooks change in the working tree, so a change already
+    there would be committed as if a hook had made it. The configuration files this very
+    command generates are the exception: they are never committed at all
+    """
+    return [path for path in get_uncommitted_paths(repo_dirname) if not is_generated_cfg_path(path)]
+
+
+def autofix_commit_target(path, repo_dirname):
+    """The commit message target of a changed path
+
+    It is the module the path belongs to, the first level folder of the repository, or
+    the path itself when it is a file at its root. Anything the commit message check
+    would reject as a target, a hidden folder or a file an autofix renamed away, falls
+    back to the "various" special name it accepts
+    """
+    module, _separator, module_path = path.partition("/")
+    if not module_path:
+        if pathlib.Path(os.path.join(repo_dirname, path)).is_file():
+            return path
+        return AUTOFIX_COMMIT_OTHER_TARGET
+    if module.startswith("."):
+        return AUTOFIX_COMMIT_OTHER_TARGET
+    return module
+
+
+def get_autofix_hooks(pre_commit_cfg_autofix):
+    """The (hook id, documentation url) of the autofix hooks, in the order they run
+
+    An id repeated by two repositories is reported only once since "pre-commit run" runs
+    every hook that has it, so running it again would only be slower
+    """
+    with pathlib.Path(pre_commit_cfg_autofix).open(encoding="utf-8") as f_cfg:
+        cfg = yaml.safe_load(f_cfg)
+    hooks = {}
+    for repo in cfg.get("repos") or []:
+        repo_url = repo.get("repo") or ""
+        for hook in repo.get("hooks") or []:
+            hook_id = hook["id"]
+            if hook_id in hooks:
+                continue
+            hooks[hook_id] = HOOK_DOC_URLS.get(hook_id) or (repo_url if repo_url != "local" else "")
+    return list(hooks.items())
+
+
+def ruff_rule_doc_url(rule, code):
+    """Where a ruff rule is documented, the fork site for the Odoo checks of ruff-odoo"""
+    if re_ruff_odoo_code.match(code):
+        return RUFF_ODOO_RULE_DOC_URL % rule
+    return RUFF_RULE_DOC_URL % rule
+
+
+def parse_ruff_fixes(output):
+    """The rules ruff fixed on each path, from its "--show-fixes" output
+
+    e.g. {"module_name/models/model_name.py": {"unused-import": "https://..."}} for
+
+        Fixed 3 errors:
+        - module_name/models/model_name.py:
+            2 × unused-import (F401)
+            1 × attribute-string-redundant (ODW8113)
+    """
+    fixes = {}
+    path_fixes = None
+    for line in output.splitlines():
+        if re_ruff_fixed_header.match(line):
+            path_fixes = None
+            continue
+        file_match = re_ruff_fixed_file.match(line)
+        if file_match:
+            path_fixes = fixes.setdefault(file_match["path"], {})
+            continue
+        rule_match = re_ruff_fixed_rule.match(line)
+        if rule_match is not None and path_fixes is not None:
+            path_fixes[rule_match["rule"]] = ruff_rule_doc_url(rule_match["rule"], rule_match["code"])
+    return fixes
+
+
+def parse_oca_checks(output):
+    """The checks the OCA hooks reported on each path, from their
+    "path:line:column: check-name message" output
+    """
+    checks = {}
+    for line in output.splitlines():
+        check_match = re_oca_check.match(line)
+        if check_match:
+            checks.setdefault(check_match["path"], {})[check_match["check"]] = OCA_HOOKS_DOC_URL
+    return checks
+
+
+def parse_autofix_checks(hook_id, output, repo_dirname):
+    """The checks a hook reported on each path, for the hooks that name them
+
+    The paths are relative to the root of the repository, the same way git reports the
+    files a hook changed, no matter if pre-commit ran the hook with absolute ones
+    """
+    plain_output = re_ansi_escape.sub("", output)
+    if hook_id == RUFF_HOOK_ID:
+        checks = parse_ruff_fixes(plain_output)
+    elif hook_id in OCA_HOOK_IDS:
+        checks = parse_oca_checks(plain_output)
+    else:
+        return {}
+    relative_checks = {}
+    for path, path_checks in checks.items():
+        if pathlib.Path(path).is_absolute():
+            # "as_posix" is required since that windows separates the paths with "\"
+            path = pathlib.Path(os.path.relpath(path, start=repo_dirname)).as_posix()
+        relative_checks[path] = path_checks
+    return relative_checks
+
+
+def run_autofix_hook(cmd, hook_id):
+    """Run a single autofix hook, printing its output while it is captured
+
+    The output is what names the checks that fixed each module, so it can not be simply
+    inherited, but it is printed as soon as the hook finishes to keep showing the same
+    information a plain "pre-commit run" does
+    """
+    # The hook is a positional argument of "pre-commit run", so it goes before the
+    # options: "--files" would take it as one more file otherwise
+    hook_cmd = cmd[:2] + [hook_id] + cmd[2:]
+    _logger.debug("Running command: %s", " ".join(hook_cmd))
+    hook_run = subprocess.run(hook_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    output = hook_run.stdout.decode(sys.stdout.encoding, errors="replace")
+    sys.stdout.write(output)
+    sys.stdout.flush()
+    return hook_run.returncode, output
+
+
+def build_autofix_commit_message(target, fixes):
+    """The commit message of the autofixes of a module, linking the documentation of
+    every check that fixed it
+    """
+    message = ["[%s] %s: %s" % (AUTOFIX_COMMIT_TAG, target, AUTOFIX_COMMIT_SUMMARY), ""]
+    for label, doc_url in sorted(fixes.items()):
+        message.append("- Autofix [%s](%s)" % (label, doc_url) if doc_url else "- Autofix %s" % label)
+    return "\n".join(message) + "\n"
+
+
+def commit_autofixes(repo_dirname, target, paths, fixes):
+    """Commit the paths a module was autofixed on, with the checks that fixed them"""
+    message = build_autofix_commit_message(target, fixes)
+    subprocess.check_call(["git", "add", "-A", "--", *paths], cwd=repo_dirname)
+    commit_status = subprocess_call(
+        # The hooks are skipped since these very checks are the ones that made the
+        # changes being committed, and running them again on each commit is only slower
+        ["git", "commit", "--no-verify", "-m", message],
+        cwd=repo_dirname,
+    )
+    if commit_status:
+        raise UserWarning("Unable to commit the autofixes of '%s'. Is the git user configured?" % target)
+    _logger.info("Committed the autofixes of '%s'\n%s", target, message)
+
+
+def run_autofix_commit_by_module(cmd, pre_commit_cfg_autofix, repo_dirname):
+    """Run the autofix hooks committing what they changed, one commit per module
+
+    The hooks are run one by one because that is what makes a change traceable to the
+    check that made it: pre-commit reports the files a hook modified only as a whole and
+    the tools that do not name them, e.g. the formatters, could not be attributed
+    otherwise. Their changes are staged right away so the next hook does not stash them
+    as unstaged changes, and they are unstaged again before committing module by module
+    """
+    status = 0
+    fixes_by_target = {}
+    paths_by_target = {}
+    hook_cmd = cmd + ["-c", pre_commit_cfg_autofix]
+    for hook_id, hook_doc_url in get_autofix_hooks(pre_commit_cfg_autofix):
+        hook_status, output = run_autofix_hook(hook_cmd, hook_id)
+        status = status or hook_status
+        changed_paths = [path for path in get_worktree_changed_paths(repo_dirname) if not is_generated_cfg_path(path)]
+        checks = parse_autofix_checks(hook_id, output, repo_dirname)
+        for path in changed_paths:
+            target = autofix_commit_target(path, repo_dirname)
+            paths_by_target.setdefault(target, set()).add(path)
+            # A hook that does not name the check that fixed the file, or that fixed it
+            # without reporting it, is documented by the tool itself
+            fixes_by_target.setdefault(target, {}).update(checks.get(path) or {hook_id: hook_doc_url})
+        # The generated configuration files are staged too, so they are not stashed and
+        # restored by every single hook, but they are never committed
+        subprocess.check_call(["git", "add", "-A"], cwd=repo_dirname)
+    if not paths_by_target:
+        _logger.info("The autofix checks changed nothing, so there is nothing to commit")
+        return status
+    subprocess.check_call(["git", "reset", "--quiet"], cwd=repo_dirname)
+    # "various" holds what is not a module, so it is committed last to keep the modules first
+    for target in sorted(paths_by_target, key=lambda target: (target == AUTOFIX_COMMIT_OTHER_TARGET, target)):
+        commit_autofixes(repo_dirname, target, sorted(paths_by_target[target]), fixes_by_target[target])
+    _logger.info(
+        "Committed the autofixes of %d module(s): %s", len(paths_by_target), ", ".join(sorted(paths_by_target))
+    )
+    return status
+
+
 # There are a lot of if validations in this method. It is expected for now.
 def main(  # ruff: ignore[complex-structure]
     paths,
@@ -637,6 +923,7 @@ def main(  # ruff: ignore[complex-structure]
     precommit_hooks_type,
     fail_optional,
     install,
+    autofixes_commit_by_module,
     skip_string_normalization,
     odoo_version,
     is_project_for_apps,
@@ -663,6 +950,23 @@ def main(  # ruff: ignore[complex-structure]
         if do_exit:
             sys.exit(0)
         return
+
+    if autofixes_commit_by_module:
+        # It is checked before generating the configuration files, which are changes of
+        # the working tree themselves
+        uncommitted_paths = get_autofix_uncommitted_paths(repo_dirname)
+        if uncommitted_paths:
+            _logger.error(
+                "'--autofixes-commit-by-module' needs a working tree with no changes to know what the "
+                "autofixes changed.\nCommit or stash the following path(s) and run the same command again:\n%s",
+                "\n".join(uncommitted_paths),
+            )
+            if do_exit:
+                sys.exit(1)
+            return
+        if "fix" not in precommit_hooks_type:
+            _logger.info("Enabling the 'fix' hooks, the ones '--autofixes-commit-by-module' commits")
+            precommit_hooks_type += ("fix",)
 
     precommit_config_dir = os.path.join(root_dir, "cfg")
     uninstallable_modules = get_uninstallable_modules(repo_dirname)
@@ -764,14 +1068,19 @@ def main(  # ruff: ignore[complex-structure]
     if "fix" in precommit_hooks_type:
         _logger.info("%s AUTOFIX CHECKS %s", "-" * 25, "-" * 25)
         _logger.info("Running autofix checks (affect status build but you can autofix them locally)")
-        autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
+        if autofixes_commit_by_module:
+            autofix_status = run_autofix_commit_by_module(cmd, pre_commit_cfg_autofix, repo_dirname)
+        else:
+            autofix_status = subprocess_call(cmd + ["-c", pre_commit_cfg_autofix])
         status += autofix_status
         test_name = "Autofix checks"
         all_status[test_name] = {"status": autofix_status}
         if autofix_status:
             _logger.error("%s reformatted", test_name)
             is_ci = get_is_ci()
-            if is_ci[0]:
+            # The instructions to reformat locally are pointless when the changes are
+            # already committed by module, where even the diff they show is empty
+            if is_ci[0] and not autofixes_commit_by_module:
                 # Similar to https://github.com/pre-commit/pre-commit/blob/3fe38df/pre_commit/commands/run.py#L306
                 # But using a custom message related to pre-commit-vauxoo instead of pre-commit
                 # and limit the output
