@@ -1,0 +1,79 @@
+# determine() in odoo/orm/fields.py branches on the determinant's TYPE:
+#   str      -> getattr(records, needle)(...)   respects the MRO
+#   callable -> needle(records, ...)            SKIPS the MRO entirely
+# It is the generic helper behind determine_inverse, determine_domain (search=) and
+# determine_group_expand, so all of them share the failure mode: an override of the
+# method in another module never runs unless that module also redeclares the field.
+#
+# `group_expand=True` / `search=True` are sentinels for the ORM default, not refs.
+# A lambda is excluded: the MRO lookup happens inside its body, on the record
+# (compute=lambda r: r._compute_x()), so the override is reached normally.
+#
+# One rule per keyword on purpose: pattern-not is scoped to the SAME keyword, so a
+# field mixing the two forms -- compute="_compute_x", inverse=_set_x -- is still
+# flagged on the bare one. Every pattern is YAML-quoted; unquoted, "..." unwraps into
+# semgrep's match-anything ellipsis and a lambda's colon breaks the YAML mapping.
+rules:
+  - id: odoo-bare-determinant-compute
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `compute=` is wired as a bare reference. determine() calls it directly and skips
+      the MRO, so any module that overrides this method without redeclaring the field
+      is silently ignored. Use the string form: compute="_compute_x".
+    patterns:
+      - pattern: 'fields.$TYPE(..., compute=$M, ...)'
+      - pattern-not: 'fields.$TYPE(..., compute="...", ...)'
+      - pattern-not: 'fields.$TYPE(..., compute=None, ...)'
+      - pattern-not: 'fields.$TYPE(..., compute=False, ...)'
+      # True is Odoo 19's sentinel for "use the ORM default", not a callable
+      - pattern-not: 'fields.$TYPE(..., compute=True, ...)'
+      - pattern-not: 'fields.$TYPE(..., compute=lambda $...X: $B, ...)'
+
+  - id: odoo-bare-determinant-inverse
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `inverse=` is wired as a bare reference. determine() calls it directly and skips
+      the MRO, so any module that overrides this method without redeclaring the field
+      is silently ignored. Use the string form: inverse="_inverse_x".
+    patterns:
+      - pattern: 'fields.$TYPE(..., inverse=$M, ...)'
+      - pattern-not: 'fields.$TYPE(..., inverse="...", ...)'
+      - pattern-not: 'fields.$TYPE(..., inverse=None, ...)'
+      - pattern-not: 'fields.$TYPE(..., inverse=False, ...)'
+      # True is Odoo 19's sentinel for "use the ORM default", not a callable
+      - pattern-not: 'fields.$TYPE(..., inverse=True, ...)'
+      - pattern-not: 'fields.$TYPE(..., inverse=lambda $...X: $B, ...)'
+
+  - id: odoo-bare-determinant-search
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `search=` is wired as a bare reference. determine() calls it directly and skips
+      the MRO, so any module that overrides this method without redeclaring the field
+      is silently ignored. Use the string form: search="_search_x".
+    patterns:
+      - pattern: 'fields.$TYPE(..., search=$M, ...)'
+      - pattern-not: 'fields.$TYPE(..., search="...", ...)'
+      - pattern-not: 'fields.$TYPE(..., search=None, ...)'
+      - pattern-not: 'fields.$TYPE(..., search=False, ...)'
+      # True is Odoo 19's sentinel for "use the ORM default", not a callable
+      - pattern-not: 'fields.$TYPE(..., search=True, ...)'
+      - pattern-not: 'fields.$TYPE(..., search=lambda $...X: $B, ...)'
+
+  - id: odoo-bare-determinant-group_expand
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `group_expand=` is wired as a bare reference. determine() calls it directly and skips
+      the MRO, so any module that overrides this method without redeclaring the field
+      is silently ignored. Use the string form: group_expand="_read_group_x".
+    patterns:
+      - pattern: 'fields.$TYPE(..., group_expand=$M, ...)'
+      - pattern-not: 'fields.$TYPE(..., group_expand="...", ...)'
+      - pattern-not: 'fields.$TYPE(..., group_expand=None, ...)'
+      - pattern-not: 'fields.$TYPE(..., group_expand=False, ...)'
+      # True is Odoo 19's sentinel for "use the ORM default", not a callable
+      - pattern-not: 'fields.$TYPE(..., group_expand=True, ...)'
+      - pattern-not: 'fields.$TYPE(..., group_expand=lambda $...X: $B, ...)'

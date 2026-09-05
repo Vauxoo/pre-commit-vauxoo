@@ -96,6 +96,7 @@ setup(
             "pre-commit-vauxoo = pre_commit_vauxoo.cli:main",
             "vx-check-commit-log = pre_commit_vauxoo.hooks.check_commit_msg:main_git_log",
             "vx-check-deactivate = pre_commit_vauxoo.hooks.check_deactivate_jinja:main",
+            "vx-semgrep-odoo = pre_commit_vauxoo.hooks.check_semgrep_odoo:main",
         ]
     },
 )
