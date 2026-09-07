@@ -1300,6 +1300,36 @@ class TestPreCommitVauxoo:
 
         assert files.count(conflicted) == 1, "The conflicted file is listed once per stage"
 
+    def test_format_command_collapses_the_files_list(self):
+        """The logged command counts the files it does not print
+
+        A scope can cover hundreds of files, which logs a wall of paths that buries the
+        rest of the output
+        """
+        files = ["module_example1/file%d.py" % index for index in range(25)]
+        command = ["pre-commit", "run", "--color=always", "--files"] + files + ["-c", ".pre-commit-config.yaml"]
+
+        logged = pre_commit_vauxoo.format_command(command)
+
+        assert logged.startswith("pre-commit run --color=always --files module_example1/file0.py ")
+        assert "module_example1/file9.py" in logged, "The first files are not printed"
+        assert "module_example1/file10.py" not in logged, "The whole list is printed"
+        assert "... and 15 more files" in logged, "The hidden files are not counted"
+        assert logged.endswith("-c .pre-commit-config.yaml"), "The options after the files are lost"
+
+    def test_format_command_keeps_a_short_files_list(self):
+        """A list that fits is printed whole: it is what says which files were checked"""
+        files = ["module_example1/file%d.py" % index for index in range(3)]
+        command = ["pre-commit", "run", "--files"] + files + ["-c", ".pre-commit-config.yaml"]
+
+        assert pre_commit_vauxoo.format_command(command) == " ".join(command)
+
+    def test_format_command_without_files(self):
+        """A command that sends no files is logged as it is run"""
+        command = ["git", "commit", "--no-verify", "-m", "[FIX] module_example1: something"]
+
+        assert pre_commit_vauxoo.format_command(command) == " ".join(command)
+
     def test_scope_default_is_all(self, monkeypatch):
         """Running the command without a scope delegates the whole repository to pre-commit
 

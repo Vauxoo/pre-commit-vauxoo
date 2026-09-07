@@ -59,6 +59,9 @@ BASE_REF_ENVVAR = "PRECOMMIT_BASE_REF"
 STABLE_REMOTE_NAME = "stb"
 STABLE_URL_NAMESPACE = "vauxoo/"
 
+# How many names of a "--files" list are printed when the command being run is logged
+LOGGED_FILES_LIMIT = 10
+
 # Commit message of "--autofixes-commit-by-module". "REF" is the tag for a change that
 # does not modify the expected behavior and the target is the module the autofixes
 # reformatted, both validated by the commit message check (see hooks/check_commit_msg.py)
@@ -679,9 +682,32 @@ def envfile2envdict(repo_dirname, source_file="variables.sh", no_overwrite_envir
     return envdict
 
 
+def format_command(command):
+    """The command as a string, with a long "--files" list collapsed
+
+    A scope covering many files turns the logged command into a wall of paths that
+    buries the rest of the output, so only the first ones are printed and the rest
+    counted
+    """
+    try:
+        first_file = command.index("--files") + 1
+    except ValueError:
+        return " ".join(command)
+    # The file names are not the last arguments ("-c <config>" is appended afterwards),
+    # so the list ends where the next option begins
+    last_file = first_file
+    while last_file < len(command) and not command[last_file].startswith("-"):
+        last_file += 1
+    hidden = last_file - first_file - LOGGED_FILES_LIMIT
+    if hidden <= 0:
+        return " ".join(command)
+    return " ".join(
+        command[: first_file + LOGGED_FILES_LIMIT] + ["... and %d more files" % hidden] + command[last_file:]
+    )
+
+
 def subprocess_call(command, *args, **kwargs):
-    cmd_str = " ".join(command)
-    _logger.debug("Running command: %s", cmd_str)
+    _logger.debug("Running command: %s", format_command(command))
     return subprocess.call(command, *args, **kwargs)
 
 
@@ -871,7 +897,7 @@ def run_autofix_hook(cmd, hook_id):
     # The hook is a positional argument of "pre-commit run", so it goes before the
     # options: "--files" would take it as one more file otherwise
     hook_cmd = cmd[:2] + [hook_id] + cmd[2:]
-    _logger.debug("Running command: %s", " ".join(hook_cmd))
+    _logger.debug("Running command: %s", format_command(hook_cmd))
     hook_run = subprocess.run(hook_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
     output = hook_run.stdout.decode(sys.stdout.encoding, errors="replace")
     sys.stdout.write(output)
