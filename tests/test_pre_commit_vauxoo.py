@@ -71,7 +71,8 @@ VERSIONED_MANDATORY_CHECKS = {
     "no-raise-unlink",
     "prefer-env-attribute",  # deprecated-self-cr, autofixable but mandatory (see .ruff.toml)
 }
-# The translation-* family was optional in pylint-odoo so it keeps running as optional
+# The translation-* family was optional in pylint-odoo, so it is one of the families the
+# optional configuration used to select and .ruff.toml selects now
 VERSIONED_OPTIONAL_CHECKS = {
     "translation-contains-variable",
     "translation-format-interpolation",
@@ -82,7 +83,7 @@ VERSIONED_OPTIONAL_CHECKS = {
     "translation-unsupported-format",
 }
 VERSIONED_AUTOFIX_CHECKS = {"deprecated-self-cr", "prefer-env-translation", "translation-not-lazy"}
-RUFF_TOML_FILENAMES = (".ruff.toml", ".ruff-optional.toml", ".ruff-experimental.toml", ".ruff-autofix.toml")
+RUFF_TOML_FILENAMES = (".ruff.toml", ".ruff-experimental.toml", ".ruff-autofix.toml")
 
 
 @pytest.fixture(
@@ -200,6 +201,24 @@ class TestPreCommitVauxoo:
         diff = set(expected_logs) - formatted_logs
         assert not diff, f"Logs expected not raised {diff}"
 
+    # The fixture modules carrying the findings of the checks promoted from the optional
+    # configuration. Without ruff they only fail the optional run, with ruff there is no
+    # optional level anymore so they fail the mandatory one. module_autofix1 is one of them
+    # whenever its autofixes are excluded, which is the default of setup_method
+    PROMOTED_FINDINGS_MODULES = ("module_warnings1/", "module_autofix1/")
+
+    def exclude_lint_promoted_findings(self, *paths):
+        """Set EXCLUDE_LINT so the tests asserting a clean mandatory run pass either way
+
+        Without ruff nothing is added, so those tests keep linting exactly what they linted
+        before the optional configuration was merged into the mandatory one
+        """
+        paths = list(paths)
+        if self.uses_ruff():
+            paths += [path for path in self.PROMOTED_FINDINGS_MODULES if path not in paths]
+        if paths:
+            os.environ["EXCLUDE_LINT"] = ",".join(paths)
+
     def get_pylint_messages(self):
         output = StringIO()
         with redirect_stdout(output):
@@ -234,7 +253,7 @@ class TestPreCommitVauxoo:
     def test_exclude_lint_path(self, caplog):
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "false"
-        os.environ["EXCLUDE_LINT"] = "module_example1/models,module_warnings1/"
+        self.exclude_lint_promoted_findings("module_example1/models", "module_warnings1/")
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).read_text()
@@ -242,6 +261,7 @@ class TestPreCommitVauxoo:
 
     def test_disable_lints(self, caplog):
         os.environ["DISABLE_PYLINT_CHECKS"] = "import-error"
+        self.exclude_lint_promoted_findings()
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         f_content = Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, ".pylintrc")).read_text()
@@ -255,7 +275,9 @@ class TestPreCommitVauxoo:
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         cfg_dir = Path(self.tmp_dir) / CFG_SUBFOLDER
         assert "additional-builtins=env,records" in (cfg_dir / ".pylintrc").read_text()
-        for flake8_cfg in [".flake8", ".flake8-optional"]:
+        # The optional flake8 configuration was merged into .flake8 when ruff is used
+        flake8_cfgs = [".flake8"] if self.uses_ruff() else [".flake8", ".flake8-optional"]
+        for flake8_cfg in flake8_cfgs:
             assert "builtins = env,records" in (cfg_dir / flake8_cfg).read_text(), flake8_cfg
 
     def test_additional_builtins_ruff(self, caplog):
@@ -271,7 +293,7 @@ class TestPreCommitVauxoo:
         result = self.runner.invoke(main, ["--only-cp-cfg"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         cfg_dir = Path(self.tmp_dir) / CFG_SUBFOLDER
-        for ruff_cfg in [".ruff.toml", ".ruff-optional.toml", ".ruff-autofix.toml"]:
+        for ruff_cfg in [".ruff.toml", ".ruff-autofix.toml"]:
             with (cfg_dir / ruff_cfg).open("rb") as f_ruff_toml:
                 assert tomllib.load(f_ruff_toml)["builtins"] == ["env", "records"], ruff_cfg
 
@@ -279,6 +301,7 @@ class TestPreCommitVauxoo:
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all"
         os.environ["EXCLUDE_AUTOFIX"] = "module_example1/demo/,module_autofix1/,module_warnings1/"
         os.environ["BLACK_SKIP_STRING_NORMALIZATION"] = "true"
+        self.exclude_lint_promoted_findings()
         result = self.runner.invoke(main, [])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         with Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, "pyproject.toml")).open() as f_pyproject:
@@ -286,6 +309,26 @@ class TestPreCommitVauxoo:
 
     def test_fail_warning(self, caplog, capfd):
         os.environ["PRECOMMIT_FAIL_OPTIONAL"] = "1"
+        # "resources/module_example1/models/markupsafe_sanitized.py" sanitizes the value so the
+        # markupsafe XSS check must not be raised for it: it is whitelisted from the
+        # "allowed_calls" of ".bandit-optional.yml" and, once ruff replaces bandit, from the
+        # "allowed-markup-calls" of ".ruff.toml"
+        if self.uses_ruff():
+            # There is no optional level for ruff anymore: the optional configuration only
+            # carries the EXPERIMENTAL hook, which never fails the build, so the findings that
+            # used to fail the optional run are the ones failing the mandatory one now
+            os.environ["PRECOMMIT_HOOKS_TYPE"] = "mandatory"
+            expected_logs = ["ERROR:pre-commit-vauxoo:Mandatory checks failed"]
+            with self.custom_assert_logs(
+                "pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog
+            ):
+                result = self.runner.invoke(main, [])
+            assert result.exit_code == 1, "Exited without error"
+            output = self.strip_ansi(capfd.readouterr().out)
+            assert "unsafe-markup-use" not in output, (
+                "unsafe-markup-use was raised for the sanitized Markup() call\n%s" % output
+            )
+            return
         # Only optional
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "optional"
         expected_logs = ["ERROR:pre-commit-vauxoo:Optional checks failed"]
@@ -293,21 +336,13 @@ class TestPreCommitVauxoo:
             result = self.runner.invoke(main, [])
         assert result.exit_code == 1, "Exited without error"
         output = self.strip_ansi(capfd.readouterr().out)
-        # "resources/module_example1/models/markupsafe_sanitized.py" sanitizes the value so the
-        # markupsafe XSS check must not be raised for it: it is whitelisted from the
-        # "allowed_calls" of ".bandit-optional.yml" and, once ruff replaces bandit, from the
-        # "allowed-markup-calls" of ".ruff-optional.toml"
-        if self.uses_ruff():
-            assert "unsafe-markup-use" not in output, (
-                "unsafe-markup-use was raised for the sanitized Markup() call\n%s" % output
-            )
-        else:
-            bandit_passed = re.search(r"^bandit optional\.+Passed$", output, re.MULTILINE)
-            assert bandit_passed, "bandit optional did not pass\n%s" % output
+        bandit_passed = re.search(r"^bandit optional\.+Passed$", output, re.MULTILINE)
+        assert bandit_passed, "bandit optional did not pass\n%s" % output
 
     def test_rm_options(self, caplog):
         # Only mandatory
         os.environ["PRECOMMIT_HOOKS_TYPE"] = "all,-optional,-fix,-experimental"
+        self.exclude_lint_promoted_findings()
         expected_logs = ["INFO:pre-commit-vauxoo:Mandatory checks passed!"]
         with self.custom_assert_logs("pre-commit-vauxoo", level="INFO", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
@@ -611,7 +646,9 @@ class TestPreCommitVauxoo:
         # The last commit scope only looks at HEAD, which is a valid one
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="18.0", scope=SCOPE_LAST_COMMIT)
 
-    def test_commit_msg_hook_is_in_optional_config(self):
+    def test_commit_msg_range_hook_config(self):
+        """The commit message range check is a repository-wide hook, never the git hook
+        validating the single message being written (vx-check-commit-msg)"""
         self.runner.invoke(main, ["--only-cp-cfg"])
         cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
         mandatory_content = (cfg_subfolder / ".pre-commit-config.yaml").read_text(encoding="utf-8")
@@ -619,7 +656,12 @@ class TestPreCommitVauxoo:
 
         assert "vx-check-commit-msg" not in mandatory_content
         assert "vx-check-commit-msg" not in optional_content
-        assert "vx-check-commit-log" in optional_content
+        if self.uses_ruff():
+            # The optional hooks were converged into the mandatory configuration
+            assert "vx-check-commit-log" in mandatory_content
+            assert "vx-check-commit-log" not in optional_content
+        else:
+            assert "vx-check-commit-log" in optional_content
 
     def test_check_commit_messages_since_version_passes_without_version(self):
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True
@@ -632,7 +674,11 @@ class TestPreCommitVauxoo:
         expected_logs = ["ERROR:pre-commit-vauxoo:Autofix checks reformatted"]
         with self.custom_assert_logs("pre-commit-vauxoo", level="ERROR", expected_logs=expected_logs, caplog=caplog):
             result = self.runner.invoke(main, [])
-        assert result.exit_code == 1, "Exited without error"
+        # The fixture modules are linted here (their autofixes are what this test asserts), so
+        # with ruff the promoted checks fail the mandatory run too and its status adds up. What
+        # is asserted is the autofix, through the log above and the diff below
+        expected_exit_code = 2 if self.uses_ruff() else 1
+        assert result.exit_code == expected_exit_code, "Exited without error"
         result = subprocess.run(["git", "diff", self.tmp_dir], capture_output=True, text=True, check=False)
         diff_output = index_re.sub("", result.stdout)
         black_autoflake_matrix_value = parse_matrix_compatibility(
@@ -694,12 +740,14 @@ class TestPreCommitVauxoo:
                 f"random-msg was supposed to be disabled for {oca_hooks_cfg_path} through the corresponding environment variable"
             )
 
-    def test_oca_hooks_optional_config(self, caplog):
+    def test_oca_hooks_config(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
-        with (Path(self.tmp_dir) / CFG_SUBFOLDER / ".pre-commit-config-optional.yaml").open() as config_fd:
+        # The oca-checks hooks were converged into the mandatory configuration when ruff is used
+        config_filename = ".pre-commit-config.yaml" if self.uses_ruff() else ".pre-commit-config-optional.yaml"
+        with (Path(self.tmp_dir) / CFG_SUBFOLDER / config_filename).open() as config_fd:
             config = load(config_fd, Loader)
         oca_hooks = [hook for repo in config["repos"] for hook in repo["hooks"] if hook["id"].startswith("oca-checks")]
-        assert oca_hooks, "Expected oca-checks hooks in the optional configuration"
+        assert oca_hooks, f"Expected oca-checks hooks in {config_filename}"
         for hook in oca_hooks:
             assert f"--config={CFG_SUBFOLDER}/.oca_hooks.cfg" in hook.get("args", []), (
                 f"{hook['id']} should read the generated .oca_hooks.cfg to honor the disabled checks"
@@ -738,7 +786,7 @@ class TestPreCommitVauxoo:
         ):
             pytest.skip("Requires BLACK_AUTOFLAKE_MATRIX_VALUE >= 30")
         # manifest-required-author (ODC8101) and invalid-commit (ODE8102) come from pylint-odoo,
-        # dangerous-default-value (B006) comes from pylint and print-used (T201) runs as optional.
+        # dangerous-default-value (B006) and print-used (T201) come from pylint.
         # translation-required has no ruff equivalent so it should not add any ruff code
         expected_ruff_codes = {"B006", "ODC8101", "ODE8102", "T201"}
         ruff_toml_filenames = RUFF_TOML_FILENAMES
@@ -791,10 +839,9 @@ class TestPreCommitVauxoo:
         assert selected & VERSIONED_MANDATORY_CHECKS == expected_selected, (
             f"Wrong version-scoped checks selected in .ruff.toml for odoo version {odoo_version}"
         )
-        with (cfg_subfolder / ".ruff-optional.toml").open("rb") as f_ruff_toml:
-            selected_optional = set(tomllib.load(f_ruff_toml)["lint"]["select"])
-        assert selected_optional & VERSIONED_OPTIONAL_CHECKS == VERSIONED_OPTIONAL_CHECKS, (
-            f"Wrong version-scoped checks selected in .ruff-optional.toml for odoo version {odoo_version}"
+        assert selected & VERSIONED_OPTIONAL_CHECKS == VERSIONED_OPTIONAL_CHECKS, (
+            "Wrong version-scoped checks promoted from the optional configuration in .ruff.toml "
+            f"for odoo version {odoo_version}"
         )
         with (cfg_subfolder / ".ruff-autofix.toml").open("rb") as f_ruff_toml:
             ignored = set(tomllib.load(f_ruff_toml)["lint"]["ignore"])
@@ -822,40 +869,36 @@ class TestPreCommitVauxoo:
             "The checks using the [lint.odoo] options are not selected in .ruff.toml"
         )
         # manifest-version-format was an optional pylint-odoo check so it uses the odoo-version
-        # option (the pylint "valid-odoo-version" one) from the optional configuration
-        with (cfg_subfolder / ".ruff-optional.toml").open("rb") as f_ruff_toml:
-            data_optional = tomllib.load(f_ruff_toml)
-        assert data_optional["lint"]["odoo"]["odoo-version"] == "17.0", "Wrong odoo-version in .ruff-optional.toml"
-        assert "manifest-version-format" in set(data_optional["lint"]["select"]), (
-            "manifest-version-format is not selected in .ruff-optional.toml"
+        # option (the pylint "valid-odoo-version" one), and the optional configuration it used to
+        # run from was merged into this one
+        assert "manifest-version-format" in set(data["lint"]["select"]), (
+            "manifest-version-format is not selected in .ruff.toml"
         )
         # license-allowed and manifest-required-author were optional pylint-odoo checks configured
-        # from the [ODOOLINT] section of .pylintrc-optional, so the ruff-odoo ones must keep the
-        # same values from the optional configuration
-        odoo_options_optional = data_optional["lint"]["odoo"]
-        pylintrc_optional = ConfigParser(inline_comment_prefixes=("#", ";"))
-        pylintrc_optional.read(cfg_subfolder / ".pylintrc-optional")
+        # from the [ODOOLINT] section of .pylintrc-optional, whose values moved to .pylintrc
+        # together with the checks
+        pylintrc = ConfigParser(inline_comment_prefixes=("#", ";"))
+        pylintrc.read(cfg_subfolder / ".pylintrc")
         for ruff_option, pylint_option in (
             ("license-allowed", "license-allowed"),
             ("manifest-required-authors", "manifest-required-authors"),
         ):
             expected_values = [
                 value.strip()
-                for value in pylintrc_optional.get("ODOOLINT", pylint_option).replace("\n", "").split(",")
+                for value in pylintrc.get("ODOOLINT", pylint_option).replace("\n", "").split(",")
                 if value.strip()
             ]
-            assert odoo_options_optional[ruff_option] == expected_values, (
-                f"The [lint.odoo] {ruff_option} of .ruff-optional.toml is not the [ODOOLINT] "
-                f"{pylint_option} of .pylintrc-optional"
+            assert odoo_options[ruff_option] == expected_values, (
+                f"The [lint.odoo] {ruff_option} of .ruff.toml is not the [ODOOLINT] {pylint_option} of .pylintrc"
             )
         # manifest-deprecated-key is not configured: the ruff-odoo default already reports the
         # [ODOOLINT] manifest-deprecated-keys values gating qweb by the odoo-version option
-        assert "manifest-deprecated-keys" not in odoo_options_optional, (
-            "manifest-deprecated-keys should not be configured in .ruff-optional.toml"
+        assert "manifest-deprecated-keys" not in odoo_options, (
+            "manifest-deprecated-keys should not be configured in .ruff.toml"
         )
-        expected_optional_checks = {"license-allowed", "manifest-required-author", "manifest-deprecated-key"}
-        assert expected_optional_checks.issubset(set(data_optional["lint"]["select"])), (
-            "The checks using the [lint.odoo] options are not selected in .ruff-optional.toml"
+        expected_promoted_checks = {"license-allowed", "manifest-required-author", "manifest-deprecated-key"}
+        assert expected_promoted_checks.issubset(set(data["lint"]["select"])), (
+            "The checks promoted from the optional configuration are not selected in .ruff.toml"
         )
 
     def test_ruff_checks_by_name(self, caplog):
@@ -966,6 +1009,9 @@ class TestPreCommitVauxoo:
         result = self.runner.invoke(main, ["--only-cp-cfg"])
         assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
         use_ruff = self.uses_ruff()
+        # The optional hooks were converged into the mandatory configuration when ruff is used,
+        # so the checks that used to run from the optional one are reported from there now
+        optional_config_file = ".pre-commit-config.yaml" if use_ruff else ".pre-commit-config-optional.yaml"
         # The mandatory use cases can not live in "resources/" since the other tests
         # expect the mandatory checks passing for the resources modules
         mandatory_cases_fname = "ruff_mandatory_use_cases.py"
@@ -986,13 +1032,13 @@ class TestPreCommitVauxoo:
             ),
             (
                 self.RUFF_OPTIONAL_USE_CASES_EXPECTED,
-                ".pre-commit-config-optional.yaml",
+                optional_config_file,
                 ["flake8", "pylint_odoo"],
                 optional_cases_fname,
             ),
             (
                 self.RUFF_OPTIONAL_BANDIT_USE_CASES_EXPECTED,
-                ".pre-commit-config-optional.yaml",
+                optional_config_file,
                 ["flake8", "pylint_odoo"],
                 optional_bandit_cases_fname,
             ),
@@ -1039,20 +1085,26 @@ class TestPreCommitVauxoo:
         migration_script.parent.mkdir(parents=True)
         shutil.copy(TEST_PATH / "data_ruff" / "ruff_migrations_security_use_cases.txt", migration_script)
         subprocess.check_call(["git", "add", "-A"])
-        # The optional configuration carries the EXPERIMENTAL hook under the same "ruff-check"
-        # id, so both are run and asserted from the optional configuration. Its hook name is
-        # the marker proving the second one ran, since the checks it selects on top of the
-        # optional ones are exactly the ones expected to stay silent here
+        # The optional configuration only carries the EXPERIMENTAL hook, under the same
+        # "ruff-check" id, so both configurations are run here. Everything that hook selects is
+        # exactly what must stay silent in a migration script, so there is no finding left to
+        # use as the "the file was really linted" marker: the absence of the pre-commit "no
+        # files to check" message is what proves it ran over the file
         for config_file, linted_marker, hook_marker in [
-            (".pre-commit-config.yaml", "none-comparison", "ruff-odoo mandatory checks"),
-            (".pre-commit-config-optional.yaml", "print", "EXPERIMENTAL"),
+            (".pre-commit-config.yaml", "none-comparison", "ruff-odoo checks"),
+            (".pre-commit-config-optional.yaml", None, "EXPERIMENTAL"),
         ]:
             output = self.run_precommit_hooks(["ruff-check"], config_file, fname)
             assert hook_marker in output, "The '%s' hook did not run for %s\n%s" % (hook_marker, fname, output)
-            assert "%s:" % linted_marker in output, (
-                "'%s' was not reported for %s, so the file was not linted at all and the checks "
-                "below would not be asserted\n%s" % (linted_marker, fname, output)
-            )
+            if linted_marker:
+                assert "%s:" % linted_marker in output, (
+                    "'%s' was not reported for %s, so the file was not linted at all and the checks "
+                    "below would not be asserted\n%s" % (linted_marker, fname, output)
+                )
+            else:
+                assert "no files to check" not in output, (
+                    "%s was not linted at all, so the checks below would not be asserted\n%s" % (fname, output)
+                )
             for check in self.RUFF_MIGRATIONS_SECURITY_CHECKS:
                 assert "%s:" % check not in output, "'%s' was reported inside migrations/ for %s\n%s" % (
                     check,
@@ -1063,9 +1115,10 @@ class TestPreCommitVauxoo:
     def test_valid_pylintrc_messages(self, caplog):
         self.runner.invoke(main, ["--only-cp-cfg"])
         pylint_messages = self.get_pylint_messages()
+        # The optional pylint configuration was merged into .pylintrc when ruff is used
+        pylintrc_filenames = [".pylintrc"] if self.uses_ruff() else [".pylintrc", ".pylintrc-optional"]
         rc_files = [
-            Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc)).resolve()
-            for pylintrc in [".pylintrc", ".pylintrc-optional"]
+            Path(os.path.join(self.tmp_dir, CFG_SUBFOLDER, pylintrc)).resolve() for pylintrc in pylintrc_filenames
         ]
         for rc_file in rc_files:
             config = ConfigParser(inline_comment_prefixes=("#", ";"))

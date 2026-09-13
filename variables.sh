@@ -1,6 +1,10 @@
 export INCLUDE_LINT="src,tests,resources,setup.py,docs/conf.py"
 export PRECOMMIT_HOOKS_TYPE="all"
-export EXCLUDE_LINT="resources/module_warnings1,resources/module_uninstallable"
+# resources/module_autofix1 is excluded from the lint, not only from the autofix below:
+# it has to stay unfixed for the autofix tests, and the checks it trips (file-not-used
+# and xml-tag-position) were optional until the optional level was merged into the
+# mandatory one for ruff
+export EXCLUDE_LINT="resources/module_warnings1,resources/module_uninstallable,resources/module_autofix1"
 # docs/conf.py keeps a "# pylint: disable=invalid-name,redefined-builtin" that both worlds
 # still need: pylint reads it in the matrix without ruff, and in the ruff one the same
 # suppression comes from the docs/conf.py per-file-ignores. Letting the autofix migrate

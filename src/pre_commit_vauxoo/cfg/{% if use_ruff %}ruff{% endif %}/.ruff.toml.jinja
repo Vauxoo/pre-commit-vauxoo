@@ -1,12 +1,18 @@
 # Mandatory ruff checks
 # It runs ruff-odoo (https://github.com/Vauxoo/ruff-odoo), the Vauxoo fork of ruff
 # with the Odoo-specific rules ported from pylint-odoo and odoo-pre-commit-hooks
-# It replaces the flake8 and pylint mandatory checks already implemented in ruff:
-#  - flake8 only keeps the continuation-line rules (E12x/E13x/E704) not implemented in ruff (see .flake8)
+# There is no optional ruff configuration anymore: the checks that used to run from
+# .ruff-optional.toml are selected here, so a single ruff-odoo hook reports all of them and
+# all of them affect the build status. Only the experimental ones keep a level of their own
+# (see .ruff-experimental.toml)
+# It replaces the flake8, flake8-bugbear, pylint and bandit checks already implemented in ruff:
+#  - flake8 only keeps the continuation-line rules (E12x/E13x/E704) not implemented in ruff and
+#    the bugbear checks without a ruff implementation (see .flake8)
 #  - pylint only keeps the checks without a ruff equivalent (see .pylintrc "migrated to ruff" section)
 line-length = 119
-# Required by the pycodestyle rules migrated from flake8 and to select the checks by name
-# instead of by code (selecting rules by name requires preview mode)
+# Required by the pycodestyle rules migrated from flake8, by compare-to-empty-string,
+# return-in-generator, class-as-data-structure and loop-iterator-mutation, and to select the
+# checks by name instead of by code (selecting rules by name requires preview mode)
 preview = true
 target-version = "{{ py_target_version }}"  # Mapped from the odoo version (VERSION or --odoo-version)
 {%- if additional_builtins %}
@@ -164,9 +170,7 @@ select = [
     "useless-else-on-loop",
     "useless-exception-statement",  # pointless-exception-statement
     "useless-expression",  # expression-not-assigned and pointless-statement, both mandatory in
-                           # pylint (a single ruff rule reports the two of them). It used to run
-                           # from the optional configuration while pylint kept reporting it here,
-                           # so the same statement was reported twice at two different levels
+                           # pylint (a single ruff rule reports the two of them)
     "useless-import-alias",
     "useless-object-inheritance",
     "useless-return",
@@ -175,10 +179,8 @@ select = [
     "yield-in-for-loop",  # use-yield-from
     "yield-in-init",  # init-is-generator
     # Odoo checks from ruff-odoo (ported from pylint-odoo and odoo-pre-commit-hooks)
-    # Each check keeps the same level it had before the ruff migration, so only the ones
-    # that were mandatory in pylint-odoo are selected here:
-    #  - The ones that were optional (attribute-deprecated, sql-injection, the translation-*
-    #    family, ...) run from .ruff-optional.toml
+    # The ones that were mandatory in pylint-odoo are selected here, the ones that were optional
+    # are selected in the "checks promoted from the optional configuration" block below:
     #  - no-search-all was experimental in pylint-odoo and is promoted to mandatory here: since
     #    ruff-odoo 0.16.3.31 it only reports an unlimited search on the models that actually grow
     #    (see the no-search-all-models option), which is a real performance bug worth blocking a
@@ -188,9 +190,9 @@ select = [
     #    prefer-env-translation and prefer-env-attribute (deprecated-self-cr) are autofixable too
     #    but they were mandatory, so they are also selected here to keep reporting them when the
     #    autofix hook is not executed
-    #  - manifest-required-author, license-allowed and manifest-deprecated-key were optional in
-    #    pylint-odoo so they run from .ruff-optional.toml, where the [lint.odoo] options keep the
-    #    values the [ODOOLINT] section of .pylintrc-optional configured for them
+    #  - manifest-required-author, license-allowed and manifest-deprecated-key are selected in
+    #    the promoted block below, and the [lint.odoo] options keep the values the [ODOOLINT]
+    #    section of .pylintrc-optional configured for them
     #  - Version-dependent gating is handled by ruff-odoo's internal logic when --odoo-version
     #    is passed to ruff-odoo; all version-scoped checks are always enabled here and ruff-odoo
     #    filters them
@@ -219,6 +221,132 @@ select = [
     "super-method-mismatch",
     "test-folder-imported",
     "translation-injection",
+    # ------------------------------------------------------------------------------------
+    # Checks promoted from the optional configuration (they used to run from
+    # .ruff-optional.toml, which no longer exists: every one of them affects the build status
+    # now, so a single ruff-odoo hook reports the whole set)
+    # ------------------------------------------------------------------------------------
+    # flake8-bugbear replacement (they used to run from .config/.flake8-optional)
+    #  - unary-prefix-increment-decrement, mutable-argument-default, jump-statement-in-finally,
+    #    cached-instance-method, duplicate-try-block-exception and duplicate-value are already
+    #    selected above
+    #  - The bugbear B001 is covered by bare-except and B902 by invalid-first-argument-name-for-method
+    #    and invalid-first-argument-name-for-class-method (all selected above)
+    #  - function-uses-loop-variable, abstract-base-class-without-abstract-method,
+    #    raise-without-from-inside-except, zip-without-explicit-strict and the bugbear B036 and B907
+    #    keep being disabled (see .flake8 comments)
+    #  - The bugbear B040, B042, B906, B908, B910 and B950 are not implemented in ruff so they
+    #    keep running from flake8
+    "assert-false",
+    "assert-raises-exception",
+    "assignment-to-os-environ",
+    "batched-without-explicit-strict",
+    "class-as-data-structure",
+    "del-attr-with-constant",
+    "duplicate-handler-exception",
+    "empty-method-without-abstract-decorator",
+    "except-with-empty-tuple",
+    "except-with-non-exception-classes",
+    "f-string-docstring",
+    "function-call-in-default-argument",
+    "get-attr-with-constant",
+    "loop-iterator-mutation",
+    "loop-variable-overrides-iterator",
+    "mutable-contextvar-default",
+    "no-explicit-stacklevel",
+    "raise-literal",
+    "re-sub-positional-args",
+    "redundant-tuple-in-exception-handler",
+    "return-in-generator",
+    "reuse-of-groupby-generator",
+    "set-attr-with-constant",
+    "star-arg-unpacking-after-keyword-arg",
+    "static-key-dict-comprehension",
+    "strip-with-multi-characters",
+    "unintentional-type-annotation",
+    "unreliable-callable-check",
+    "unused-loop-control-variable",
+    "useless-comparison",
+    "useless-contextlib-suppress",
+    # bandit replacement
+    #  - unsafe-markup-use was the only check enabled in the old .config/.bandit-optional.yml
+    #  - assert and suspicious-non-cryptographic-random-usage come from the experimental
+    #    configuration: an assert is dropped by "python -O" and a random built on the Mersenne
+    #    Twister is fine for anything that is not a secret, so both are worth a look but neither
+    #    should fail the build only when the developer opts into the experimental hook. Both are
+    #    ignored under tests/ like the rest of the family (see [lint.per-file-ignores]), which
+    #    reproduces the "exclude_dirs: tests" of the old bandit configuration
+    "assert",  # B101 assert_used
+    "suspicious-non-cryptographic-random-usage",  # B311 random
+    "unsafe-markup-use",  # B704 markupsafe_markup_xss
+    # Checks enabled in the optional flake8 but ignored in the mandatory one
+    #  - ambiguous-variable-name is disabled at every level now (see the ignore below)
+    "redefined-while-unused",
+    "tab-after-comma",  # tab after ','
+    # line-too-long with the same 10% tolerance bugbear B950 applies (see [lint.pycodestyle]),
+    # which is what used to report it from flake8-optional
+    "line-too-long",
+    # pylint optional checks with a ruff replacement (removed now from .config/.pylintrc-optional)
+    #  - request-without-timeout is not selected since the ruff-odoo external-request-timeout
+    #    covers it (requests + more libraries)
+    "try-except-pass",  # It reports the same handler the ruff-odoo except-pass did (an "except"
+                        # whose whole body is a "pass"), so except-pass is deprecated in favor of
+                        # it and this configuration keeps the one that stays. It also runs from the
+                        # experimental bandit replacement as S110, ignored there for this reason
+    "compare-to-empty-string",  # use-implicit-booleaness-not-comparison-to-string
+    "complex-structure",  # too-complex (mccabe)
+    "multi-line-summary-first-line",  # docstring-first-line-empty
+    "print",  # print-used
+    "single-line-implicit-string-concatenation",  # implicit-str-concat
+    "triple-single-quotes",  # bad-docstring-quotes
+    "unicode-kind-prefix",  # redundant-u-string-prefix
+    "unnecessary-collection-call",  # use-dict-literal and use-list-literal (a single check for
+                                    # dict()/list()/tuple())
+    # Odoo checks from ruff-odoo that were optional in pylint-odoo
+    #  - The autofixable ones (attribute-string-redundant, manifest-data-duplicated,
+    #    manifest-deprecated-key, translation-not-lazy and use-vim-comment) are autofixed from
+    #    .ruff-autofix.toml, they are also selected here to keep reporting them when the autofix
+    #    hook is not executed
+    #  - license-allowed, manifest-required-author and manifest-deprecated-key use the [lint.odoo]
+    #    options below with the same values the [ODOOLINT] section of .pylintrc-optional used
+    "attribute-deprecated",
+    "attribute-string-redundant",
+    "bad-builtin-groupby",
+    "context-overridden",
+    "deprecated-odoo-model-method",
+    #  - except-pass is deprecated in ruff-odoo, the flake8-bandit try-except-pass selected above
+    #    reports the very same handler
+    "external-request-timeout",  # request-without-timeout is a subset of it, don't enable both
+    "license-allowed",  # It uses the license-allowed option (see [lint.odoo])
+    "manifest-author-string",
+    "manifest-data-duplicated",
+    "manifest-deprecated-key",  # It uses the manifest-deprecated-keys default (see [lint.odoo])
+    "manifest-maintainers-list",
+    "manifest-required-author",  # It uses the manifest-required-authors option (see [lint.odoo])
+    "manifest-version-format",  # It uses the odoo-version option (see [lint.odoo])
+    "method-compute",
+    "method-inverse",
+    "method-required-super",
+    "method-search",
+    "missing-readme",
+    "missing-return",
+    "odoo-addons-relative-import",
+    "odoo-exception-warning",
+    "renamed-field-parameter",
+    "resource-not-exist",
+    "sql-injection",
+    "translation-contains-variable",
+    "translation-field",
+    "translation-format-interpolation",
+    "translation-format-truncated",
+    "translation-fstring-interpolation",
+    "translation-not-lazy",
+    "translation-required",
+    "translation-too-few-args",
+    "translation-too-many-args",
+    "translation-unsupported-format",
+    "use-vim-comment",
+    "website-manifest-key-not-valid-uri",
 {% if is_project_for_apps %}
     # Checks for modules published in the Odoo Apps store (odoo.com/apps) enabled
     # from the --is-project-for-apps option (PRECOMMIT_IS_PROJECT_FOR_APPS)
@@ -254,13 +382,26 @@ ignore = [
     "invalid-envvar-default",
     "translation-positional-used",
     # Same ignores previously configured in .config/.flake8
-    "line-too-long",  # line-too-long (reported by the optional configuration, which reproduces
-                      # the bugbear B950 tolerance, and reformatted by the autofix)
+    # line-too-long, redefined-while-unused and tab-after-comma used to be ignored here and
+    # selected from the optional configuration, so they are selected above now
     "missing-whitespace-around-arithmetic-operator",  # missing whitespace around arithmetic operator (better autofixing)
     "multiple-spaces-after-comma",  # multiple spaces after ',' (better autofixing)
-    "redefined-while-unused",  # redefinition is legal in odoo 8 when we implement 2 interfaces for a method
-    "tab-after-comma",  # tab after ',' (enabled from the optional configuration)
     "whitespace-before-punctuation",  # whitespace before ':' is handled by black and it doesn't consider black syntax
+]
+
+[lint.flake8-bandit]
+# try-except-pass only reports "except Exception"/"except BaseException" by default, while the
+# ruff-odoo except-pass it replaces reported any handler whose body is a bare "pass" -- and so did
+# the bandit B110 it is ported from. This option restores that scope
+check-typed-exception = true
+# Same as the "markupsafe_xss allowed_calls" option of the old .config/.bandit-optional.yml
+# Markup() is required to post HTML in Odoo (mail_thread.message_post() runs escape(body) and
+# keeps it as is only for Markup objects), so the value can not simply be escaped. Wrapping the
+# value with html_sanitize() is the safe way to build it, so it is whitelisted instead of
+# forcing "# noqa" comments
+allowed-markup-calls = [
+    "odoo.tools.html_sanitize",
+    "odoo.tools.mail.html_sanitize",
 ]
 
 [lint.flake8-builtins]
@@ -284,6 +425,46 @@ odoo-version = "{{ odoo_version }}"
 # have their own fixed values so they are not configurable from here
 category-allowed = []
 odoo-required-files = []
+# Same values the [ODOOLINT] section of .config/.pylintrc-optional configured for the
+# pylint-odoo checks replaced by the ruff-odoo ones promoted from the optional configuration:
+#  - license-allowed uses the [ODOOLINT] "license-allowed" option
+#  - manifest-required-author uses the [ODOOLINT] "manifest-required-authors" option
+# manifest-deprecated-key is not configured here on purpose: the ruff-odoo default is already
+# the [ODOOLINT] "manifest-deprecated-keys" value (active and description, plus qweb from 16.0
+# on) and it gates qweb by the odoo-version above instead of by the configuration file
+license-allowed = [
+    "AGPL-3",
+    "GPL-2",
+    "GPL-2 or any later version",
+    "GPL-3",
+    "GPL-3 or any later version",
+    "LGPL-3",
+    "Other OSI approved licence",
+    "Other proprietary",
+    "OEEL-1",
+    "OPL-1",
+]
+manifest-required-authors = [
+    "Vauxoo",
+    "Odoo Community Association (OCA)",
+    "Jarsa",
+]
+
+[lint.mccabe]
+# Same as the .pylintrc-optional [DESIGN] max-complexity option
+#  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
+#   - The figure of 10 had received substantial corroborating evidence,
+#     but that in some circumstances it may be appropriate to relax the restriction
+#     and permit modules with a complexity as high as 15
+max-complexity = 15
+
+[lint.pycodestyle]
+# The bugbear B950 that used to report the long lines from .config/.flake8-optional allows the
+# line to run 10% past the limit before complaining, so a line is only reported past 130
+# characters even though the formatter still wraps at the 119 of "line-length" above. ruff draws
+# the same distinction: "line-length" is what the formatter targets, this option is where
+# line-too-long starts reporting
+max-line-length = 130
 
 [lint.pylint]
 # Same limits as the .pylintrc [DESIGN] section
@@ -296,25 +477,32 @@ max-returns = 6
 [lint.per-file-ignores]
 "**/migrations/**" = [
     # Migration scripts run once, on a database being upgraded, from a controlled environment,
-    # and no deployed code path ever imports them, so they are not an attack surface either.
-    # Same prefix and same reasoning as the "tests/" ignore below.
+    # and no deployed code path ever imports them, so none of these are an attack surface
+    # there. It notably drops assert (S101), which a migration script uses to state what the
+    # database must look like before it goes on.
     "S",
+    # Same reasoning, and it is the noisiest one there. A migration script builds its SQL
+    # from the table and column names it is upgrading, which no request ever reaches
+    "sql-injection",
 ]
 "**/tests/**" = [
     # Same as the "exclude_dirs: tests" every .config/.bandit-*.yml used to carry, and as the
-    # ignore the optional and experimental configurations already apply: a hardcoded credential,
-    # an exec() or an eval() inside a test is not deployed code, so it is not an attack surface.
-    # The prefix covers the flake8-bandit rules selected here by name (exec-builtin S102,
-    # suspicious-eval-usage S307) and anything added to the family later.
+    # ignore the experimental configuration already applies: test code is never deployed, so
+    # none of these are an attack surface there. Covers assert (S101), exec-builtin (S102),
+    # try-except-pass (S110), suspicious-eval-usage (S307),
+    # suspicious-non-cryptographic-random-usage (S311), unsafe-markup-use (S704) and anything
+    # added to the family later.
     "S",
+    # It is not part of the "S" prefix but it is a security check like the rest, and a test
+    # builds its SQL from the data it just created rather than from a request
+    "sql-injection",
 ]
 "__init__.py" = [
     "unused-import",  # imported but unused is legal in odoo __init__.py files
 ]
 "__manifest__.py" = [
     "useless-expression",  # the manifest is a bare dict literal, so the whole file is one
-                           # expression nothing assigns (same ignore the optional configuration
-                           # had while this check ran from there)
+                           # expression nothing assigns
 ]
 "docs/conf.py" = [
     "builtin-variable-shadowing",  # Sphinx requires assigning the "copyright" builtin variable name

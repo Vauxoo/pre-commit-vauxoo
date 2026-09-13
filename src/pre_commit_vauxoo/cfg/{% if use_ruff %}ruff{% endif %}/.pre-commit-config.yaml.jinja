@@ -31,7 +31,7 @@ repos:
     rev: 0.16.3.35{# b2v-ruff #}
     hooks:
       - id: ruff-check
-        name: ruff-odoo mandatory checks
+        name: ruff-odoo checks
         args:
           - --config=.config/.ruff.toml
   - repo: https://github.com/PyCQA/flake8
@@ -42,7 +42,12 @@ repos:
 {%- endif %}
     hooks:
       - id: flake8
-        name: flake8 mandatory checks
+        name: flake8 + bugbear checks
+{%- if flake8_matrix_value >= 20 %}
+        additional_dependencies: ["flake8-bugbear==25.11.29"]
+{%- else %}
+        additional_dependencies: ["flake8-bugbear==23.9.16"]
+{%- endif %}
         args:
           - --config=.config/.flake8
   - repo: https://github.com/OCA/pylint-odoo
@@ -53,13 +58,33 @@ repos:
 {%- endif %}
     hooks:
       - id: pylint_odoo
-        name: pylint mandatory checks
+        name: pylint checks
         args:
           - --rcfile=.config/.pylintrc
           - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
 {%- if pylint_matrix_value >= 20 %}
           - --jobs=3
 {%- endif %}
+  - repo: https://github.com/OCA/odoo-pre-commit-hooks
+{%- if oca_hooks_matrix_value >= 20 %}
+    rev: v0.2.26
+{%- else %}
+    rev: v0.1.7
+{%- endif %}
+    hooks:
+      - id: oca-checks-odoo-module
+        args:
+          - --config=.config/.oca_hooks.cfg
+      - id: oca-checks-po
+        args:
+          - --config=.config/.oca_hooks.cfg
+  - repo: https://github.com/PyCQA/doc8
+    rev: v2.0.0
+    hooks:
+      - id: doc8
+        name: RST lint
+        args:
+          - --config=.config/doc8.ini
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v10.8.1
     hooks:
@@ -84,6 +109,13 @@ repos:
         language: python
         types: [text]
         files: (^deactivate\.jinja$|/data/neutralize\.sql$)
+      - id: vx-check-commit-log
+        name: commit message range check
+        description: Validate commit messages from VERSION..HEAD using the Odoo/Vauxoo structure.
+        entry: vx-check-commit-log
+        language: python
+        pass_filenames: false
+        always_run: true
   - repo: https://github.com/pre-commit/pre-commit-hooks
 {%- if pre_commit_matrix_value >= 20 %}
     rev: v6.0.0
