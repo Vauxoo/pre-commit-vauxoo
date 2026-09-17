@@ -27,73 +27,10 @@ default_language_version:
   python: python3
   node: "26.7.0"
 repos:
-  - repo: https://github.com/OCA/pylint-odoo
-{%- if pylint_matrix_value >= 20 %}
-    rev: v10.0.11{# b2v-pylint #}
-{%- else %}
-    rev: v9.3.24
-{%- endif %}
-    hooks:
-      - id: pylint_odoo
-        name: pylint optional checks
-        args:
-          - --rcfile=.config/.pylintrc-optional
-          - --disable={{ pylint_disable_checks | join(",") if pylint_disable_checks else "R0000" }}
-{%- if pylint_matrix_value >= 20 %}
-          - --jobs=3
-{%- endif %}
-  - repo: https://github.com/OCA/odoo-pre-commit-hooks
-{%- if oca_hooks_matrix_value >= 20 %}
-    rev: v0.2.26
-{%- else %}
-    rev: v0.1.7
-{%- endif %}
-    hooks:
-      - id: oca-checks-odoo-module
-        args:
-          - --config=.config/.oca_hooks.cfg
-      - id: oca-checks-po
-        args:
-          - --config=.config/.oca_hooks.cfg
-  - repo: https://github.com/PyCQA/doc8
-    rev: v2.0.0
-    hooks:
-      - id: doc8
-        name: RST lint
-        args:
-          - --config=.config/doc8.ini
-  - repo: local
-    hooks:
-      - id: vx-check-commit-log
-        name: commit message range check
-        description: Validate commit messages from VERSION..HEAD using the Odoo/Vauxoo structure.
-        entry: vx-check-commit-log
-        language: python
-        pass_filenames: false
-        always_run: true
-  - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
-    rev: 0.16.3.35{# b2v-ruff #}
-    hooks:
-      - id: ruff-check
-        name: ruff-odoo optional checks
-        args:
-          - --config=.config/.ruff-optional.toml
-  - repo: https://github.com/PyCQA/flake8
-{%- if flake8_matrix_value >= 20 %}
-    rev: 7.3.0
-{%- else %}
-    rev: 6.1.0
-{%- endif %}
-    hooks:
-      - id: flake8
-        name: flake8 + bugbear optional checks
-{%- if flake8_matrix_value >= 20 %}
-        additional_dependencies: ["flake8-bugbear==25.11.29"]
-{%- else %}
-        additional_dependencies: ["flake8-bugbear==23.9.16"]
-{%- endif %}
-        args:
-          - --config=.config/.flake8-optional
+  # Every optional hook was converged into .pre-commit-config.yaml: the checks it used to run
+  # are reported by the mandatory ruff-odoo, flake8 and pylint hooks now, and the oca-checks,
+  # doc8 and commit-log hooks moved there as they were. Only the EXPERIMENTAL checks keep a
+  # level that does not affect the build status, which is what this configuration runs
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
     rev: 0.16.3.35{# b2v-ruff #}
     hooks:

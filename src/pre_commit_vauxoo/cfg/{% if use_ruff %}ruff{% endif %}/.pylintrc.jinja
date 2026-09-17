@@ -13,9 +13,21 @@ py-version={{ py_version }}
 
 
 [ODOOLINT]
+# The checks using license-allowed, manifest-required-authors and manifest-deprecated-keys are
+# migrated to ruff, so the values actually running are the [lint.odoo] ones of
+# .config/.ruff.toml, kept here in sync for the external scripts replacing this section
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
+   GPL-3,GPL-3 or any later version,LGPL-3,
+   Other OSI approved licence,Other proprietary,
+   OEEL-1, OPL-1,
 manifest-required-authors=Vauxoo,
    Odoo Community Association (OCA),
    Jarsa,
+manifest-deprecated-keys=active,
+   description,
+   {% if odoo_version and odoo_version|float >= 16.0 -%}
+   qweb,
+   {%- endif %}
 # External scripts odoo_lint replace
 
 [MESSAGES CONTROL]
@@ -37,8 +49,6 @@ disable=abstract-method,
    consider-using-ternary,
    consider-using-generator,
    cyclic-import,
-   deprecated-pragma,
-   deprecated-method,
    docstring-first-line-empty,
    duplicate-code,
    file-ignored,
@@ -80,17 +90,16 @@ disable=abstract-method,
    unused-private-member,
    use-dict-literal,
    use-implicit-booleaness-not-comparison-to-string,
-   use-implicit-booleaness-not-comparison-to-zero,
    useless-option-value,
    unknown-option-value,
-   use-symbolic-message-instead,
    useless-suppression,
    wrong-import-order,
    wrong-import-position,
    # Disabled here because enabled from Experimental
    manifest-superfluous-key,
    no-search-all,
-   # odoolint disable all to be enabled from optional
+   # odoolint checks reported by ruff-odoo from .config/.ruff.toml (they were the optional
+   # pylint-odoo ones before the optional configuration was merged into the mandatory one)
    # Comment to enable
    attribute-deprecated,
    attribute-string-redundant,
@@ -135,9 +144,7 @@ disable=abstract-method,
    use-vim-comment,
    website-manifest-key-not-valid-uri,
    # Checks migrated to ruff (see .config/.ruff.toml)
-   # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks,
-   # except the ones annotated with the configuration file running them (e.g. use-list-literal,
-   # which a single ruff rule reports together with the optional use-dict-literal)
+   # They are disabled here to avoid duplicated reports since ruff runs them as mandatory checks
    anomalous-backslash-in-string,  # ruff W605
    assert-on-string-literal,  # ruff PLW0129
    assert-on-tuple,  # ruff F631
@@ -324,7 +331,7 @@ disable=abstract-method,
    unused-variable,  # ruff F841
    use-a-generator,  # ruff C419
    use-implicit-booleaness-not-len,  # ruff PLC1802
-   use-list-literal,  # ruff C408 (moved to the optional level with use-dict-literal)
+   use-list-literal,  # ruff C408 (a single rule reports it together with use-dict-literal)
    use-maxsplit-arg,  # ruff PLC0207
    use-sequence-for-iteration,  # ruff PLC0208
    use-yield-from,  # ruff UP028

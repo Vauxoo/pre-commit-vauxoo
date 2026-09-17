@@ -32,9 +32,9 @@ enable=deprecated-method,
   use-symbolic-message-instead,
   useless-parent-delegation,
   # The following checks are migrated to ruff when it is enabled
-  # They keep the same optional level running from .config/.ruff-optional.toml, except the ones
-  # annotated as "mandatory .ruff.toml": those were also enabled by the "enable=all" of
-  # .config/.pylintrc so they keep the mandatory level
+  # They all run from .config/.ruff.toml there: the ruff optional configuration was merged into
+  # the mandatory one, so the "mandatory .ruff.toml" annotations below only record which ones
+  # were already enabled by the "enable=all" of .config/.pylintrc before that merge
   # The autofixable ones are also fixed from .config/.ruff-autofix.toml (annotated as "autofix")
   attribute-deprecated,  # ruff ODW8105
   attribute-string-redundant,  # ruff ODW8113 (autofix .ruff-autofix.toml)

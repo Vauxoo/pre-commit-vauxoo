@@ -2,9 +2,24 @@
 # The pyflakes (F) and most of the pycodestyle (E,W) checks were migrated to ruff (.config/.ruff.toml)
 # Only the continuation-line indentation rules (E12x/E13x) and E704 keep running here
 # since ruff does not implement them https://github.com/astral-sh/ruff/issues/2402
-select = E12,E13,E704
+# The optional flake8 configuration was merged into this one, so the bugbear checks without a
+# ruff implementation run from here too (B040, B042, B906, B908, B910 and any future one)
+# B = bugbear
+# B9 = bugbear opinionated (incl line length +10% tolerance)
+select = E12,E13,E704,B,B9
 # E123,E133 keep being ignored (same as before the ruff migration)
-ignore = E123,E133
+# - B001 is covered by ruff E722 and B902 by ruff N804/N805 (both from .config/.ruff.toml)
+# - B037 is covered by the ruff return-in-init and yield-in-init, and B041 by the ruff
+#   multi-value-repeated-key-literal and multi-value-repeated-key-variable (the pyflakes F601/F602
+#   selected from the "F" of .config/.ruff.toml). Both were reported twice, by ruff and by bugbear
+# - B043 is implemented in ruff as del-attr-with-constant, now selected from .config/.ruff.toml
+# - B912: map(strict=True) only works in python >= 3.14 (same reason as B905)
+# - B023,B024,B036,B904,B905,B907 were already ignored before the ruff migration (see comments below)
+# - B950 (line length with a 10% tolerance) is reproduced by the ruff line-too-long selected in
+#   .config/.ruff.toml, where "line-length" is the 119 the formatter targets and
+#   [lint.pycodestyle] "max-line-length" the 130 where the check starts reporting
+# - The remaining B0xx/B9xx checks are implemented in ruff (.config/.ruff.toml)
+ignore = E123,E133,B001,B002,B003,B004,B005,B006,B007,B008,B009,B010,B011,B012,B013,B014,B015,B016,B017,B018,B019,B020,B021,B022,B023,B024,B025,B026,B027,B028,B029,B030,B031,B032,B033,B034,B035,B036,B037,B039,B041,B043,B901,B902,B903,B904,B905,B907,B909,B911,B912,B950
 max-line-length = 119
 # flake8 spells its parallel mode "auto", not 0 like pylint does: a numeric 0 is taken
 # literally as "0 jobs", which makes flake8 fall back to run_serial() and check every file

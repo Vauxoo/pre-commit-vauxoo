@@ -21,9 +21,9 @@ line-ending = "lf"
 #   manifest-deprecated-key, use-vim-comment, unused-logger, attribute-string-redundant,
 #   prefer-env-translation, manifest-superfluous-key, header-comments, deprecated-self-cr,
 #   manifest-data-duplicated and translation-not-lazy
-# The remaining Odoo checks keep the same level they had in pylint-odoo: the mandatory ones from
-# .ruff.toml and the optional ones from .ruff-optional.toml. no-search-all is the exception: it
-# was experimental in pylint-odoo and now runs as mandatory from .ruff.toml
+# The remaining Odoo checks are reported from .ruff.toml, the mandatory ones of pylint-odoo and
+# the optional ones alike (the optional configuration was merged into it). no-search-all was
+# experimental in pylint-odoo and now runs as mandatory from .ruff.toml too
 # Version-dependent gating (prefer-env-translation only applies for odoo >= 18.0,
 # deprecated-self-cr for odoo >= 19.0 and translation-not-lazy for odoo >= 14.0) is handled
 # by ruff-odoo's internal logic when --odoo-version
@@ -146,7 +146,7 @@ ignore = [
                                     # reason). It is the only one of those with an autofix, so the
                                     # "ALL" above would keep rewriting the translation terms even
                                     # though no level reports it
-    "triple-single-quotes",  # Reported from the optional configuration (bad-docstring-quotes)
+    "triple-single-quotes",  # Reported from .ruff.toml (bad-docstring-quotes)
     "true-false-comparison",  # "var != True" is different than "not var"
     "type-alias-without-annotation",  # We are not using typing entirely yet
     "uncapitalized-environment-variables",  # It could generate issues and we are not using WIN
