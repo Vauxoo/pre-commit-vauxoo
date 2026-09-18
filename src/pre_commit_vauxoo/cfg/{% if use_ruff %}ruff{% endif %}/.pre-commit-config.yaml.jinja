@@ -85,6 +85,11 @@ repos:
         name: RST lint
         args:
           - --config=.config/doc8.ini
+  - repo: https://github.com/Vauxoo/eslint-odoo
+    rev: e3d60e0c3174687933c35dd39e5aa11873d08896
+    hooks:
+      - id: eslint-odoo
+        name: odoo javascript mandatory checks
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v10.8.1
     hooks:

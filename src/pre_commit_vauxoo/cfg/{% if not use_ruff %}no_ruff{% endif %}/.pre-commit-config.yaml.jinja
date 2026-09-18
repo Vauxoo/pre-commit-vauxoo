@@ -53,6 +53,11 @@ repos:
 {%- if pylint_matrix_value >= 20 %}
           - --jobs=3
 {%- endif %}
+  - repo: https://github.com/Vauxoo/eslint-odoo
+    rev: e3d60e0c3174687933c35dd39e5aa11873d08896
+    hooks:
+      - id: eslint-odoo
+        name: odoo javascript mandatory checks
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v9.39.1
     hooks:
