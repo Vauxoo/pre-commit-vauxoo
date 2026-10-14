@@ -35,6 +35,7 @@ from pre_commit_vauxoo.hooks.check_commit_msg import (
     resolve_commit_message_base_ref,
     validate_commit_message_header,
 )
+from pre_commit_vauxoo.hooks.check_deactivate_jinja import json2sql
 from pre_commit_vauxoo.pre_commit_vauxoo import (
     CFG_NO_RUFF_SUBFOLDER,
     CFG_RUFF_SUBFOLDER,
@@ -372,6 +373,25 @@ class TestPreCommitVauxoo:
             "[FIX] module_example1: testing",
         ])
         assert not exit_code, "Exited with error_code %s" % exit_code
+
+    def test_deactivate_jinja_deployv_write_prefix(self, capsys):
+        deactivate_path = Path(self.tmp_dir) / "deactivate.jinja"
+        deactivate_path.write_text(
+            '{"010_ok": "UPDATE res_users SET password = NULL; DO $$ BEGIN NULL; END $$;",'
+            ' "020_with": "WITH x AS (SELECT 1) DELETE FROM res_partner WHERE id IN (SELECT * FROM x);"}',
+            encoding="utf-8",
+        )
+        assert json2sql(str(deactivate_path))[1]
+
+        deactivate_path.write_text(
+            '{"010_ok": "UPDATE res_users SET password = NULL;", "020_do": "DO $$ BEGIN NULL; END $$;",'
+            ' "030_select": "SELECT 1;"}',
+            encoding="utf-8",
+        )
+        assert not json2sql(str(deactivate_path))[1]
+        output = capsys.readouterr().out
+        assert "deployv does not commit (020_do, 030_select)" in output
+        assert output.count("deployv does not commit") == 1, "Reported once per file, not per instance type"
 
     def test_commit_msg_valid_single_module(self):
         commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")

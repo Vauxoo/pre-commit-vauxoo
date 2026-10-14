@@ -20,6 +20,22 @@ VALID_VARIABLES_CODE = (
     "https://github.com/Vauxoo/pre-commit-vauxoo/blob/6f4828c192849804"
     "/src/pre_commit_vauxoo/hooks/check_deactivate_jinja.py#L16"
 )
+# deployv only commits a query starting with one of these words and reads rows from any other,
+# so a bare "DO $$ ..." fails with "no results to fetch" and a "SELECT" is never committed.
+# Based on PostgresConnector.execute in deployv/base/postgresv.py, called with with_as_write=True
+DEPLOYV_WRITE_PREFIXES = (
+    "insert into",
+    "update",
+    "create",
+    "delete",
+    "alter",
+    "reassign",
+    "grant",
+    "security",
+    "analyze",
+    "begin",
+    "with",
+)
 
 
 def check_json_variables(fname_deactivate):
@@ -36,6 +52,11 @@ def check_json_variables(fname_deactivate):
     return True
 
 
+def get_invalid_deployv_queries(json_obj):
+    """Return the keys of the deactivate queries that deployv would not run as a write"""
+    return [key for key, query in json_obj.items() if not query.lower().startswith(DEPLOYV_WRITE_PREFIXES)]
+
+
 def json2sql(fname_deactivate, instance_types=None):
     if instance_types is None:
         instance_types = INSTANCE_TYPES
@@ -43,6 +64,7 @@ def json2sql(fname_deactivate, instance_types=None):
     jinja_tmpl = Template(deactivate_content)
     res = True
     sql = ""
+    reported_keys = set()
     for instance_type in instance_types:
         json_content = jinja_tmpl.render(instance_type=instance_type)
         try:
@@ -55,6 +77,16 @@ def json2sql(fname_deactivate, instance_types=None):
             )
             res = False
             continue
+
+        invalid_keys = [key for key in get_invalid_deployv_queries(json_obj) if key not in reported_keys]
+        if invalid_keys:
+            reported_keys.update(invalid_keys)
+            print(
+                "%s->json instance_type=%s - deployv does not commit (%s): each query must start with one of (%s)."
+                " Start a DO block with an UPDATE of the same entry."
+                % (fname_deactivate, instance_type, ", ".join(invalid_keys), ", ".join(DEPLOYV_WRITE_PREFIXES))
+            )
+            res = False
 
         sql += ";\n".join(json_obj.values()) + ";"
     return (sql, res)
