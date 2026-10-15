@@ -716,7 +716,7 @@ def install_git_hook(src_path, dest_path, replacements):
     for placeholder, value in replacements.items():
         hook_content = hook_content.replace(placeholder, value)
     pathlib.Path(dest_path).write_text(hook_content, encoding="utf-8")
-    pathlib.Path(dest_path).chmod(os.stat(dest_path).st_mode | stat.S_IXUSR)
+    pathlib.Path(dest_path).chmod(pathlib.Path(dest_path).stat().st_mode | stat.S_IXUSR)
 
 
 def resolve_console_script(script_name):
