@@ -962,6 +962,8 @@ class TestPreCommitVauxoo:
         (["(trailing-comma-tuple)"], "trailing-comma-on-bare-tuple"),
         (["(use-yield-from)"], "yield-in-for-loop"),
         (["(expression-not-assigned)"], "useless-expression"),
+        # New in ruff-odoo, pylint/flake8 had no equivalent so there is no marker to expect from them
+        ([], "duplicate-field-declaration"),
     ]
     # "ambiguous-variable-name" (E741) is not listed here on purpose: the optional flake8 did
     # report it before the ruff migration and now no level does, since "l" for "line" is used

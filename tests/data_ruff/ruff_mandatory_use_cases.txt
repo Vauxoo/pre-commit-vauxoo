@@ -19,6 +19,8 @@ import os
 
 import logging
 
+from odoo import fields, models
+
 _logger = logging.getLogger(__name__)
 
 GLOBAL_VALUE = 1
@@ -132,3 +134,11 @@ def expression_not_assigned_use_case(record, uid):
     # purpose: a plain "record.name" is pointless-statement for pylint, the same ruff rule
     # reports both
     record.with_user(uid).name
+
+
+class DuplicateFieldDeclarationUseCase(models.Model):
+    # no pylint/flake8 equivalent -> duplicate-field-declaration (ruff-odoo ODW9503)
+    _inherit = "res.partner"
+
+    code_use_case = fields.Char()
+    code_use_case = fields.Char(string="Code")
