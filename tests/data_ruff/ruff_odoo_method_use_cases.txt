@@ -1,0 +1,24 @@
+"""Use cases of the ruff-odoo checks with no pylint/flake8 counterpart.
+
+It is copied as a ".py" file into the temporary repository by test_ruff_odoo_method_use_cases,
+which renders the configuration for two odoo versions: removed-odoo-method-call and
+invalid-odoo-method-call compare the calls against the ORM of that version.
+It is stored as ".txt" for the same reasons as ruff_mandatory_use_cases.txt.
+"""
+
+from odoo import fields, models
+
+
+class OdooMethodUseCase(models.Model):
+    _inherit = "res.partner"
+
+    # m2m-relation-is-label: the label sits where the relation table name goes
+    category_use_case_ids = fields.Many2many("res.partner.category", "Use Case Categories")
+
+    def removed_odoo_method_use_case(self):
+        # removed-odoo-method-call: name_get was removed from the ORM in odoo 18.0
+        return self.name_get()
+
+    def invalid_odoo_method_use_case(self, domain):
+        # invalid-odoo-method-call: _search does not take access_rights_uid since odoo 18.0
+        return self._search(domain, access_rights_uid=self.env.uid)
