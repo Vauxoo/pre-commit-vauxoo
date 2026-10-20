@@ -207,6 +207,8 @@ select = [
     "inheritable-method-string",
     "invalid-commit",
     "invalid-email",
+    "invalid-odoo-method-call",  # No pylint-odoo counterpart, it needs the odoo-version option
+    "m2m-relation-is-label",  # No pylint-odoo counterpart
     "manifest-behind-migrations",
     "manifest-external-assets",
     "manifest-required-key",
@@ -220,6 +222,7 @@ select = [
                              # here as mandatory the same way prefer-env-translation is
     "prefer-env-translation",  # Autofixed from .ruff-autofix.toml, reported here as mandatory
     "prohibited-method-override",
+    "removed-odoo-method-call",  # No pylint-odoo counterpart, it needs the odoo-version option
     "super-method-mismatch",
     "test-folder-imported",
     "translation-injection",

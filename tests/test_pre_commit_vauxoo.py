@@ -1062,6 +1062,31 @@ class TestPreCommitVauxoo:
                             output,
                         )
 
+    # ruff-odoo checks with no pylint/flake8 counterpart: the removed and invalid method calls are
+    # compared against the ORM of the odoo-version option, so they are only reported from the
+    # version where the method was removed or its signature changed
+    RUFF_ODOO_METHOD_USE_CASES = {
+        "17.0": ["m2m-relation-is-label"],
+        "18.0": ["m2m-relation-is-label", "removed-odoo-method-call", "invalid-odoo-method-call"],
+    }
+
+    def test_ruff_odoo_method_use_cases(self, caplog):
+        """The ruff-odoo checks without a pylint/flake8 counterpart must be reported as
+        mandatory, the version-scoped ones only from the odoo version they apply to"""
+        self.skip_if_no_ruff()
+        fname = "ruff_odoo_method_use_cases.py"
+        shutil.copy(TEST_PATH / "data_ruff" / "ruff_odoo_method_use_cases.txt", Path(self.tmp_dir) / fname)
+        subprocess.check_call(["git", "add", "-A"])
+        all_checks = set().union(*self.RUFF_ODOO_METHOD_USE_CASES.values())
+        for odoo_version, expected_checks in self.RUFF_ODOO_METHOD_USE_CASES.items():
+            result = self.runner.invoke(main, ["--only-cp-cfg", "--odoo-version", odoo_version])
+            assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+            output = self.run_precommit_hooks(["ruff-check"], ".pre-commit-config.yaml", fname)
+            for check in expected_checks:
+                assert "%s:" % check in output, "'%s' was not reported for odoo %s\n%s" % (check, odoo_version, output)
+            for check in all_checks - set(expected_checks):
+                assert "%s:" % check not in output, "'%s' was reported for odoo %s\n%s" % (check, odoo_version, output)
+
     # Every security check selected by any of the three ruff configurations: the whole
     # flake8-bandit family plus the ruff-odoo sql-injection, all of them ignored inside
     # "migrations/" the same way they are ignored inside "tests/"
