@@ -13,6 +13,7 @@ import sys
 
 import copier
 import yaml
+from plumbum import local
 
 from . import __version__, logging_colored, version_check
 
@@ -33,6 +34,10 @@ re_pylint_check_ruff_codes = re.compile(
 )
 
 CFG_SUBFOLDER = ".config"
+
+# The variables that point git to a repository other than the one of the working
+# directory. git exports them to the hooks of a linked worktree with absolute paths
+GIT_REPOSITORY_ENVVARS = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR")
 
 # Scope of files to run the hooks on (--all, --last-commit and --diff)
 # The templates that depend on ruff live in a folder whose name is the condition
@@ -157,6 +162,22 @@ def get_repo():
     repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
     repo_root = full_norm_path(repo_root.strip())
     return repo_root
+
+
+def get_git_hooks_dir(repo_dirname):
+    """The directory git runs the hooks from, as an absolute path
+
+    It is not always "<repo>/.git/hooks": in a linked worktree ".git" is a file and the
+    hooks are the ones of the main repository, and "core.hooksPath" can move them anywhere.
+    git answers relative to the directory it runs in, or absolute when it is elsewhere
+    """
+    hooks_dir = (
+        subprocess
+        .check_output(["git", "rev-parse", "--git-path", "hooks"], cwd=repo_dirname)
+        .decode(sys.stdout.encoding)
+        .strip()
+    )
+    return full_norm_path(os.path.join(repo_dirname, hooks_dir))
 
 
 def get_files(path):
@@ -602,15 +623,23 @@ def copy_cfg_files(  # ruff: ignore[complex-structure]
         "use_ruff": use_ruff,
     }
 
-    copier.run_copy(
-        src_path=precommit_config_dir,
-        dst_path=cfg_dir,
-        data=data,
-        unsafe=True,
-        defaults=True,
-        overwrite=not no_overwrite,
-        quiet=True,
-    )
+    # copier asks git whether the template folder is a repository. Run as a hook of a
+    # linked worktree, git exports an absolute "GIT_DIR" that makes it answer yes for any
+    # folder, and copier then fails running "git ls-remote" on it. plumbum, the one that
+    # runs git for copier, copied the environment when it was imported, so it is the
+    # environment to clean up, not os.environ
+    with local.env():
+        for git_envvar in GIT_REPOSITORY_ENVVARS:
+            local.env.pop(git_envvar, None)
+        copier.run_copy(
+            src_path=precommit_config_dir,
+            dst_path=cfg_dir,
+            data=data,
+            unsafe=True,
+            defaults=True,
+            overwrite=not no_overwrite,
+            quiet=True,
+        )
 
     # copier renders the folder whose condition matched as a subfolder of the
     # destination, so its files have to be moved up to where every tool expects them.
@@ -715,6 +744,7 @@ def install_git_hook(src_path, dest_path, replacements):
     hook_content = pathlib.Path(src_path).read_text(encoding="utf-8")
     for placeholder, value in replacements.items():
         hook_content = hook_content.replace(placeholder, value)
+    pathlib.Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
     pathlib.Path(dest_path).write_text(hook_content, encoding="utf-8")
     pathlib.Path(dest_path).chmod(pathlib.Path(dest_path).stat().st_mode | stat.S_IXUSR)
 
@@ -1001,7 +1031,7 @@ def main(  # ruff: ignore[complex-structure]
 
     if install:
         git_hook_pre_commit_src = os.path.join(root_dir, "git_hook_pre_commit")
-        git_hook_pre_commit_dest = os.path.join(repo_dirname, ".git", "hooks", "pre-commit")
+        git_hook_pre_commit_dest = os.path.join(get_git_hooks_dir(repo_dirname), "pre-commit")
         pre_commit_vauxoo_bin = resolve_console_script("pre-commit-vauxoo")
         _logger.info("pre-commit installed at %s", git_hook_pre_commit_dest)
         install_git_hook(
