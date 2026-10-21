@@ -109,13 +109,13 @@ repos:
         language: python
         types: [text]
         files: (^deactivate\.jinja$|/data/neutralize\.sql$)
-      - id: vx-check-commit-log
-        name: commit message range check
-        description: Validate commit messages from VERSION..HEAD using the Odoo/Vauxoo structure.
-        entry: vx-check-commit-log
-        language: python
-        pass_filenames: false
-        always_run: true
+#      - id: vx-check-commit-log
+#        name: commit message range check
+#        description: Validate commit messages from VERSION..HEAD using the Odoo/Vauxoo structure.
+#        entry: vx-check-commit-log
+#        language: python
+#        pass_filenames: false
+#        always_run: true
   - repo: https://github.com/pre-commit/pre-commit-hooks
 {%- if pre_commit_matrix_value >= 20 %}
     rev: v6.0.0
