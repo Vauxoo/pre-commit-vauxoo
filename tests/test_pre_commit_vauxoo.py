@@ -22,6 +22,7 @@ from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 import pytest
 from click.testing import CliRunner
 from jinja2 import Environment, FileSystemLoader
+from plumbum import local
 from pylint.config.config_initialization import _config_initialization
 from pylint.lint import PyLinter, Run
 from yaml import Loader, load
@@ -372,6 +373,45 @@ class TestPreCommitVauxoo:
             "[FIX] module_example1: testing",
         ])
         assert not exit_code, "Exited with error_code %s" % exit_code
+
+    def add_worktree(self, tmp_path):
+        self.commit("[ADD] module_example1: initial")
+        worktree_dir = os.path.realpath(tmp_path / "worktree")
+        subprocess.check_call(["git", "worktree", "add", "-q", worktree_dir, "-b", "worktree-branch"])
+        return worktree_dir
+
+    def test_install_git_hook_pre_commit_worktree(self, tmp_path):
+        worktree_dir = self.add_worktree(tmp_path)
+        with self.chdir(worktree_dir):
+            assert Path(".git").is_file(), "The '.git' of a linked worktree is expected to be a file"
+            result = self.runner.invoke(main, ["--install"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        # The worktrees run the hooks of the main repository
+        git_hook_pre_commit = os.path.join(self.tmp_dir, ".git", "hooks", "pre-commit")
+        assert Path(git_hook_pre_commit).is_file(), "The hook was not installed in the hooks of the main repository"
+
+    def test_install_git_hook_pre_commit_hooks_path(self):
+        subprocess.check_call(["git", "config", "core.hooksPath", "custom/hooks"])
+        os.chdir("module_example1")
+        result = self.runner.invoke(main, ["--install"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        git_hook_pre_commit = os.path.join(self.tmp_dir, "custom", "hooks", "pre-commit")
+        assert Path(git_hook_pre_commit).is_file(), "The hook was not installed in core.hooksPath"
+        assert not Path(self.tmp_dir, ".git", "hooks", "pre-commit").exists(), "core.hooksPath was ignored"
+
+    def test_copy_cfg_files_absolute_git_dir(self, tmp_path, monkeypatch):
+        """git runs the hooks of a linked worktree with an absolute GIT_DIR, which made
+        copier take the folder of the configuration templates for a repository"""
+        worktree_dir = self.add_worktree(tmp_path)
+        with self.chdir(worktree_dir):
+            git_dir = subprocess.check_output(["git", "rev-parse", "--absolute-git-dir"], text=True).strip()
+            monkeypatch.setenv("GIT_DIR", git_dir)
+            # copier runs git with the environment plumbum copied when it was imported
+            with local.env(GIT_DIR=git_dir):
+                result = self.runner.invoke(main, ["--only-cp-cfg"])
+                assert local.env["GIT_DIR"] == git_dir, "The environment of the caller was not restored"
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        assert Path(worktree_dir, ".config", ".pre-commit-config.yaml").is_file(), "Configuration files not copied"
 
     def test_commit_msg_valid_single_module(self):
         commit_msg_path = os.path.join(self.tmp_dir, ".git", "COMMIT_EDITMSG")

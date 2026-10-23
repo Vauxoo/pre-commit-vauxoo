@@ -4,5 +4,6 @@ jinja2
 packaging
 pathspec<1.0.0  # To avoid the deprecation warning from gitwildmatch in pre-commit
 pgsanity
+plumbum  # copier runs git through it, its environment is the one to clean up (see copy_cfg_files)
 pre-commit
 pyyaml  # To read the hooks of the autofix configuration file (--autofixes-commit-by-module)
