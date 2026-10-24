@@ -643,6 +643,18 @@ class TestPreCommitVauxoo:
         with pytest.raises(UserWarning, match="--last-commits=REMOTE/BRANCH"):
             resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS)
 
+    def test_ci_clone_of_a_dev_fork_skips_quietly(self, capsys):
+        """The pipeline of a fork: its only remote is the fork, holding only the branch built
+
+        Locally a stable remote is always there, so this only ever failed in CI.
+        """
+        self.commit("[FIX] module_example1: initial baseline")
+        self.add_remote("origin", "https://git.example.com/vauxoo-dev/project.git", version="18.0-feature-dev")
+
+        assert not resolve_commit_message_base_ref("18.0", scope=SCOPE_LAST_COMMITS)
+        assert "stable ref 18.0 was not found" in capsys.readouterr().out
+        assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="18.0") is True
+
     def test_resolve_commit_message_base_ref_last_commit_scope(self):
         self.commit("[FIX] module_example1: initial baseline")
         self.commit("[FIX] module_example1: second one")

@@ -334,10 +334,13 @@ def infer_stable_ref(version, cwd=None):
         print(f"Counting commits from the local branch {version}")
         return version
 
-    # Only when every remote is a dev fork is there nothing left to infer from. A
-    # checkout holding a single remote that simply lacks the branch -- which is what
-    # CI clones look like -- keeps skipping quietly, the way it always did
-    if remotes and len(skipped) == len(remotes):
+    # Only when every remote is a dev fork, and one of them holds a copy of stable,
+    # is there a stale answer worth asking about. A checkout whose remotes simply lack
+    # the branch -- which is what CI clones look like, the fork's own pipeline included,
+    # since its only remote is the fork and it fetches only the branch being built --
+    # keeps skipping quietly, the way it always did
+    stale_copies = [name for name in skipped if git_ref_exists(f"refs/remotes/{name}/{version}", cwd=cwd)]
+    if remotes and len(skipped) == len(remotes) and stale_copies:
         answer = ask_for_stable_ref(version, cwd=cwd)
         if not git_rev_exists(answer, cwd=cwd):
             raise UserWarning(f"The base revision {answer} does not exist")
