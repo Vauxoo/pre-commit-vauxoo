@@ -29,8 +29,9 @@ default_language_version:
 repos:
   # Every optional hook was converged into .pre-commit-config.yaml: the checks it used to run
   # are reported by the mandatory ruff-odoo, flake8 and pylint hooks now, and the oca-checks,
-  # doc8 and commit-log hooks moved there as they were. Only the EXPERIMENTAL checks keep a
-  # level that does not affect the build status, which is what this configuration runs
+  # doc8 and commit-log hooks moved there as they were. Only the EXPERIMENTAL checks and the
+  # new checks being adopted keep a level that does not affect the build status, which is
+  # what this configuration runs
   - repo: https://github.com/Vauxoo/ruff-odoo-pre-commit
     rev: 0.17.0.36{# b2v-ruff #}
     hooks:
@@ -40,3 +41,13 @@ repos:
         args:
           - --config=.config/.ruff-experimental.toml
           - --exit-zero
+  # Optional while it is adopted: promote it to the "local" hooks of .pre-commit-config.yaml to
+  # make it affect the build status
+  - repo: local
+    hooks:
+      - id: vx-check-tests-imported
+        name: Odoo test files collected
+        description: Report the tests/test_*.py files not imported by tests/__init__.py, never run by Odoo.
+        entry: vx-check-tests-imported
+        language: python
+        files: (^|/)(__manifest__\.py|__openerp__\.py|tests/.*\.py)$

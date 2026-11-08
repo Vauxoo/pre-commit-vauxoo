@@ -62,6 +62,16 @@ repos:
         name: RST lint
         args:
           - --config=.config/doc8.ini
+  # Optional while it is adopted: promote it to the "local" hooks of .pre-commit-config.yaml to
+  # make it affect the build status
+  - repo: local
+    hooks:
+      - id: vx-check-tests-imported
+        name: Odoo test files collected
+        description: Report the tests/test_*.py files not imported by tests/__init__.py, never run by Odoo.
+        entry: vx-check-tests-imported
+        language: python
+        files: (^|/)(__manifest__\.py|__openerp__\.py|tests/.*\.py)$
 #  - repo: local
 #    hooks:
 #      - id: vx-check-commit-log

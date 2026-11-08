@@ -334,6 +334,45 @@ Full --help command result:
 .. https://pre-commit-vauxoo.readthedocs.io/
 
 
+Odoo test files never collected
+===============================
+
+Odoo only runs the test modules imported by ``<module>/tests/__init__.py``. A
+``tests/test_*.py`` file missing from that ``__init__.py`` is not an error: its tests
+are never run and the build stays green. When none is imported, Odoo runs 0 tests of
+the module and only logs a ``WARNING`` (``0 failed, 0 error(s) of 0 tests``) that
+does not change the build status either.
+
+The ``vx-check-tests-imported`` hook reads the ``tests`` folder of every Odoo module
+(a folder with a ``__manifest__.py``) and reports:
+
+* ``test-file-not-imported``: a ``tests/test_*.py`` file, or a ``tests/test_*``
+  package, not imported by ``tests/__init__.py``.
+* ``tests-folder-without-tests``: a ``tests`` folder from which Odoo collects no test
+  at all, either because it has no ``test_*.py`` file or because none is imported. It
+  makes the reader believe the module is tested.
+
+e.g.::
+
+    module_name/tests/test_sale.py - [test-file-not-imported] It is not imported by module_name/tests/__init__.py, so Odoo never runs its tests. Add "from . import test_sale"
+
+The imports supported are ``from . import test_a, test_b`` (multi-line parenthesized
+too), ``from .test_a import TestA`` and the absolute ``from
+odoo.addons.module_name.tests import test_a``. They are parsed with ``ast``, never
+executed, so:
+
+* The dynamic imports (``importlib``, ``__import__``, ``from . import *``) are not
+  resolved and the files they load are reported as not imported.
+* The test methods are not counted: an imported file without any test is not reported.
+
+It is an **optional** check, so it does not affect the build status (unless
+``--fail-optional`` is set) while the repositories fix what it reports. Making it
+mandatory means moving the hook from the ``.pre-commit-config-optional.yaml.jinja``
+templates to the ``local`` hooks of the ``.pre-commit-config.yaml.jinja`` ones and
+updating ``test_check_tests_imported_hook``. A false positive is skipped with
+``EXCLUDE_LINT``.
+
+
 AI Agents Integration
 =====================
 
