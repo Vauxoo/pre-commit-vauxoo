@@ -715,6 +715,36 @@ class TestPreCommitVauxoo:
         else:
             assert "vx-check-commit-log" in optional_content
 
+    def test_check_tests_imported_hook(self):
+        """The test files never collected by Odoo are reported by the optional configuration only"""
+        result = self.runner.invoke(main, ["--only-cp-cfg"])
+        assert not result.exit_code, "Exited with error %s - %s" % (result, result.output)
+        cfg_subfolder = Path(self.tmp_dir) / CFG_SUBFOLDER
+        mandatory_content = (cfg_subfolder / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+        assert "vx-check-tests-imported" not in mandatory_content, "The check is expected to be optional"
+
+        tests_path = Path(self.tmp_dir, "module_example1", "tests")
+        tests_path.mkdir()
+        (tests_path / "__init__.py").write_text("from . import test_imported\n", encoding="utf-8")
+        (tests_path / "test_imported.py").write_text("", encoding="utf-8")
+        (tests_path / "test_not_imported.py").write_text("", encoding="utf-8")
+        subprocess.check_call(["git", "add", "-A"])
+        # Only this hook of the optional configuration, the other ones are not what is tested
+        cmd = ["pre-commit", "run", "vx-check-tests-imported", "--all-files", "--color=never"]
+        output = subprocess.run(
+            cmd + ["-c", str(cfg_subfolder / ".pre-commit-config-optional.yaml")],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert output.returncode == 1, "The hook did not fail\n%s%s" % (output.stdout, output.stderr)
+        assert re.search(r"^Odoo test files collected\.+Failed$", output.stdout, re.MULTILINE), output.stdout
+        assert (
+            "module_example1/tests/test_not_imported.py - [test-file-not-imported] It is not imported by "
+            "module_example1/tests/__init__.py" in output.stdout
+        ), output.stdout
+        assert "test_imported.py" not in output.stdout.replace("test_not_imported.py", ""), output.stdout
+
     def test_check_commit_messages_since_version_passes_without_version(self):
         assert check_commit_messages_since_version(repo_root=self.tmp_dir, version="") is True
 
