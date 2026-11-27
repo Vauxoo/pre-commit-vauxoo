@@ -124,16 +124,12 @@ jobs:
         sudo apt install -y libecpg-dev  # Required for vx-check-deactivate hook
     - name: Test == windows
       if: runner.os == 'Windows'
-      env:
-        TOXPYTHON: '${{ matrix.toxpython }}'
       run: |
         [System.Environment]::SetEnvironmentVariable('PATH',$env:Path + ";" + $env:PGBIN)
         ecpg --version
         tox -e ${{ matrix.tox_env }} -v
     - name: Test != Windows
       if: runner.os != 'Windows'
-      env:
-        TOXPYTHON: '${{ matrix.toxpython }}'
       run: |
         tox -e ${{ matrix.tox_env }} -v
     # Publishes both the tags pushed from a checkout, e.g. "bump2version" run in a
